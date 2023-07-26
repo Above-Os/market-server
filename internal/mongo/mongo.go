@@ -19,6 +19,7 @@ const (
 	AppStoreDb         = "AppStore"
 	AppTypesCollection = "AppTypes"
 	AppInfosCollection = "AppInfos"
+	AppGitCollection   = "AppGit"
 )
 
 var mgoClient *Client

@@ -45,7 +45,7 @@ func GetAppListsFromDb(page, size int64, category string) (list []models.Applica
 		result := models.ApplicationInfo{}
 		err := cur.Decode(&result)
 		if err != nil {
-			glog.Warningf("%s", err.Error())
+			glog.Warningf("err:%s", err.Error())
 			continue
 		}
 		list = append(list, result)
@@ -69,7 +69,10 @@ func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
 
 	err := mgoClient.findOneAndUpdate(AppStoreDb, AppInfosCollection, filter, u, opts).Decode(updatedDocument)
 	if err != nil {
-		glog.Warningf("%s", err.Error())
+		glog.Warningf("err:%s", err.Error())
+	}
+	if err == mongo.ErrNoDocuments {
+		return nil
 	}
 	return err
 }
@@ -77,7 +80,8 @@ func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
 func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update := bson.M{}
 	update["lastCommitHash"] = appInfoNew.LastCommitHash
-	update["ModifyTime"] = time.Now().UnixMilli()
+	update["updateTime"] = appInfoNew.UpdateTime
+	update["createTime"] = appInfoNew.CreateTime
 
 	update["icon"] = appInfoNew.Icon
 	update["desc"] = appInfoNew.Description
@@ -89,7 +93,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["fullDescription"] = appInfoNew.Icon
 	update["icon"] = appInfoNew.FullDescription
 	update["upgradeDescription"] = appInfoNew.UpgradeDescription
-	update["PromoteImage"] = appInfoNew.PromoteImage
+	update["promoteImage"] = appInfoNew.PromoteImage
 	update["promoteVideo"] = appInfoNew.PromoteVideo
 	update["subCategory"] = appInfoNew.SubCategory
 	update["developer"] = appInfoNew.Developer

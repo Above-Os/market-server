@@ -15,8 +15,8 @@
 package apiserver
 
 import (
+	"app-store-server/internal/constants"
 	servicev1 "app-store-server/pkg/apiserver/service/v1"
-	"app-store-server/pkg/constants"
 	"net/http"
 
 	restfulspec "github.com/emicklei/go-restful-openapi/v2"

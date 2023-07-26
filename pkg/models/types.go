@@ -63,14 +63,14 @@ type ApplicationInfo struct {
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
-	ModifyTime     int64  `yaml:"-" json:"modifyTime" bson:"modifyTime"`
+	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
 	//Status      AppStatus `json:"status"`
 }
 
 func (info *ApplicationInfo) InitBsonId() {
 	info.Id = primitive.NewObjectID().Hex()
 	info.CreateTime = time.Now().UnixMilli()
-	info.ModifyTime = info.CreateTime
+	info.UpdateTime = info.CreateTime
 }
 
 type AppService struct {

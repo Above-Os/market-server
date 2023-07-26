@@ -1,10 +1,10 @@
 package app
 
 import (
-	"app-store-server/pkg/constants"
-	"app-store-server/pkg/gitapp"
+	"app-store-server/internal/constants"
+	"app-store-server/internal/gitapp"
+	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
-	"app-store-server/pkg/mongo"
 	"app-store-server/pkg/utils"
 	"fmt"
 	"io/fs"
@@ -50,6 +50,7 @@ func GitPullAndUpdate() error {
 		return err
 	}
 
+	//todo check app infos in mongo if not exist in local, then del it
 	return UpdateAppInfosToMongo()
 }
 
@@ -130,7 +131,7 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 			glog.Warningf("app chart reading error: %s", err.Error())
 			continue
 		}
-		glog.Warningf("name:%s, version:%s\n", c.Name(), appInfo.Version)
+		glog.Infof("name:%s, version:%s\n", c.Name(), appInfo.Version)
 
 		//zip
 		err = zipApp(c.Name(), appInfo.Version)
@@ -139,7 +140,18 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 			continue
 		}
 		//update info to db
-		appInfo.LastCommitHash = gitapp.GetLastHash()
+		appInfo.LastCommitHash, err = gitapp.GetLastHash()
+		if err != nil {
+			glog.Warningf("GetLastHash error: %s", err.Error())
+		}
+		appInfo.CreateTime, err = gitapp.GetCreateTimeSecond(constants.AppGitLocalDir, c.Name())
+		if err != nil {
+			glog.Warningf("GetCreateTimeSecond error: %s", err.Error())
+		}
+		appInfo.UpdateTime, err = gitapp.GetLastUpdateTimeSecond(constants.AppGitLocalDir, c.Name())
+		if err != nil {
+			glog.Warningf("GetLastUpdateTimeSecond error: %s", err.Error())
+		}
 		infos = append(infos, appInfo)
 	}
 

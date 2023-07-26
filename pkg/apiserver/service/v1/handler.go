@@ -15,9 +15,9 @@
 package v1
 
 import (
+	"app-store-server/internal/app"
+	mongo2 "app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
-	"app-store-server/pkg/app"
-	"app-store-server/pkg/mongo"
 	"strconv"
 
 	"github.com/emicklei/go-restful/v3"
@@ -53,7 +53,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	if sizeN < 1 {
 		sizeN = 5
 	}
-	appList, count, err := mongo.GetAppListsFromDb(int64(pageN), int64(sizeN), category)
+	appList, count, err := mongo2.GetAppListsFromDb(int64(pageN), int64(sizeN), category)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
@@ -63,7 +63,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 }
 
 func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
-	types, err := mongo.GetAppTypesFromDb()
+	types, err := mongo2.GetAppTypesFromDb()
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return

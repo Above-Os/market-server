@@ -15,10 +15,10 @@
 package main
 
 import (
+	"app-store-server/internal/app"
+	"app-store-server/internal/gitapp"
+	"app-store-server/internal/mongo"
 	"app-store-server/pkg/apiserver"
-	"app-store-server/pkg/app"
-	"app-store-server/pkg/gitapp"
-	"app-store-server/pkg/mongo"
 	"flag"
 
 	"github.com/golang/glog"
