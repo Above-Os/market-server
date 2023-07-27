@@ -16,8 +16,11 @@ package v1
 
 import (
 	"app-store-server/internal/app"
+	"app-store-server/internal/constants"
 	mongo2 "app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
+	"fmt"
+	"io/ioutil"
 	"strconv"
 
 	"github.com/emicklei/go-restful/v3"
@@ -70,6 +73,16 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteEntity(api.NewListResult(types))
+}
+
+func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
+	appName := req.PathParameter(ParamAppName)
+	fileName := fmt.Sprintf("%s/%s", constants.AppGitZipLocalDir, appName)
+	fileBytes, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		api.HandleError(resp, req, err)
+	}
+	resp.ResponseWriter.Write(fileBytes)
 }
 
 func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {

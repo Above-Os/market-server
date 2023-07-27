@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	APIRootPath = "/app-store-server"
-	Version     = "v1"
+	APIRootPath  = "/app-store-server"
+	Version      = "v1"
+	ParamAppName = "name"
 )
 
 func newWebService() *restful.WebService {
@@ -58,6 +59,13 @@ func AddToContainer(c *restful.Container) error {
 		Returns(http.StatusOK, "success to get application type list", nil))
 
 	glog.Infof("registered sub module: %s", ws.RootPath()+"/application_types")
+
+	ws.Route(ws.GET("/application/{"+ParamAppName+"}").
+		To(handler.handleApp).
+		Doc("Get the application").
+		Param(ws.PathParameter(ParamAppName, "the name of a application")).
+		//Param(ws.HeaderParameter("X-Authorization", "Auth token")).
+		Returns(http.StatusOK, "Success to get a application", nil))
 
 	ws.Route(ws.POST("/application_updates").
 		To(handler.handleUpdates).
