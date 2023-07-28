@@ -15,9 +15,6 @@
 package main
 
 import (
-	"app-store-server/internal/app"
-	"app-store-server/internal/gitapp"
-	"app-store-server/internal/mongo"
 	"app-store-server/pkg/apiserver"
 	"flag"
 
@@ -30,16 +27,6 @@ func main() {
 	cmd := newAPPServerCommand()
 	flag.Parse()
 	defer glog.Flush()
-
-	mongo.Init()
-	err := gitapp.Init()
-	if err != nil {
-		glog.Fatalln(err)
-	}
-	err = app.Init()
-	if err != nil {
-		glog.Fatalln(err)
-	}
 
 	if err := cmd.Execute(); err != nil {
 		glog.Fatalln(err)

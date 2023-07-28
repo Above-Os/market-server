@@ -15,7 +15,10 @@
 package apiserver
 
 import (
+	"app-store-server/internal/app"
 	"app-store-server/internal/constants"
+	"app-store-server/internal/gitapp"
+	"app-store-server/internal/mongo"
 	servicev1 "app-store-server/pkg/apiserver/service/v1"
 	"net/http"
 
@@ -59,6 +62,18 @@ func (s *APIServer) PrepareRun() error {
 	}
 
 	s.Server.Handler = s.container
+
+	mongo.Init()
+	err := gitapp.Init()
+	if err != nil {
+		glog.Fatalln(err)
+		return err
+	}
+	err = app.Init()
+	if err != nil {
+		glog.Fatalln(err)
+		return err
+	}
 
 	return nil
 }
