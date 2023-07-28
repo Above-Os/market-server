@@ -16,7 +16,15 @@ func GetAppListsFromDb(page, size int64, category string) (list []models.Applica
 	if category != "" {
 		filter["categories"] = category
 	}
-	//todo save git lastcommit hash to db, and find by it
+
+	var lastCommitHash string
+	lastCommitHash, err = GetLastCommitHashFromDB()
+	if err != nil {
+		return
+	}
+	if lastCommitHash != "" {
+		filter["lastCommitHash"] = lastCommitHash
+	}
 
 	sort := bson.D{
 		bson.E{Key: "rating", Value: -1},

@@ -27,7 +27,7 @@ func SetLastCommitHashToDB(hash string) error {
 
 }
 
-func GetLastCommitHashToDB() (string, error) {
+func GetLastCommitHashFromDB() (string, error) {
 	result := struct {
 		LastCommitHash string
 	}{}

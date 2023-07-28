@@ -49,9 +49,11 @@ func GitPullAndUpdate() error {
 		glog.Warningf("%s", err.Error())
 		return err
 	}
+	
+	return UpdateAppInfosToMongo()
 
 	//todo check app infos in mongo if not exist in local, then del it
-	return UpdateAppInfosToMongo()
+	//or del by lastCommitHash old
 }
 
 func readAppInfo(dir fs.FileInfo) (*models.ApplicationInfo, error) {
