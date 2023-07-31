@@ -23,6 +23,7 @@ COPY go.sum bytetrade.io/web3os/app-store-server/go.sum
 # Copy the go source
 COPY cmd/ bytetrade.io/web3os/app-store-server/cmd/
 COPY pkg/ bytetrade.io/web3os/app-store-server/pkg/
+COPY internal/ bytetrade.io/web3os/app-store-server/internal/
 
 
 # Build
