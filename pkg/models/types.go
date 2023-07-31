@@ -34,6 +34,7 @@ type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"_id"`
 
 	Name        string `yaml:"name" json:"name" bson:"name"`
+	ChartName   string `yaml:"chartName" json:"chartName" bson:"chartName"`
 	Icon        string `yaml:"icon" json:"icon" bson:"icon"`
 	Description string `yaml:"desc" json:"desc" bson:"desc"`
 	AppID       string `yaml:"appid" json:"appid" bson:"appid"`

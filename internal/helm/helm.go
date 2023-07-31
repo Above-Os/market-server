@@ -2,27 +2,28 @@ package helm
 
 import (
 	"helm.sh/helm/v3/pkg/repo"
+	"path"
 	"path/filepath"
 
 	"github.com/golang/glog"
 	"helm.sh/helm/v3/pkg/action"
 )
 
-func PackageHelm(src, dstDir string) error {
+func PackageHelm(src, dstDir string) (string, error) {
 	client := action.NewPackage()
 	client.Destination = dstDir
 	pathAbs, err := filepath.Abs(src)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	p, err := client.Run(pathAbs, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	glog.Infof("src:%s, dstDir:%s Successfully packaged chart and saved it to: %s\n", src, dstDir, p)
 
-	return nil
+	return path.Base(p), nil
 }
 
 func IndexHelm(name, url, dir string) error {

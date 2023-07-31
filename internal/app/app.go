@@ -134,15 +134,17 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 			glog.Warningf("app chart reading error: %s", err.Error())
 			continue
 		}
-		glog.Infof("name:%s, version:%s\n", c.Name(), appInfo.Version)
 
 		//zip
 		//err = zipApp(c.Name(), appInfo.Version)
-		err = helmPackage(c.Name())
+		appInfo.ChartName, err = helmPackage(c.Name())
 		if err != nil {
 			glog.Warningf("app chart reading error: %s", err.Error())
 			continue
 		}
+
+		glog.Infof("name:%s, version:%s, chartName:%s\n", c.Name(), appInfo.Version, appInfo.ChartName)
+
 		//update info to db
 		appInfo.LastCommitHash, err = gitapp.GetLastHash()
 		if err != nil {
@@ -167,7 +169,7 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 	return infos, nil
 }
 
-func helmPackage(name string) error {
+func helmPackage(name string) (string, error) {
 	src := fmt.Sprintf("%s/%s", constants.AppGitLocalDir, name)
 	return helm.PackageHelm(src, constants.AppGitZipLocalDir)
 }

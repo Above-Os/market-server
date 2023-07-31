@@ -91,6 +91,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["updateTime"] = appInfoNew.UpdateTime
 	update["createTime"] = appInfoNew.CreateTime
 
+	update["chartName"] = appInfoNew.ChartName
 	update["icon"] = appInfoNew.Icon
 	update["desc"] = appInfoNew.Description
 	update["appid"] = appInfoNew.AppID

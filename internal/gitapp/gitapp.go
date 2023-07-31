@@ -106,7 +106,7 @@ func gitPull(directory string) error {
 	glog.Infof("git pull origin")
 	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		//glog.Warningf("err:%s", err.Error())
 		return err
 	}
 
