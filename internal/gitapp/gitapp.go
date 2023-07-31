@@ -27,7 +27,7 @@ func Init() error {
 }
 
 func GetLastHash() (string, error) {
-	return mongo.GetLastCommitHashToDB()
+	return mongo.GetLastCommitHashFromDB()
 }
 
 func updateLastHash(hash string) error {
@@ -37,6 +37,12 @@ func updateLastHash(hash string) error {
 func cloneCode() error {
 	//clear local dir
 	err := os.RemoveAll(constants.AppGitLocalDir)
+	if err != nil {
+		glog.Warningf("os.RemoveAll %s %s", constants.AppGitLocalDir, err.Error())
+		return err
+	}
+
+	err = os.RemoveAll(constants.AppGitZipLocalDir)
 	if err != nil {
 		glog.Warningf("os.RemoveAll %s %s", constants.AppGitLocalDir, err.Error())
 		return err

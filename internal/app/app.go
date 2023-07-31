@@ -3,6 +3,7 @@ package app
 import (
 	"app-store-server/internal/constants"
 	"app-store-server/internal/gitapp"
+	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
@@ -49,7 +50,7 @@ func GitPullAndUpdate() error {
 		glog.Warningf("%s", err.Error())
 		return err
 	}
-	
+
 	return UpdateAppInfosToMongo()
 
 	//todo check app infos in mongo if not exist in local, then del it
@@ -136,7 +137,8 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 		glog.Infof("name:%s, version:%s\n", c.Name(), appInfo.Version)
 
 		//zip
-		err = zipApp(c.Name(), appInfo.Version)
+		//err = zipApp(c.Name(), appInfo.Version)
+		err = helmPackage(c.Name())
 		if err != nil {
 			glog.Warningf("app chart reading error: %s", err.Error())
 			continue
@@ -157,7 +159,17 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 		infos = append(infos, appInfo)
 	}
 
+	err = helm.IndexHelm(constants.RepoName, constants.RepoUrl, constants.AppGitZipLocalDir)
+	if err != nil {
+		glog.Warningf("IndexHelm error: %s", err.Error())
+		return infos, err
+	}
 	return infos, nil
+}
+
+func helmPackage(name string) error {
+	src := fmt.Sprintf("%s/%s", constants.AppGitLocalDir, name)
+	return helm.PackageHelm(src, constants.AppGitZipLocalDir)
 }
 
 func zipApp(name, version string) error {
