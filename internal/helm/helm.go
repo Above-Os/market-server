@@ -41,5 +41,4 @@ func IndexHelm(name, url, dir string) error {
 
 	i.SortEntries()
 	return i.WriteFile(out, 0644)
-
 }
