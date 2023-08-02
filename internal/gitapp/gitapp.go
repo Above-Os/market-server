@@ -35,13 +35,14 @@ func updateLastHash(hash string) error {
 }
 
 func cloneCode() error {
-	//clear local dir
+	//clear local git dir
 	err := os.RemoveAll(constants.AppGitLocalDir)
 	if err != nil {
 		glog.Warningf("os.RemoveAll %s %s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
 
+	//clear local charts dir
 	err = os.RemoveAll(constants.AppGitZipLocalDir)
 	if err != nil {
 		glog.Warningf("os.RemoveAll %s %s", constants.AppGitLocalDir, err.Error())
@@ -58,7 +59,7 @@ func Pull() error {
 func gitClone(url, branch, directory string) error {
 	glog.Infof("git clone %s %s %s--recursive", url, branch, directory)
 
-	//git.DefaultSubmoduleRecursionDepth
+	//clone
 	r, err := git.PlainClone(directory, false, &git.CloneOptions{
 		URL:           url,
 		Progress:      os.Stdout,
@@ -110,7 +111,6 @@ func gitPull(directory string) error {
 		return err
 	}
 
-	// Print the latest commit that was just pulled
 	ref, err := r.Head()
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
@@ -121,6 +121,7 @@ func gitPull(directory string) error {
 		glog.Warningf("err:%s", err.Error())
 		return err
 	}
+	// Print the latest commit that was just pulled
 	glog.Infof("commit:%#v", commit)
 
 	updateLastHash(commit.Hash.String())
@@ -134,7 +135,7 @@ func GetCreateTimeSecond(dirPath, subDirPath string) (int64, error) {
 		return 0, err
 	}
 
-	t, err := time.Parse("Mon Jan 02 15:04:05 2006 -0700", timeStr)
+	t, err := time.Parse(constants.TimeFormatStr, timeStr)
 	if err != nil {
 		return 0, err
 	}
@@ -148,7 +149,7 @@ func GetLastUpdateTimeSecond(dirPath, subDirPath string) (int64, error) {
 		return 0, err
 	}
 
-	t, err := time.Parse("Mon Jan 02 15:04:05 2006 -0700", timeStr)
+	t, err := time.Parse(constants.TimeFormatStr, timeStr)
 	if err != nil {
 		return 0, err
 	}

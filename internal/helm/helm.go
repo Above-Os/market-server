@@ -17,7 +17,8 @@ func PackageHelm(src, dstDir string) (string, error) {
 		return "", err
 	}
 
-	p, err := client.Run(pathAbs, nil)
+	var p string
+	p, err = client.Run(pathAbs, nil)
 	if err != nil {
 		return "", err
 	}
@@ -32,14 +33,14 @@ func IndexHelm(name, url, dir string) error {
 		return err
 	}
 
-	out := filepath.Join(path, "index.yaml")
-
-	i, err := repo.IndexDirectory(path, url)
+	var i *repo.IndexFile
+	i, err = repo.IndexDirectory(path, url)
 	if err != nil {
 		return err
 	}
 	//merge to not implement
 
 	i.SortEntries()
+	out := filepath.Join(path, "index.yaml")
 	return i.WriteFile(out, 0644)
 }

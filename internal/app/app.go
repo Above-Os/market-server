@@ -23,11 +23,12 @@ func Init() error {
 	err := UpdateAppInfosToMongo()
 	if err != nil {
 		glog.Warningf("%s", err.Error())
+		return err
 	}
 
 	go pullAndUpdateLoop()
 
-	return err
+	return nil
 }
 
 func pullAndUpdateLoop() {
@@ -78,26 +79,13 @@ func readAppInfo(dir fs.FileInfo) (*models.ApplicationInfo, error) {
 		return nil, err
 	}
 
-	// cache app icon data
-	// var icon string
-	// iconData, found := imageCache.Get(appCfg.Metadata.Icon)
-	// if !found {
-	// 	icon, err = readImageToBase64(fmt.Sprintf("%s/%s", ChartsPath, dir.Name()), appCfg.Metadata.Icon)
-	// 	if err != nil {
-	// 		klog.Errorf("get app icon error: %s", err)
-	// 	} else {
-	// 		imageCache.Set(appCfg.Metadata.Icon, icon, cache.DefaultExpiration)
-	// 	}
-	// } else {
-	// 	icon = iconData.(string)
-	// }
-
 	return appCfg.ToAppInfo(), nil
 }
 
 func UpdateAppInfosToMongo() error {
 	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
 	if err != nil {
+		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
 
@@ -137,6 +125,8 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 
 		//zip
 		//err = zipApp(c.Name(), appInfo.Version)
+
+		//helm package
 		appInfo.ChartName, err = helmPackage(c.Name())
 		if err != nil {
 			glog.Warningf("app chart reading error: %s", err.Error())
@@ -161,11 +151,13 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 		infos = append(infos, appInfo)
 	}
 
+	//index charts directory
 	err = helm.IndexHelm(constants.RepoName, constants.RepoUrl, constants.AppGitZipLocalDir)
 	if err != nil {
 		glog.Warningf("IndexHelm error: %s", err.Error())
 		return infos, err
 	}
+
 	return infos, nil
 }
 

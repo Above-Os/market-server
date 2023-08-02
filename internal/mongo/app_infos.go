@@ -27,7 +27,7 @@ func GetAppListsFromDb(page, size int64, category string) (list []models.Applica
 	}
 
 	sort := bson.D{
-		bson.E{Key: "rating", Value: -1},
+		bson.E{Key: "updateTime", Value: -1},
 		bson.E{Key: "name", Value: 1},
 	}
 

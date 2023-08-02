@@ -27,10 +27,6 @@ import (
 	"github.com/golang/glog"
 )
 
-const (
-	ChartsPath = "./charts"
-)
-
 type Handler struct {
 	appServiceClient *Client
 }
@@ -47,15 +43,15 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	category := req.QueryParameter("category")
 
 	glog.Infof("page:%s, size:%s, category:%s", page, size, category)
-	pageN, _ := strconv.Atoi(page)
-	if pageN < 1 {
-		pageN = 1
+	pageN, err := strconv.Atoi(page)
+	if pageN < 1 || err != nil {
+		pageN = constants.DefaultPage
+	}
+	sizeN, _ := strconv.Atoi(size)
+	if sizeN < 1 || err != nil {
+		sizeN = constants.DefaultPageSize
 	}
 
-	sizeN, _ := strconv.Atoi(size)
-	if sizeN < 1 {
-		sizeN = 5
-	}
 	appList, count, err := mongo2.GetAppListsFromDb(int64(pageN), int64(sizeN), category)
 	if err != nil {
 		api.HandleError(resp, req, err)
