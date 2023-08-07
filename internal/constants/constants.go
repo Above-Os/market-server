@@ -28,4 +28,35 @@ const (
 
 	DefaultPage     = 1
 	DefaultPageSize = 100
+
+	MongoDBUri = "MONGODB_URI"
+
+	EsAddr     = "ES_ADDR"
+	EsName     = "ES_NAME"
+	EsPassword = "ES_PASSWORD"
+)
+
+var (
+	//`{
+	//   "appTypes":[
+	//	   "AI",
+	//	   "Mining",
+	//	   "Protocol",
+	//	   "Home",
+	//	   "Data",
+	//	   "Developer",
+	//	   "Productivity",
+	//	   "Multimedia",
+	//	   "Utilities",
+	//	   "Security",
+	//	   "Game"
+	//   ]
+	//}`
+
+	DefaultAppTypes = []string{"AI", "Mining", "Protocol", "Home",
+		"Data", "Developer", "Productivity", "Multimedia",
+		"Utilities", "Security", "Game"}
+	DefaultAppTypeMaps = map[string]byte{"AI": 1, "Mining": 1, "Protocol": 1, "Home": 1,
+		"Data": 1, "Developer": 1, "Productivity": 1, "Multimedia": 1,
+		"Utilities": 1, "Security": 1, "Game": 1}
 )

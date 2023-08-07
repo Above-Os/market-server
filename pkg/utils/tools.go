@@ -17,6 +17,7 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"strconv"
 )
 
 func ToJSON(v any) string {
@@ -35,4 +36,23 @@ func PrettyJSON(v any) string {
 		panic(err)
 	}
 	return buf.String()
+}
+
+func VerifyFromAndSize(page, size string) (int, int) {
+	pageN, err := strconv.Atoi(page)
+	if pageN < 1 || err != nil {
+		pageN = 1
+	}
+
+	sizeN, err := strconv.Atoi(size)
+	if sizeN < 1 || err != nil {
+		sizeN = 5
+	}
+
+	from := (pageN - 1) * sizeN
+	if from < 0 {
+		from = 0
+	}
+
+	return from, sizeN
 }

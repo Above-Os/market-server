@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"app-store-server/internal/constants"
 	"context"
 	"os"
 	"time"
@@ -29,7 +30,7 @@ func Init() {
 }
 
 func NewMongoClient() *Client {
-	uri := os.Getenv("MONGODB_URI")
+	uri := os.Getenv(constants.MongoDBUri)
 	if uri == "" {
 		glog.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
 	}

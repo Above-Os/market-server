@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAppListsFromDb(page, size int64, category string) (list []models.ApplicationInfo, count int64, err error) {
+func GetAppListsFromDb(page, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
 		filter["categories"] = category
@@ -56,7 +56,7 @@ func GetAppListsFromDb(page, size int64, category string) (list []models.Applica
 			glog.Warningf("err:%s", err.Error())
 			continue
 		}
-		list = append(list, result)
+		list = append(list, &result)
 	}
 
 	count, err = mgoClient.count(AppStoreDb, AppInfosCollection, filter)
@@ -99,8 +99,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["version"] = appInfoNew.Version
 	update["categories"] = appInfoNew.Categories
 	update["versionName"] = appInfoNew.VersionName
-	update["fullDescription"] = appInfoNew.Icon
-	update["icon"] = appInfoNew.FullDescription
+	update["fullDescription"] = appInfoNew.FullDescription
 	update["upgradeDescription"] = appInfoNew.UpgradeDescription
 	update["promoteImage"] = appInfoNew.PromoteImage
 	update["promoteVideo"] = appInfoNew.PromoteVideo

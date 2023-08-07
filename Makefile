@@ -33,4 +33,4 @@ run: fmt vet; $(info $(M)...Run app-store-server.)
 	go run cmd/app-store-server/main.go -v 4 --logtostderr
 
 dev: fmt vet; $(info $(M)...Run app-store-server.)
-	export MONGODB_URI='mongodb://root:123456@localhost:27017' && go run cmd/app-store-server/main.go -v 4 --logtostderr
+	export MONGODB_URI='mongodb://root:123456@localhost:27017' && export ES_ADDR='https://localhost:9200' && export ES_NAME='elastic' && export ES_PASSWORD='WVF+CRh+oHV+J8ZTV4lC' && go run cmd/app-store-server/main.go -v 4 --logtostderr

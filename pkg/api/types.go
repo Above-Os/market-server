@@ -28,6 +28,15 @@ func NewListResultWithCount[T any](items []T, count int64) *ListResult {
 }
 
 type Response struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message,omitempty"`
+	Code int    `json:"code"`
+	Msg  string `json:"message,omitempty"`
+	Data any    `json:"data,omitempty"`
+}
+
+func NewResponse(code int, msg string, data any) *Response {
+	return &Response{
+		Code: code,
+		Msg:  msg,
+		Data: data,
+	}
 }

@@ -30,6 +30,11 @@ const (
 	APP_UNINSTALLING AppStatus = "uninstalling"
 )
 
+type TopResultItem struct {
+	Category string             `json:"category"`
+	Apps     []*ApplicationInfo `json:"apps"`
+}
+
 type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"_id"`
 

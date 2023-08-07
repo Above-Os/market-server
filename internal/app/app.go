@@ -20,7 +20,7 @@ import (
 )
 
 func Init() error {
-	err := UpdateAppInfosToMongo()
+	err := UpdateAppInfosToDB()
 	if err != nil {
 		glog.Warningf("%s", err.Error())
 		return err
@@ -52,7 +52,7 @@ func GitPullAndUpdate() error {
 		return err
 	}
 
-	return UpdateAppInfosToMongo()
+	return UpdateAppInfosToDB()
 
 	//todo check app infos in mongo if not exist in local, then del it
 	//or del by lastCommitHash old
@@ -82,15 +82,25 @@ func readAppInfo(dir fs.FileInfo) (*models.ApplicationInfo, error) {
 	return appCfg.ToAppInfo(), nil
 }
 
-func UpdateAppInfosToMongo() error {
+func UpdateAppInfosToDB() error {
 	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
 	if err != nil {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
 
+	err = UpdateAppInfosToMongo(infos)
+	if err != nil {
+		glog.Warningf("%s", err.Error())
+		return err
+	}
+
+	return nil
+}
+
+func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
 	for _, info := range infos {
-		err = mongo.UpsertAppInfoToDb(info)
+		err := mongo.UpsertAppInfoToDb(info)
 		if err != nil {
 			glog.Warningf("mongo.UpsertAppInfoToDb err:%s", err.Error())
 			continue

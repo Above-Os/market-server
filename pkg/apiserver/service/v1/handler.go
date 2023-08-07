@@ -17,8 +17,11 @@ package v1
 import (
 	"app-store-server/internal/app"
 	"app-store-server/internal/constants"
+	"app-store-server/internal/es"
 	mongo2 "app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
+	"app-store-server/pkg/models"
+	"app-store-server/pkg/utils"
 	"fmt"
 	"io/ioutil"
 	"strconv"
@@ -58,7 +61,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewListResultWithCount(appList, count))
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResultWithCount(appList, count)))
 }
 
 func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
@@ -68,11 +71,11 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewListResult(types))
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResult(types)))
 }
 
 func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
-	appName := req.PathParameter(ParamAppName)
+	appName := req.PathParameter(ParamAppChartName)
 	fileName := fmt.Sprintf("%s/%s", constants.AppGitZipLocalDir, appName)
 	fileBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
@@ -89,8 +92,41 @@ func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.Response{
-		Code:    200,
-		Message: "ok",
-	})
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, nil))
+}
+
+func (h *Handler) top(req *restful.Request, resp *restful.Response) {
+	//todo local cache results
+	var results []models.TopResultItem
+	categories := es.GetCategories()
+	glog.Infof("categories:%+v", categories)
+	for _, category := range categories {
+		var result models.TopResultItem
+		result.Category = category
+		//default every category 3 apps
+		infos, err := es.SearchByCategory(0, 3, category)
+		if err != nil {
+			continue
+		}
+		for _, info := range infos {
+			result.Apps = append(result.Apps, info)
+		}
+		results = append(results, result)
+	}
+
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResult(results)))
+}
+
+func (h *Handler) search(req *restful.Request, resp *restful.Response) {
+	appName := req.PathParameter(ParamAppName)
+	page := req.QueryParameter("page")
+	size := req.QueryParameter("size")
+	from, sizeN := utils.VerifyFromAndSize(page, size)
+	appList, count, err := es.SearchByName(from, sizeN, appName)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResultWithCount(appList, count)))
 }

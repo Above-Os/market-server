@@ -35,6 +35,12 @@ const (
 	ErrorIamOperator         ErrorType = "iam_operator"
 )
 
+const (
+	OK = 0
+
+	Success = "success"
+)
+
 // Avoid emitting errors that look like valid HTML. Quotes are okay.
 var sanitizer = strings.NewReplacer(`&`, "&amp;", `<`, "&lt;", `>`, "&gt;")
 
