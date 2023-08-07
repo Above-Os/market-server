@@ -2,6 +2,7 @@ package app
 
 import (
 	"app-store-server/internal/constants"
+	"app-store-server/internal/es"
 	"app-store-server/internal/gitapp"
 	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
@@ -94,6 +95,8 @@ func UpdateAppInfosToDB() error {
 		glog.Warningf("%s", err.Error())
 		return err
 	}
+
+	es.StartOnceSyncLoop()
 
 	return nil
 }

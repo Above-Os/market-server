@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	es8 "github.com/elastic/go-elasticsearch/v8"
@@ -23,7 +24,10 @@ type Client struct {
 	typedClient *es8.TypedClient
 }
 
-var esClient *Client
+var (
+	esClient *Client
+	once     sync.Once
+)
 
 const indexName = "app_info"
 
@@ -42,9 +46,13 @@ func Init() error {
 		createIndex()
 	}
 
-	go syncAppInfosLoop()
-
 	return nil
+}
+
+func StartOnceSyncLoop() {
+	once.Do(func() {
+		go syncAppInfosLoop()
+	})
 }
 
 func syncAppInfosLoop() {

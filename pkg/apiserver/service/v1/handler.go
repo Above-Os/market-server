@@ -18,16 +18,15 @@ import (
 	"app-store-server/internal/app"
 	"app-store-server/internal/constants"
 	"app-store-server/internal/es"
+	"app-store-server/internal/gitapp"
 	mongo2 "app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
 	"fmt"
-	"io/ioutil"
-	"strconv"
-
 	"github.com/emicklei/go-restful/v3"
 	"github.com/golang/glog"
+	"io/ioutil"
 )
 
 type Handler struct {
@@ -46,16 +45,10 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	category := req.QueryParameter("category")
 
 	glog.Infof("page:%s, size:%s, category:%s", page, size, category)
-	pageN, err := strconv.Atoi(page)
-	if pageN < 1 || err != nil {
-		pageN = constants.DefaultPage
-	}
-	sizeN, _ := strconv.Atoi(size)
-	if sizeN < 1 || err != nil {
-		sizeN = constants.DefaultPageSize
-	}
 
-	appList, count, err := mongo2.GetAppListsFromDb(int64(pageN), int64(sizeN), category)
+	from, sizeN := utils.VerifyFromAndSize(page, size)
+
+	appList, count, err := mongo2.GetAppListsFromDb(int64(from), int64(sizeN), category)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
@@ -129,4 +122,14 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResultWithCount(appList, count)))
+}
+
+func (h *Handler) handleExist(req *restful.Request, resp *restful.Response) {
+	appName := req.PathParameter(ParamAppName)
+	exist := gitapp.AppDirExist(appName)
+	res := &models.ExistRes{
+		Exist: exist,
+	}
+
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, res))
 }

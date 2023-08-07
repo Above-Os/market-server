@@ -136,3 +136,7 @@ func (as AppStatus) Show() string {
 
 	return "Install"
 }
+
+type ExistRes struct {
+	Exist bool `json:"exist"`
+}

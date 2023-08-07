@@ -2,9 +2,11 @@ package gitapp
 
 import (
 	"app-store-server/internal/mongo"
+	"app-store-server/pkg/utils"
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,8 +28,12 @@ func Init() error {
 	return cloneCode()
 }
 
-func GetLastHash() (string, error) {
-	return mongo.GetLastCommitHashFromDB()
+func GetLastHash() (hash string, err error) {
+	hash, err = mongo.GetLastCommitHashFromDB()
+	if err == nil && hash != "" {
+		return hash, nil
+	}
+	return getGitLastCommitHash(constants.AppGitLocalDir)
 }
 
 func updateLastHash(hash string) error {
@@ -54,6 +60,16 @@ func cloneCode() error {
 
 func Pull() error {
 	return gitPull(constants.AppGitLocalDir)
+}
+
+func AppDirExist(name string) bool {
+	filePath := path.Join(constants.AppGitLocalDir, name)
+	exist, err := utils.PathExists(filePath)
+	if err != nil {
+		glog.Warningf("utils.PathExists %s %s", filePath, err.Error())
+	}
+
+	return exist
 }
 
 func gitClone(url, branch, directory string) error {
@@ -127,6 +143,29 @@ func gitPull(directory string) error {
 	updateLastHash(commit.Hash.String())
 
 	return err
+}
+
+func getGitLastCommitHash(directory string) (string, error) {
+	r, err := git.PlainOpen(directory)
+	if err != nil {
+		glog.Warningf("err:%s", err.Error())
+		return "", err
+	}
+
+	ref, err := r.Head()
+	if err != nil {
+		glog.Warningf("err:%s", err.Error())
+		return "", err
+	}
+	commit, err := r.CommitObject(ref.Hash())
+	if err != nil {
+		glog.Warningf("err:%s", err.Error())
+		return "", err
+	}
+	// Print the latest commit that was just pulled
+	glog.Infof("commit:%#v", commit)
+
+	return commit.Hash.String(), nil
 }
 
 func GetCreateTimeSecond(dirPath, subDirPath string) (int64, error) {

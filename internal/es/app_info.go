@@ -1,6 +1,7 @@
 package es
 
 import (
+	"app-store-server/internal/gitapp"
 	"app-store-server/pkg/models"
 	"context"
 	"encoding/json"
@@ -91,6 +92,12 @@ func GetCategories() (categories []string) {
 
 func SearchByCategory(from, size int, category string) (infos []*models.ApplicationInfo, err error) {
 	var resp *search.Response
+	var lastCommitHash string
+	lastCommitHash, err = gitapp.GetLastHash()
+	if err != nil {
+		glog.Warningf("GetLastHash error: %s", err.Error())
+		return
+	}
 	resp, err = esClient.typedClient.Search().
 		Index(indexName).
 		Request(
@@ -98,8 +105,18 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 				Size: some.Int(size),
 				From: some.Int(from),
 				Query: &types.Query{
-					Match: map[string]types.MatchQuery{
-						"categories": {Query: category},
+					Bool: &types.BoolQuery{
+						Filter: []types.Query{
+							{
+								Term: map[string]types.TermQuery{
+									"lastCommitHash": {Value: lastCommitHash}},
+							},
+							{
+								Term: map[string]types.TermQuery{
+									"categories": {Value: category},
+								},
+							},
+						},
 					},
 				},
 				Sort: []types.SortCombinations{
@@ -132,6 +149,13 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 
 func SearchByName(from, size int, name string) (infos []*models.ApplicationInfo, count int64, err error) {
 	var resp *search.Response
+	var lastCommitHash string
+	lastCommitHash, err = gitapp.GetLastHash()
+	if err != nil {
+		glog.Warningf("GetLastHash error: %s", err.Error())
+		return
+	}
+
 	resp, err = esClient.typedClient.Search().
 		Index(indexName).
 		Request(
@@ -139,8 +163,24 @@ func SearchByName(from, size int, name string) (infos []*models.ApplicationInfo,
 				Size: some.Int(size),
 				From: some.Int(from),
 				Query: &types.Query{
-					Match: map[string]types.MatchQuery{
-						"name": {Query: name},
+					Bool: &types.BoolQuery{
+						Filter: []types.Query{
+							{
+								Term: map[string]types.TermQuery{
+									"lastCommitHash": {Value: lastCommitHash}},
+							},
+							{
+								Bool: &types.BoolQuery{
+									Filter: []types.Query{
+										{
+											Match: map[string]types.MatchQuery{
+												"name": {Query: name},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 				Sort: []types.SortCombinations{

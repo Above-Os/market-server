@@ -61,8 +61,8 @@ func AddToContainer(c *restful.Container) error {
 
 	ws.Route(ws.GET("/applications/{"+ParamAppChartName+"}").
 		To(handler.handleApp).
-		Doc("Get the application chart").
-		Param(ws.PathParameter(ParamAppChartName, "the chart name of a application")).
+		Doc("download the application chart").
+		Param(ws.PathParameter(ParamAppChartName, "the chart name of the application")).
 		Returns(http.StatusOK, "Success to get a application chart", nil))
 
 	ws.Route(ws.POST("/applications/update").
@@ -79,9 +79,17 @@ func AddToContainer(c *restful.Container) error {
 
 	ws.Route(ws.GET("/applications/search/{"+ParamAppName+"}").
 		To(handler.handleSearch).
-		Param(ws.PathParameter(ParamAppName, "the name of a application")).
-		Doc("Get top application list").
-		Returns(http.StatusOK, "success to get top application list", nil))
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Param(ws.QueryParameter("page", "page")).
+		Param(ws.QueryParameter("size", "size")).
+		Doc("search application list by name").
+		Returns(http.StatusOK, "success to search application list by name", nil))
+
+	ws.Route(ws.GET("/applications/exist/{"+ParamAppName+"}").
+		To(handler.handleExist).
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Doc("does the application exist by name").
+		Returns(http.StatusOK, "success to judge the application exist by name", nil))
 
 	c.Add(ws)
 	return nil

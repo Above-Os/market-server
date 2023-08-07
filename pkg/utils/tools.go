@@ -15,6 +15,7 @@
 package utils
 
 import (
+	"app-store-server/internal/constants"
 	"bytes"
 	"encoding/json"
 	"strconv"
@@ -41,12 +42,12 @@ func PrettyJSON(v any) string {
 func VerifyFromAndSize(page, size string) (int, int) {
 	pageN, err := strconv.Atoi(page)
 	if pageN < 1 || err != nil {
-		pageN = 1
+		pageN = constants.DefaultPage
 	}
 
 	sizeN, err := strconv.Atoi(size)
 	if sizeN < 1 || err != nil {
-		sizeN = 5
+		sizeN = constants.DefaultPageSize
 	}
 
 	from := (pageN - 1) * sizeN

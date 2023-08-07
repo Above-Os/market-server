@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAppListsFromDb(page, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
+func GetAppListsFromDb(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
 		filter["categories"] = category
@@ -31,10 +31,6 @@ func GetAppListsFromDb(page, size int64, category string) (list []*models.Applic
 		bson.E{Key: "name", Value: 1},
 	}
 
-	offset := (page - 1) * size
-	if offset < 0 {
-		offset = 0
-	}
 	findOpts := options.Find()
 	findOpts.SetSort(sort).SetSkip(offset).SetLimit(size)
 
