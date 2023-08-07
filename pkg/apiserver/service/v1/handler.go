@@ -95,7 +95,7 @@ func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(api.NewResponse(api.OK, api.Success, nil))
 }
 
-func (h *Handler) top(req *restful.Request, resp *restful.Response) {
+func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 	//todo local cache results
 	var results []models.TopResultItem
 	categories := es.GetCategories()
@@ -117,7 +117,7 @@ func (h *Handler) top(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResult(results)))
 }
 
-func (h *Handler) search(req *restful.Request, resp *restful.Response) {
+func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
 	page := req.QueryParameter("page")
 	size := req.QueryParameter("size")
