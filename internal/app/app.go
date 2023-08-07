@@ -7,11 +7,11 @@ import (
 	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
-	"app-store-server/pkg/utils"
 	"fmt"
 	"io/fs"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -136,9 +136,6 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 			continue
 		}
 
-		//zip
-		//err = zipApp(c.Name(), appInfo.Version)
-
 		//helm package
 		appInfo.ChartName, err = helmPackage(c.Name())
 		if err != nil {
@@ -175,14 +172,6 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 }
 
 func helmPackage(name string) (string, error) {
-	src := fmt.Sprintf("%s/%s", constants.AppGitLocalDir, name)
+	src := path.Join(constants.AppGitLocalDir, name)
 	return helm.PackageHelm(src, constants.AppGitZipLocalDir)
-}
-
-func zipApp(name, version string) error {
-	src := fmt.Sprintf("%s/%s", constants.AppGitLocalDir, name)
-	dst := fmt.Sprintf("%s/%s-%s.tgz", constants.AppGitZipLocalDir, name, version)
-
-	err := utils.Tar(src, dst)
-	return err
 }
