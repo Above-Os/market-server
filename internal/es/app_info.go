@@ -5,6 +5,7 @@ import (
 	"app-store-server/pkg/models"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/golang/glog"
 
@@ -147,7 +148,62 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 	return
 }
 
-func SearchByName(from, size int, name string) (infos []*models.ApplicationInfo, count int64, err error) {
+func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
+	var resp *search.Response
+	lastCommitHash, err := gitapp.GetLastHash()
+	if err != nil {
+		glog.Warningf("GetLastHash error: %s", err.Error())
+		return nil, err
+	}
+
+	resp, err = esClient.typedClient.Search().
+		Index(indexName).
+		Request(
+			&search.Request{
+				Query: &types.Query{
+					Bool: &types.BoolQuery{
+						Filter: []types.Query{
+							{
+								Term: map[string]types.TermQuery{
+									"lastCommitHash": {Value: lastCommitHash}},
+							},
+							{
+								Term: map[string]types.TermQuery{
+									"name": {Value: name},
+								},
+							},
+						},
+					},
+				},
+				Sort: []types.SortCombinations{
+					types.SortOptions{SortOptions: map[string]types.FieldSort{
+						"updateTime": {Order: &sortorder.Desc},
+						"name":       {Order: &sortorder.Asc},
+					}},
+				},
+			}).
+		Do(context.TODO())
+
+	if err != nil {
+		glog.Warningf("err:%s", err.Error())
+		return nil, err
+	}
+
+	for _, hit := range resp.Hits.Hits {
+		info := &models.ApplicationInfo{}
+		err = json.Unmarshal(hit.Source_, info)
+		if err != nil {
+			return nil, err
+		}
+		glog.Infof("name:%s, update:%d\n", info.Name, info.UpdateTime)
+
+		return info, nil
+	}
+
+	return nil, fmt.Errorf("get info failed")
+}
+
+func SearchByNameFuzzy(from, size int, name string) (infos []*models.ApplicationInfo, count int64, err error) {
 	var resp *search.Response
 	var lastCommitHash string
 	lastCommitHash, err = gitapp.GetLastHash()
@@ -196,6 +252,8 @@ func SearchByName(from, size int, name string) (infos []*models.ApplicationInfo,
 		glog.Warningf("err:%s", err.Error())
 		return
 	}
+
+	count = resp.Hits.Total.Value
 
 	for _, hit := range resp.Hits.Hits {
 		info := &models.ApplicationInfo{}

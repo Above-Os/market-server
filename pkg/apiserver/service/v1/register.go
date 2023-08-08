@@ -23,10 +23,9 @@ import (
 )
 
 const (
-	APIRootPath       = "/app-store-server"
-	Version           = "v1"
-	ParamAppName      = "name"
-	ParamAppChartName = "name"
+	APIRootPath  = "/app-store-server"
+	Version      = "v1"
+	ParamAppName = "name"
 )
 
 func newWebService() *restful.WebService {
@@ -59,11 +58,17 @@ func AddToContainer(c *restful.Container) error {
 
 	glog.Infof("registered sub module: %s", ws.RootPath()+"/application_types")
 
-	ws.Route(ws.GET("/applications/{"+ParamAppChartName+"}").
+	ws.Route(ws.GET("/applications/{"+ParamAppName+"}").
 		To(handler.handleApp).
 		Doc("download the application chart").
-		Param(ws.PathParameter(ParamAppChartName, "the chart name of the application")).
-		Returns(http.StatusOK, "Success to get a application chart", nil))
+		Param(ws.PathParameter(ParamAppName, "the (chart)name of the application")).
+		Returns(http.StatusOK, "Success to get the application chart", nil))
+
+	ws.Route(ws.GET("/applications/info/{"+ParamAppName+"}").
+		To(handler.handleAppInfo).
+		Doc("get the application info").
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Returns(http.StatusOK, "Success to get the application info", nil))
 
 	ws.Route(ws.POST("/applications/update").
 		To(handler.handleUpdates).

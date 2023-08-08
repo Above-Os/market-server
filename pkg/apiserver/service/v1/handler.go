@@ -16,7 +16,6 @@ package v1
 
 import (
 	"app-store-server/internal/app"
-	"app-store-server/internal/constants"
 	"app-store-server/internal/es"
 	"app-store-server/internal/gitapp"
 	mongo2 "app-store-server/internal/mongo"
@@ -48,7 +47,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 
 	from, sizeN := utils.VerifyFromAndSize(page, size)
 
-	appList, count, err := mongo2.GetAppListsFromDb(int64(from), int64(sizeN), category)
+	appList, count, err := mongo2.GetAppLists(int64(from), int64(sizeN), category)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
@@ -68,13 +67,31 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 }
 
 func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
-	appName := req.PathParameter(ParamAppChartName)
-	fileName := fmt.Sprintf("%s/%s", constants.AppGitZipLocalDir, appName)
+	appName := req.PathParameter(ParamAppName)
+	fileName := getChartPath(appName)
+	if fileName == "" {
+		api.HandleError(resp, req, fmt.Errorf("failed to get chart"))
+		return
+	}
+
 	fileBytes, err := ioutil.ReadFile(fileName)
 	if err != nil {
 		api.HandleError(resp, req, err)
+		return
 	}
 	resp.ResponseWriter.Write(fileBytes)
+}
+
+func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
+	appName := req.PathParameter(ParamAppName)
+
+	info, err := getInfoByName(appName)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.WriteEntity(api.NewResponse(api.OK, api.Success, info))
 }
 
 func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
@@ -115,7 +132,7 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	page := req.QueryParameter("page")
 	size := req.QueryParameter("size")
 	from, sizeN := utils.VerifyFromAndSize(page, size)
-	appList, count, err := es.SearchByName(from, sizeN, appName)
+	appList, count, err := es.SearchByNameFuzzy(from, sizeN, appName)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return

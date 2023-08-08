@@ -11,7 +11,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAppListsFromDb(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
+func GetAppLists(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
 		filter["categories"] = category
@@ -62,6 +62,18 @@ func GetAppListsFromDb(offset, size int64, category string) (list []*models.Appl
 	}
 
 	return
+}
+
+func GetAppInfoByName(name string) (*models.ApplicationInfo, error) {
+	filter := bson.M{"name": name}
+	info := &models.ApplicationInfo{}
+	err := mgoClient.queryOne(AppStoreDb, AppInfosCollection, filter).Decode(&info)
+	if err != nil {
+		glog.Warningf("err:%s", err.Error())
+		return nil, err
+	}
+
+	return info, nil
 }
 
 func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {

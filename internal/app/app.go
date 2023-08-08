@@ -7,8 +7,6 @@ import (
 	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
-	"fmt"
-	"io/fs"
 	"io/ioutil"
 	"os"
 	"path"
@@ -49,8 +47,13 @@ func GitPullAndUpdate() error {
 		return nil
 	}
 	if err != nil {
-		glog.Warningf("%s", err.Error())
+		glog.Warningf("git pull err:%s", err.Error())
 		return err
+	}
+
+	err = gitapp.GetLastCommitHashAndUpdate()
+	if err != nil {
+		glog.Warningf("GetLastCommitHashAndUpdate err:%s", err.Error())
 	}
 
 	return UpdateAppInfosToDB()
@@ -59,8 +62,8 @@ func GitPullAndUpdate() error {
 	//or del by lastCommitHash old
 }
 
-func readAppInfo(dir fs.FileInfo) (*models.ApplicationInfo, error) {
-	cfgFileName := fmt.Sprintf("%s/%s/%s", constants.AppGitLocalDir, dir.Name(), constants.AppCfgFileName)
+func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
+	cfgFileName := path.Join(constants.AppGitLocalDir, dirName, constants.AppCfgFileName)
 
 	f, err := os.Open(cfgFileName)
 	if err != nil {
@@ -96,7 +99,7 @@ func UpdateAppInfosToDB() error {
 		return err
 	}
 
-	es.StartOnceSyncLoop()
+	go es.SyncInfoFromMongo()
 
 	return nil
 }
@@ -130,7 +133,7 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 		}
 
 		// read app info from chart
-		appInfo, err := readAppInfo(c)
+		appInfo, err := ReadAppInfo(c.Name())
 		if err != nil {
 			glog.Warningf("app chart reading error: %s", err.Error())
 			continue

@@ -73,7 +73,7 @@ func AppDirExist(name string) bool {
 }
 
 func gitClone(url, branch, directory string) error {
-	glog.Infof("git clone %s %s %s--recursive", url, branch, directory)
+	glog.Infof("git clone %s %s %s --recursive", url, branch, directory)
 
 	//clone
 	r, err := git.PlainClone(directory, false, &git.CloneOptions{
@@ -106,43 +106,95 @@ func gitClone(url, branch, directory string) error {
 }
 
 func gitPull(directory string) error {
-	r, err := git.PlainOpen(directory)
+	curDir, err := os.Getwd()
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		return err
+	}
+	defer os.Chdir(curDir)
+
+	dir, err := filepath.Abs(directory)
+	if err != nil {
 		return err
 	}
 
-	// Get the working directory for the repository
-	w, err := r.Worktree()
+	err = os.Chdir(dir)
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
 		return err
 	}
 
-	// Pull the latest changes from the origin remote and merge into the current branch
-	glog.Infof("git pull origin")
-	err = w.Pull(&git.PullOptions{RemoteName: "origin"})
+	cmd := exec.Command("git", "pull")
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		//glog.Warningf("err:%s", err.Error())
+		glog.Infof("combined out:%s\n", string(out))
 		return err
 	}
 
-	ref, err := r.Head()
+	if strings.Contains(string(out), "Already up to date") {
+		return git.NoErrAlreadyUpToDate
+	}
+
+	glog.Infof("out:%s\n", string(out))
+	return nil
+}
+
+//func gitPull(directory string) error {
+//	r, err := git.PlainOpen(directory)
+//	if err != nil {
+//		glog.Warningf("err:%s", err.Error())
+//		return err
+//	}
+//
+//	// Get the working directory for the repository
+//	w, err := r.Worktree()
+//	if err != nil {
+//		glog.Warningf("err:%s", err.Error())
+//		return err
+//	}
+//
+//	w.Status()
+//	// Pull the latest changes from the origin remote and merge into the current branch
+//	glog.Infof("git pull origin")
+//	err = w.Pull(&git.PullOptions{
+//		Force: true,
+//	})
+//	if err != nil {
+//		glog.Warningf("err:%s", err.Error())
+//		return err
+//	}
+//
+//	ref, err := r.Head()
+//	if err != nil {
+//		glog.Warningf("err:%s", err.Error())
+//		return err
+//	}
+//	commit, err := r.CommitObject(ref.Hash())
+//	if err != nil {
+//		glog.Warningf("err:%s", err.Error())
+//		return err
+//	}
+//	// Print the latest commit that was just pulled
+//	glog.Infof("commit:%#v", commit)
+//
+//	updateLastHash(commit.Hash.String())
+//
+//	return err
+//}
+
+func GetLastCommitHashAndUpdate() error {
+	hash, err := getGitLastCommitHash(constants.AppGitLocalDir)
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		glog.Warningf("getGitLastCommitHash err:%s", err.Error())
 		return err
 	}
-	commit, err := r.CommitObject(ref.Hash())
+
+	err = updateLastHash(hash)
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		glog.Warningf("updateLastHash err:%s", err.Error())
 		return err
 	}
-	// Print the latest commit that was just pulled
-	glog.Infof("commit:%#v", commit)
 
-	updateLastHash(commit.Hash.String())
-
-	return err
+	return nil
 }
 
 func getGitLastCommitHash(directory string) (string, error) {

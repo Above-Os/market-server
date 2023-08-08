@@ -104,7 +104,6 @@ func (mc *Client) queryOne(db, collection string, filter interface{}, opts ...*o
 	defer cancel()
 
 	return coll.FindOne(ctx, filter, opts...)
-
 }
 
 func (mc *Client) queryMany(db, collection string, filter interface{}, opts ...*options.FindOptions) (cur *mongo.Cursor, err error) {

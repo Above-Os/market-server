@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"sync"
 	"time"
 
 	es8 "github.com/elastic/go-elasticsearch/v8"
@@ -26,15 +25,15 @@ type Client struct {
 
 var (
 	esClient *Client
-	once     sync.Once
+	//once     sync.Once
 )
 
 const indexName = "app_info"
 
 func Init() error {
-	addr := os.Getenv(constants.EsAddr)         //https://localhost:9200
-	username := os.Getenv(constants.EsName)     //elastic
-	password := os.Getenv(constants.EsPassword) //WVF+CRh+oHV+J8ZTV4lC
+	addr := os.Getenv(constants.EsAddr)
+	username := os.Getenv(constants.EsName)
+	password := os.Getenv(constants.EsPassword)
 
 	err := initWithParams(addr, username, password)
 	if err != nil {
@@ -49,27 +48,21 @@ func Init() error {
 	return nil
 }
 
-func StartOnceSyncLoop() {
-	once.Do(func() {
-		go syncAppInfosLoop()
-	})
-}
-
-func syncAppInfosLoop() {
-	for {
-		err := syncAppInfosFromMongoToEs()
-		if err != nil {
-			glog.Warningf("syncAppInfosFromMongoToEs err:%s", err.Error())
-		}
-		time.Sleep(time.Duration(1) * time.Minute)
+func SyncInfoFromMongo() error {
+	//todo add retry
+	err := syncAppInfosFromMongoToEs()
+	if err != nil {
+		glog.Warningf("syncAppInfosFromMongoToEs err:%s", err.Error())
 	}
+	return err
 }
 
 func syncAppInfosFromMongoToEs() error {
-	for page := int64(1); ; page++ {
-		infos, _, err := mongo.GetAppListsFromDb(page, 1000, "")
+	pageSize := int64(1000)
+	for offset := int64(0); ; {
+		infos, _, err := mongo.GetAppLists(offset, pageSize, "")
 		if err != nil {
-			glog.Warningf("GetAppListsFromDb err:%s", err.Error())
+			glog.Warningf("GetAppLists err:%s", err.Error())
 			break
 		}
 		glog.Infof("success get %d docs from mongodb", len(infos))
@@ -85,6 +78,7 @@ func syncAppInfosFromMongoToEs() error {
 		if len(infos) < 1000 {
 			break
 		}
+		offset += pageSize
 	}
 	return nil
 }
@@ -116,7 +110,6 @@ func initWithParams(addr, username, password string) error {
 	}
 
 	esClient = &Client{
-		//apiClient:   client,
 		typedClient: typedClient,
 	}
 
