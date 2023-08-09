@@ -58,11 +58,27 @@ func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
 //}
 
 func GetCategories() (categories []string) {
+	lastCommitHash, err := gitapp.GetLastHash()
+	if err != nil {
+		glog.Warningf("GetLastHash error: %s", err.Error())
+		return
+	}
+
 	totalCategoriesAgg, err := esClient.typedClient.Search().
 		Index(indexName).
 		Request(
 			&search.Request{
 				Size: some.Int(0),
+				Query: &types.Query{
+					Bool: &types.BoolQuery{
+						Filter: []types.Query{
+							{
+								Term: map[string]types.TermQuery{
+									"lastCommitHash": {Value: lastCommitHash}},
+							},
+						},
+					},
+				},
 				Aggregations: map[string]types.Aggregations{
 					"categories": {
 						Terms: &types.TermsAggregation{
