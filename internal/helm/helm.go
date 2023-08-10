@@ -1,7 +1,6 @@
 package helm
 
 import (
-	"helm.sh/helm/v3/pkg/repo"
 	"path"
 	"path/filepath"
 
@@ -25,22 +24,4 @@ func PackageHelm(src, dstDir string) (string, error) {
 	glog.Infof("src:%s, dstDir:%s Successfully packaged chart and saved it to: %s\n", src, dstDir, p)
 
 	return path.Base(p), nil
-}
-
-func IndexHelm(name, url, dir string) error {
-	path, err := filepath.Abs(dir)
-	if err != nil {
-		return err
-	}
-
-	var i *repo.IndexFile
-	i, err = repo.IndexDirectory(path, url)
-	if err != nil {
-		return err
-	}
-	//merge to not implement
-
-	i.SortEntries()
-	out := filepath.Join(path, "index.yaml")
-	return i.WriteFile(out, 0644)
 }

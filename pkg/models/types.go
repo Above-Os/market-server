@@ -20,16 +20,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type AppStatus string
-
-const (
-	APP_INSTALLED    AppStatus = "installed"
-	APP_RUNNING      AppStatus = "running"
-	APP_INSTALLING   AppStatus = "installing"
-	APP_UNINSTALLED  AppStatus = "uninstalled"
-	APP_UNINSTALLING AppStatus = "uninstalling"
-)
-
 type TopResultItem struct {
 	Category string             `json:"category"`
 	Apps     []*ApplicationInfo `json:"apps"`
@@ -118,23 +108,6 @@ type SysDataCfg struct {
 	DataType string   `yaml:"dataType" json:"dataType"`
 	Version  string   `yaml:"version" json:"version"`
 	Ops      []string `yaml:"ops" json:"ops"`
-}
-
-func (as AppStatus) Show() string {
-	switch as {
-	case APP_INSTALLED:
-		return "Uninstall"
-	case APP_RUNNING:
-		return "Close"
-	case APP_INSTALLING:
-		return "Cancel"
-	case APP_UNINSTALLED:
-		return "Install"
-	case APP_UNINSTALLING:
-		return "Cancel"
-	}
-
-	return "Install"
 }
 
 type ExistRes struct {

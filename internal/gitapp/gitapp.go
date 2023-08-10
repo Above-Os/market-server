@@ -24,20 +24,7 @@ const (
 )
 
 func Init() error {
-	//todo add retry
-	return cloneCode()
-}
-
-func GetLastHash() (hash string, err error) {
-	hash, err = mongo.GetLastCommitHashFromDB()
-	if err == nil && hash != "" {
-		return hash, nil
-	}
-	return getGitLastCommitHash(constants.AppGitLocalDir)
-}
-
-func updateLastHash(hash string) error {
-	return mongo.SetLastCommitHashToDB(hash)
+	return utils.RetryFunction(cloneCode, 3, time.Second)
 }
 
 func cloneCode() error {
@@ -56,20 +43,6 @@ func cloneCode() error {
 	}
 
 	return gitClone(AppGitHttpsAddr, AppGitBranch, constants.AppGitLocalDir)
-}
-
-func Pull() error {
-	return gitPull(constants.AppGitLocalDir)
-}
-
-func AppDirExist(name string) bool {
-	filePath := path.Join(constants.AppGitLocalDir, name)
-	exist, err := utils.PathExists(filePath)
-	if err != nil {
-		glog.Warningf("utils.PathExists %s %s", filePath, err.Error())
-	}
-
-	return exist
 }
 
 func gitClone(url, branch, directory string) error {
@@ -105,6 +78,10 @@ func gitClone(url, branch, directory string) error {
 	return nil
 }
 
+func Pull() error {
+	return gitPull(constants.AppGitLocalDir)
+}
+
 func gitPull(directory string) error {
 	curDir, err := os.Getwd()
 	if err != nil {
@@ -133,53 +110,33 @@ func gitPull(directory string) error {
 	if strings.Contains(string(out), "Already up to date") {
 		return git.NoErrAlreadyUpToDate
 	}
-
 	glog.Infof("out:%s\n", string(out))
+
 	return nil
 }
 
-//func gitPull(directory string) error {
-//	r, err := git.PlainOpen(directory)
-//	if err != nil {
-//		glog.Warningf("err:%s", err.Error())
-//		return err
-//	}
-//
-//	// Get the working directory for the repository
-//	w, err := r.Worktree()
-//	if err != nil {
-//		glog.Warningf("err:%s", err.Error())
-//		return err
-//	}
-//
-//	w.Status()
-//	// Pull the latest changes from the origin remote and merge into the current branch
-//	glog.Infof("git pull origin")
-//	err = w.Pull(&git.PullOptions{
-//		Force: true,
-//	})
-//	if err != nil {
-//		glog.Warningf("err:%s", err.Error())
-//		return err
-//	}
-//
-//	ref, err := r.Head()
-//	if err != nil {
-//		glog.Warningf("err:%s", err.Error())
-//		return err
-//	}
-//	commit, err := r.CommitObject(ref.Hash())
-//	if err != nil {
-//		glog.Warningf("err:%s", err.Error())
-//		return err
-//	}
-//	// Print the latest commit that was just pulled
-//	glog.Infof("commit:%#v", commit)
-//
-//	updateLastHash(commit.Hash.String())
-//
-//	return err
-//}
+func AppDirExist(name string) bool {
+	filePath := path.Join(constants.AppGitLocalDir, name)
+	exist, err := utils.PathExists(filePath)
+	if err != nil {
+		glog.Warningf("utils.PathExists %s %s", filePath, err.Error())
+	}
+
+	return exist
+}
+
+func updateLastHash(hash string) error {
+	return mongo.SetLastCommitHashToDB(hash)
+}
+
+func GetLastHash() (hash string, err error) {
+	hash, err = mongo.GetLastCommitHashFromDB()
+	if err == nil && hash != "" {
+		return hash, nil
+	}
+	
+	return getGitLastCommitHash(constants.AppGitLocalDir)
+}
 
 func GetLastCommitHashAndUpdate() error {
 	hash, err := getGitLastCommitHash(constants.AppGitLocalDir)

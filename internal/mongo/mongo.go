@@ -3,10 +3,10 @@ package mongo
 import (
 	"app-store-server/internal/constants"
 	"context"
+	"errors"
 	"os"
 	"time"
 
-	"github.com/golang/glog"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -25,29 +25,31 @@ const (
 
 var mgoClient *Client
 
-func Init() {
-	mgoClient = NewMongoClient()
+func Init() error {
+	var err error
+	mgoClient, err = NewMongoClient()
+	return err
 }
 
-func NewMongoClient() *Client {
+func NewMongoClient() (*Client, error) {
 	uri := os.Getenv(constants.MongoDBUri)
 	if uri == "" {
-		glog.Fatal("You must set your 'MONGODB_URI' environmental variable. See\n\t https://www.mongodb.com/docs/drivers/go/current/usage-examples/#environment-variable")
+		return nil, errors.New("you must set your 'MONGODB_URI' environmental variable")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))
 	if err != nil {
-		glog.Exitln(err)
+		return nil, err
 	}
 
 	err = client.Ping(ctx, readpref.Primary())
 	if err != nil {
-		glog.Exitln(err)
+		return nil, err
 	}
 
-	return &Client{client}
+	return &Client{client}, nil
 }
 
 func (mc *Client) insertOne(db, collection string, document interface{}, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {

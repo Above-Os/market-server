@@ -3,6 +3,7 @@ package es
 import (
 	"app-store-server/internal/constants"
 	"app-store-server/internal/mongo"
+	"app-store-server/pkg/utils"
 	"context"
 	"crypto/tls"
 	"encoding/json"
@@ -25,7 +26,6 @@ type Client struct {
 
 var (
 	esClient *Client
-	//once     sync.Once
 )
 
 const indexName = "app_info"
@@ -49,12 +49,14 @@ func Init() error {
 }
 
 func SyncInfoFromMongo() error {
-	//todo add retry
-	err := syncAppInfosFromMongoToEs()
+	err := utils.RetryFunction(syncAppInfosFromMongoToEs, 3, time.Second)
 	if err != nil {
 		glog.Warningf("syncAppInfosFromMongoToEs err:%s", err.Error())
+		return err
 	}
-	return err
+
+	glog.Infof("syncAppInfosFromMongoToEs success")
+	return nil
 }
 
 func syncAppInfosFromMongoToEs() error {
@@ -113,7 +115,7 @@ func initWithParams(addr, username, password string) error {
 		typedClient: typedClient,
 	}
 
-	suc, err := esClient.typedClient.Ping().IsSuccess(context.TODO())
+	suc, _ := esClient.typedClient.Ping().IsSuccess(context.TODO())
 	if !suc {
 		return fmt.Errorf("ping failed, err:%s", err.Error())
 	}
@@ -163,7 +165,6 @@ func (c *Client) AddDocWithID(indexName, id string, doc any) error {
 
 func (c *Client) GetDocById(indexName, id string) (string, error) {
 	response, err := c.typedClient.Get(indexName, id).Do(context.TODO())
-
 	if err != nil {
 		glog.Warningf("es8.Get err:%s", err.Error())
 		return "", err
@@ -179,7 +180,6 @@ func (c *Client) DelOneDoc(indexName, id string) error {
 		glog.Warningf("es8.Delete err:%s", err.Error())
 		return err
 	}
-
 	glog.Infof("response:%+v", response)
 
 	return nil
@@ -189,7 +189,6 @@ func (c *Client) UpdateOneDoc(indexName, id, doc string) error {
 	response, err := c.typedClient.Update(indexName, id).
 		Request(&update.Request{Doc: json.RawMessage(doc)}).
 		Do(context.TODO())
-
 	if err != nil {
 		glog.Warningf("es8.Update err:%s", err.Error())
 		return err

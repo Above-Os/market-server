@@ -64,26 +64,31 @@ func (s *APIServer) PrepareRun() error {
 
 	s.Server.Handler = s.container
 
-	mongo.Init()
-	err := es.Init()
+	initMiddlewares()
+
+	return nil
+}
+
+func initMiddlewares() {
+	err := mongo.Init()
 	if err != nil {
 		glog.Fatalln(err)
-		return err
+	}
+
+	err = es.Init()
+	if err != nil {
+		glog.Fatalln(err)
 	}
 
 	err = gitapp.Init()
 	if err != nil {
 		glog.Fatalln(err)
-		return err
 	}
 
 	err = app.Init()
 	if err != nil {
 		glog.Fatalln(err)
-		return err
 	}
-
-	return nil
 }
 
 func (s *APIServer) Run() error {

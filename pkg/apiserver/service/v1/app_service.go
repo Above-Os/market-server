@@ -15,16 +15,8 @@
 package v1
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
-	"io/ioutil"
 	"net/http"
-	"net/url"
-	"os"
 	"time"
-
-	"github.com/golang/glog"
 )
 
 const (
@@ -35,75 +27,10 @@ type Client struct {
 	httpClient *http.Client
 }
 
-const (
-	AppServiceGetURLTempl  = "http://%s:%s/app-service/v1/applications/%s/%s"
-	AppServiceListURLTempl = "http://%s:%s/app-service/v1/applications"
-	AppSeviceHostEnv       = "APP_SERVICE_SERVICE_HOST"
-	AppSevicePortEnv       = "APP_SERVICE_SERVICE_PORT"
-)
-
 func newAppServiceClient() *Client {
 	c := &Client{
 		httpClient: &http.Client{Timeout: time.Second * 2},
 	}
 
 	return c
-}
-
-func (c *Client) fetchAppListFromAppService(token string) ([]map[string]interface{}, error) {
-	appServiceHost := os.Getenv(AppSeviceHostEnv)
-	appServicePort := os.Getenv(AppSevicePortEnv)
-	urlStr := fmt.Sprintf(AppServiceListURLTempl, appServiceHost, appServicePort)
-
-	return c.doHttpGetList(urlStr, token)
-}
-
-func (c *Client) doHttpGetResponse(urlStr, token string) (*http.Response, error) {
-	url, err := url.Parse(urlStr)
-	if err != nil {
-		return nil, err
-	}
-
-	req := &http.Request{
-		Method: http.MethodGet,
-		Header: http.Header{
-			AuthorizationTokenKey: []string{token},
-		},
-		URL: url,
-	}
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		glog.Error("do request error: ", err)
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		glog.Error("app info response not ok, ", resp.Status)
-		return nil, errors.New("app info not found")
-	}
-
-	return resp, nil
-}
-
-func (c *Client) doHttpGetList(urlStr, token string) ([]map[string]interface{}, error) {
-	resp, err := c.doHttpGetResponse(urlStr, token)
-	if err != nil {
-		return nil, err
-	}
-
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	var apps []map[string]interface{} // simple get. TODO: application struct
-	err = json.Unmarshal(data, &apps)
-	if err != nil {
-		glog.Error("parse response error: ", err, string(data))
-		return nil, err
-	}
-
-	return apps, nil
-
 }

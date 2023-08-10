@@ -52,7 +52,6 @@ func newAPPServerCommand() *cobra.Command {
 }
 
 func Run() error {
-
 	// new server
 	s, err := apiserver.New()
 	if err != nil {

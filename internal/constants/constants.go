@@ -16,7 +16,6 @@ package constants
 
 const (
 	APIServerListenAddress = ":8081"
-	//HelpServerListenAddress = ":8082"
 
 	AppGitLocalDir    = "./app_git"
 	AppGitZipLocalDir = "./charts"

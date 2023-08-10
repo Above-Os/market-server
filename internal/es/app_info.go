@@ -6,24 +6,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
-	"github.com/golang/glog"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/some"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
+	"github.com/golang/glog"
 )
 
 func existIndex() bool {
 	exists, err := esClient.typedClient.Indices.Exists(indexName).IsSuccess(context.Background())
-	if !exists && err == nil {
-		return false
+	if exists {
+		return true
 	}
 	if err != nil {
 		glog.Warningf("index %s Exists err:%s", indexName, err.Error())
 	}
 
-	return true
+	return false
 }
 
 func createIndex() error {
@@ -88,7 +88,6 @@ func GetCategories() (categories []string) {
 				},
 			},
 		).Do(context.Background())
-
 	if err != nil {
 		glog.Warningf("GetCategories error:%s", err.Error())
 		return
@@ -115,6 +114,7 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 		glog.Warningf("GetLastHash error: %s", err.Error())
 		return
 	}
+
 	resp, err = esClient.typedClient.Search().
 		Index(indexName).
 		Request(
@@ -144,7 +144,6 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 				},
 			}).
 		Do(context.TODO())
-
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
 		return
@@ -199,7 +198,6 @@ func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
 				},
 			}).
 		Do(context.TODO())
-
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
 		return nil, err
@@ -263,7 +261,6 @@ func SearchByNameFuzzy(from, size int, name string) (infos []*models.Application
 				},
 			}).
 		Do(context.TODO())
-
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
 		return

@@ -18,24 +18,22 @@ import (
 	"app-store-server/internal/app"
 	"app-store-server/internal/es"
 	"app-store-server/internal/gitapp"
-	mongo2 "app-store-server/internal/mongo"
+	"app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/emicklei/go-restful/v3"
 	"github.com/golang/glog"
-	"io/ioutil"
 )
 
 type Handler struct {
-	appServiceClient *Client
 }
 
 func newHandler() *Handler {
-	return &Handler{
-		appServiceClient: newAppServiceClient(),
-	}
+	return &Handler{}
 }
 
 func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
@@ -47,7 +45,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 
 	from, sizeN := utils.VerifyFromAndSize(page, size)
 
-	appList, count, err := mongo2.GetAppLists(int64(from), int64(sizeN), category)
+	appList, count, err := mongo.GetAppLists(int64(from), int64(sizeN), category)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
@@ -57,7 +55,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 }
 
 func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
-	types, err := mongo2.GetAppTypesFromDb()
+	types, err := mongo.GetAppTypesFromDb()
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return

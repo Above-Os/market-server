@@ -30,6 +30,25 @@ func Init() error {
 	return nil
 }
 
+func UpdateAppInfosToDB() error {
+	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
+	if err != nil {
+		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
+		return err
+	}
+
+	err = UpdateAppInfosToMongo(infos)
+	if err != nil {
+		glog.Warningf("%s", err.Error())
+		return err
+	}
+
+	//sync info from mongodb to es
+	go es.SyncInfoFromMongo()
+
+	return nil
+}
+
 func pullAndUpdateLoop() {
 	for {
 		time.Sleep(time.Duration(1) * time.Minute)
@@ -54,12 +73,25 @@ func GitPullAndUpdate() error {
 	err = gitapp.GetLastCommitHashAndUpdate()
 	if err != nil {
 		glog.Warningf("GetLastCommitHashAndUpdate err:%s", err.Error())
+		return err
 	}
 
 	return UpdateAppInfosToDB()
 
 	//todo check app infos in mongo if not exist in local, then del it
 	//or del by lastCommitHash old
+}
+
+func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
+	for _, info := range infos {
+		err := mongo.UpsertAppInfoToDb(info)
+		if err != nil {
+			glog.Warningf("mongo.UpsertAppInfoToDb info:%#v, err:%s", info, err.Error())
+			continue
+		}
+	}
+
+	return nil
 }
 
 func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
@@ -86,36 +118,6 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	return appCfg.ToAppInfo(), nil
 }
 
-func UpdateAppInfosToDB() error {
-	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
-	if err != nil {
-		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
-		return err
-	}
-
-	err = UpdateAppInfosToMongo(infos)
-	if err != nil {
-		glog.Warningf("%s", err.Error())
-		return err
-	}
-
-	go es.SyncInfoFromMongo()
-
-	return nil
-}
-
-func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
-	for _, info := range infos {
-		err := mongo.UpsertAppInfoToDb(info)
-		if err != nil {
-			glog.Warningf("mongo.UpsertAppInfoToDb err:%s", err.Error())
-			continue
-		}
-	}
-
-	return nil
-}
-
 func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err error) {
 	charts, err := ioutil.ReadDir(dir)
 	if err != nil {
@@ -124,54 +126,50 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 	}
 
 	for _, c := range charts {
-		if !c.IsDir() {
-			continue
-		}
-
-		if strings.HasPrefix(c.Name(), ".") {
+		if !c.IsDir() || strings.HasPrefix(c.Name(), ".") {
 			continue
 		}
 
 		// read app info from chart
 		appInfo, err := ReadAppInfo(c.Name())
 		if err != nil {
-			glog.Warningf("app chart reading error: %s", err.Error())
+			glog.Warningf("app chart %s reading error: %s", c.Name(), err.Error())
 			continue
 		}
 
 		//helm package
 		appInfo.ChartName, err = helmPackage(c.Name())
 		if err != nil {
-			glog.Warningf("app chart reading error: %s", err.Error())
+			glog.Warningf("helm package %s error: %s", c.Name(), err.Error())
 			continue
 		}
 
-		glog.Infof("name:%s, version:%s, chartName:%s\n", c.Name(), appInfo.Version, appInfo.ChartName)
+		glog.Infof("name:%s, version:%s, chartName:%s", c.Name(), appInfo.Version, appInfo.ChartName)
 
-		//update info to db
-		appInfo.LastCommitHash, err = gitapp.GetLastHash()
-		if err != nil {
-			glog.Warningf("GetLastHash error: %s", err.Error())
-		}
-		appInfo.CreateTime, err = gitapp.GetCreateTimeSecond(constants.AppGitLocalDir, c.Name())
-		if err != nil {
-			glog.Warningf("GetCreateTimeSecond error: %s", err.Error())
-		}
-		appInfo.UpdateTime, err = gitapp.GetLastUpdateTimeSecond(constants.AppGitLocalDir, c.Name())
-		if err != nil {
-			glog.Warningf("GetLastUpdateTimeSecond error: %s", err.Error())
-		}
+		//get git info
+		getGitInfosByName(appInfo, c.Name())
 		infos = append(infos, appInfo)
 	}
 
-	//index charts directory
-	err = helm.IndexHelm(constants.RepoName, constants.RepoUrl, constants.AppGitZipLocalDir)
+	return infos, nil
+}
+
+func getGitInfosByName(appInfo *models.ApplicationInfo, name string) {
+	var err error
+	appInfo.LastCommitHash, err = gitapp.GetLastHash()
 	if err != nil {
-		glog.Warningf("IndexHelm error: %s", err.Error())
-		return infos, err
+		glog.Warningf("GetLastHash error: %s", err.Error())
 	}
 
-	return infos, nil
+	appInfo.CreateTime, err = gitapp.GetCreateTimeSecond(constants.AppGitLocalDir, name)
+	if err != nil {
+		glog.Warningf("GetCreateTimeSecond error: %s", err.Error())
+	}
+
+	appInfo.UpdateTime, err = gitapp.GetLastUpdateTimeSecond(constants.AppGitLocalDir, name)
+	if err != nil {
+		glog.Warningf("GetLastUpdateTimeSecond error: %s", err.Error())
+	}
 }
 
 func helmPackage(name string) (string, error) {

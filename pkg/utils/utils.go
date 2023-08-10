@@ -1,8 +1,10 @@
 package utils
 
 import (
+	"github.com/golang/glog"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func PathExists(path string) (bool, error) {
@@ -31,5 +33,19 @@ func CheckDir(path string) error {
 	}
 
 	err = os.MkdirAll(dir, 0755)
+	return err
+}
+
+func RetryFunction(f func() error, maxAttempts int, delay time.Duration) error {
+	var err error
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		err = f()
+		if err == nil {
+			return nil
+		}
+		glog.Infof("retry failed,err:%s, retry times:%d\n", err.Error(), attempt+1)
+		time.Sleep(delay)
+	}
+
 	return err
 }

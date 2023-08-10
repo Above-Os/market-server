@@ -23,8 +23,8 @@ func SetLastCommitHashToDB(hash string) error {
 	if err == mongo.ErrNoDocuments {
 		return nil
 	}
-	return err
 
+	return err
 }
 
 func GetLastCommitHashFromDB() (string, error) {
