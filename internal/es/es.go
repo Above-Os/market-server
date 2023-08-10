@@ -117,7 +117,7 @@ func initWithParams(addr, username, password string) error {
 
 	suc, _ := esClient.typedClient.Ping().IsSuccess(context.TODO())
 	if !suc {
-		return fmt.Errorf("ping failed, err:%s", err.Error())
+		return fmt.Errorf("ping failed, err:%v", err)
 	}
 
 	return nil
