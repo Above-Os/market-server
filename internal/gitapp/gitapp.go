@@ -134,7 +134,7 @@ func GetLastHash() (hash string, err error) {
 	if err == nil && hash != "" {
 		return hash, nil
 	}
-	
+
 	return getGitLastCommitHash(constants.AppGitLocalDir)
 }
 
