@@ -35,9 +35,13 @@ RUN cd bytetrade.io/web3os/app-store-server && \
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/static:nonroot
-WORKDIR /
-COPY --from=builder /workspace/bytetrade.io/web3os/app-store-server/app-store .
-USER 65532:65532
+FROM alpine:latest
 
-ENTRYPOINT ["/app-store-server"]
+RUN apk update && \
+    apk upgrade &&  \
+    apk add --no-cache bash git openssh
+
+WORKDIR /workspace
+COPY --from=builder /workspace/bytetrade.io/web3os/app-store-server/app-store-server .
+
+ENTRYPOINT ["/app-store-server", "-v", "4", "--logtostderr"]
