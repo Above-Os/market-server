@@ -1,0 +1,73 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: nginx
+    restart: always
+    networks:
+      - appstore-network
+    ports:
+      - '80:80'
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    command:
+      - nginx
+    depends_on:
+      - app-store-server
+  app-store-server:
+    image: yangt1314/app-store-server:v0.1.0-gh
+    container_name: app-store-server
+    restart: always
+    networks:
+      - appstore-network
+    links:
+      - elasticsearch:elasticsearch
+    ports:
+      - '8081:8081'
+    environment:
+      - GIT_ADDR=https://github.com/almondyoung/test.git
+      - GIT_BRANCH=dev
+      - MONGODB_URI=mongodb://root:123456@mongodb:27017
+      - ES_ADDR=http://elasticsearch:9200
+    volumes:
+      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
+    command:
+      - /bin/sh
+      - -c
+      - |
+        /usr/local/bin/wait-for-it.sh elasticsearch:9200 -t 120 -- /app-store-server -v 4 --logtostderr
+    depends_on:
+      - mongodb
+      - elasticsearch
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    networks:
+      - appstore-network
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./mongo/db:/data/db
+      - ./mongo/log:/var/log/mongodb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.2
+    container_name: elasticsearch
+    restart: always
+    networks:
+      - appstore-network
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    volumes:
+      - ./elasticsearch/data:/usr/share/elasticsearch/data
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+
+networks:
+  appstore-network:

@@ -41,7 +41,7 @@ RUN apk update && \
     apk upgrade &&  \
     apk add --no-cache bash git openssh
 
-WORKDIR /workspace
+WORKDIR /
 COPY --from=builder /workspace/bytetrade.io/web3os/app-store-server/app-store-server .
 
-ENTRYPOINT ["/app-store-server", "-v", "4", "--logtostderr"]
+CMD ["/app-store-server", "-v", "4", "--logtostderr"]

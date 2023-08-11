@@ -21,8 +21,6 @@ const (
 	AppGitZipLocalDir = "./charts"
 	AppCfgFileName    = "app.cfg"
 
-	RepoUrl       = "http://127.0.0.1:81/charts"
-	RepoName      = "localrepo"
 	TimeFormatStr = "Mon Jan 02 15:04:05 2006 -0700"
 
 	DefaultPage     = 1

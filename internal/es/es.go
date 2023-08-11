@@ -31,10 +31,15 @@ var (
 const indexName = "app_info"
 
 func Init() error {
+	return utils.RetryFunction(initWithRetry, 3, time.Second)
+}
+
+func initWithRetry() error {
 	addr := os.Getenv(constants.EsAddr)
 	username := os.Getenv(constants.EsName)
 	password := os.Getenv(constants.EsPassword)
 
+	glog.Warningf("addr:%s, username:%s, password:%s", addr, username, password)
 	err := initWithParams(addr, username, password)
 	if err != nil {
 		glog.Warningf("initWithParams err:%s", err.Error())
@@ -117,8 +122,9 @@ func initWithParams(addr, username, password string) error {
 
 	suc, _ := esClient.typedClient.Ping().IsSuccess(context.TODO())
 	if !suc {
-		return fmt.Errorf("ping failed, err:%s", err.Error())
+		return fmt.Errorf("ping failed, err:%v", err)
 	}
+	glog.Infof("suc: %#v, err:%#v", suc, err)
 
 	return nil
 }

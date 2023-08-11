@@ -1,6 +1,7 @@
 package gitapp
 
 import (
+	"app-store-server/internal/constants"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/utils"
 	"fmt"
@@ -14,14 +15,32 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/golang/glog"
-
-	"app-store-server/internal/constants"
 )
 
 const (
 	AppGitHttpsAddr = "https://github.com/Above-Os/terminus-apps.git"
 	AppGitBranch    = "dev"
+
+	GitAddrEnv   = "GIT_ADDR"
+	GitBranchEnv = "GIT_BRANCH"
 )
+
+func getGitAddr() string {
+	gitAddr := os.Getenv(GitAddrEnv)
+	if gitAddr != "" {
+		return gitAddr
+	}
+
+	return AppGitHttpsAddr
+}
+
+func getGitBranch() string {
+	gitBranch := os.Getenv(GitBranchEnv)
+	if gitBranch != "" {
+		return gitBranch
+	}
+	return AppGitBranch
+}
 
 func Init() error {
 	return utils.RetryFunction(cloneCode, 3, time.Second)
@@ -42,7 +61,7 @@ func cloneCode() error {
 		return err
 	}
 
-	return gitClone(AppGitHttpsAddr, AppGitBranch, constants.AppGitLocalDir)
+	return gitClone(getGitAddr(), getGitBranch(), constants.AppGitLocalDir)
 }
 
 func gitClone(url, branch, directory string) error {
