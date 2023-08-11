@@ -1,6 +1,7 @@
 package gitapp
 
 import (
+	"app-store-server/internal/constants"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/utils"
 	"fmt"
@@ -14,8 +15,6 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/golang/glog"
-
-	"app-store-server/internal/constants"
 )
 
 const (
