@@ -52,7 +52,7 @@ func VerifyFromAndSize(page, size string) (int, int) {
 
 	from := (pageN - 1) * sizeN
 	if from < 0 {
-		from = 0
+		from = constants.DefaultFrom
 	}
 
 	return from, sizeN
