@@ -51,7 +51,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResultWithCount(appList, count)))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appList, count)))
 }
 
 func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
@@ -61,7 +61,7 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResult(types)))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(types)))
 }
 
 func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
@@ -89,7 +89,7 @@ func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, info))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, info))
 }
 
 func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
@@ -100,7 +100,7 @@ func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, nil))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, nil))
 }
 
 func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
@@ -122,7 +122,7 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 		results = append(results, result)
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResult(results)))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(results)))
 }
 
 func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
@@ -136,7 +136,7 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, api.NewListResultWithCount(appList, count)))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appList, count)))
 }
 
 func (h *Handler) handleExist(req *restful.Request, resp *restful.Response) {
@@ -146,5 +146,5 @@ func (h *Handler) handleExist(req *restful.Request, resp *restful.Response) {
 		Exist: exist,
 	}
 
-	resp.WriteEntity(api.NewResponse(api.OK, api.Success, res))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, res))
 }

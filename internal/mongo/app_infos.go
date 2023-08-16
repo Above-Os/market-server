@@ -46,13 +46,13 @@ func GetAppLists(offset, size int64, category string) (list []*models.Applicatio
 
 	for cur.Next(ctx) {
 		// To decode into a struct, use cursor.Decode()
-		result := models.ApplicationInfo{}
-		err := cur.Decode(&result)
+		result := &models.ApplicationInfo{}
+		err := cur.Decode(result)
 		if err != nil {
 			glog.Warningf("err:%s", err.Error())
 			continue
 		}
-		list = append(list, &result)
+		list = append(list, result)
 	}
 
 	count, err = mgoClient.count(AppStoreDb, AppInfosCollection, filter)

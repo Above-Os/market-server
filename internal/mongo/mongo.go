@@ -17,10 +17,15 @@ type Client struct {
 }
 
 const (
-	AppStoreDb         = "AppStore"
-	AppTypesCollection = "AppTypes"
-	AppInfosCollection = "AppInfos"
-	AppGitCollection   = "AppGit"
+	AppStoreDb                      = "AppStore"
+	AppStoreAdminDb                 = "AppStoreAdmin"
+	AppTypesCollection              = "AppTypes"
+	AppInfosCollection              = "AppInfos"
+	AppGitCollection                = "AppGit"
+	AppStatsCollection              = "AppStats"
+	AppTopicsCollection             = "AppTopics"
+	AppRecommendsCollection         = "AppRecommends"
+	AppCategoryRecommendsCollection = "AppCategoryRecommends"
 )
 
 var mgoClient *Client
