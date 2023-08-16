@@ -57,21 +57,6 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.BodyParameter("topics", "topic list").DataFormat("json").DataType("json").PossibleValues([]string{topicsExample}).Required(true)).
 		Returns(http.StatusOK, "success to set the topic list", &models.ResponseBase{}))
 
-	//ws.Route(ws.POST("/topic/{"+ParamName+"}").
-	//	To(handler.addOneTopic).
-	//	Doc("add/update one topic").
-	//	Returns(http.StatusOK, "success to add/update one topic", &models.ResponseBase{}))
-	//
-	//ws.Route(ws.GET("/topic/{"+ParamName+"}").
-	//	To(handler.getOneTopic).
-	//	Doc("get one topic").
-	//	Returns(http.StatusOK, "success to get one topic", &models.CmsTopicResponse{}))
-	//
-	//ws.Route(ws.DELETE("/topic/{"+ParamName+"}").
-	//	To(handler.delOneTopic).
-	//	Doc("delete one topic").
-	//	Returns(http.StatusOK, "success to delete one topic", &models.ResponseBase{}))
-
 	ws.Route(ws.GET("/recommends").
 		To(handler.getCateRecommends).
 		Doc("set recommends list").

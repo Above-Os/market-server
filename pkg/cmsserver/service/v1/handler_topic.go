@@ -47,15 +47,3 @@ func (h *Handler) setTopics(req *restful.Request, resp *restful.Response) {
 
 	resp.WriteEntity(&models.ResponseBase{Code: api.OK, Msg: api.Success})
 }
-
-//func (h *Handler) addOneTopic(req *restful.Request, resp *restful.Response) {
-//
-//}
-//
-//func (h *Handler) getOneTopic(req *restful.Request, resp *restful.Response) {
-//
-//}
-//
-//func (h *Handler) delOneTopic(req *restful.Request, resp *restful.Response) {
-//
-//}
