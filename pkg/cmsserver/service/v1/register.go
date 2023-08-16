@@ -26,11 +26,9 @@ import (
 const (
 	APIRootPath = "/app-store-admin-server"
 	Version     = "v1"
-	ParamName   = "name"
 
 	topicsExample         = `[{"name":"test","intro":"test","desc":"test","iconSrc":"test","detailsImgSrc":"test","richText":"test"}]`
-	recommendsExample     = `[{"name":"test1","desc":"test1"},{"name":"test22","desc":"test2"}]`
-	cateRecommendsExample = `[{"category":"cat1","data":[{"name":"test1","desc":"test1"},{"name":"test2","desc":"test2"}]},{"category":"cat2","data":[{"name":"test11","desc":"test11"},{"name":"test22","desc":"test22"}]}]`
+	cateRecommendsExample = `[{"category":"all","data":[{"name":"test1","desc":"test1"},{"name":"test2","desc":"test2"}]},{"category":"cat2","data":[{"name":"test11","desc":"test11"},{"name":"test22","desc":"test22"}]}]`
 )
 
 func newWebService() *restful.WebService {
@@ -75,26 +73,15 @@ func AddToContainer(c *restful.Container) error {
 	//	Returns(http.StatusOK, "success to delete one topic", &models.ResponseBase{}))
 
 	ws.Route(ws.GET("/recommends").
-		To(handler.getRecommends).
+		To(handler.getCateRecommends).
 		Doc("set recommends list").
-		Returns(http.StatusOK, "success to set recommend list", &models.CmsRecommendListResponse{}))
+		Returns(http.StatusOK, "success to set recommend list", &models.CmsCategoryRecommendListResponse{}))
 
 	ws.Route(ws.PUT("/recommends").
-		To(handler.setRecommends).
-		Doc("get recommend list").
-		Param(ws.BodyParameter("recommends", "recommend list").DataFormat("json").DataType("json").PossibleValues([]string{recommendsExample}).Required(true)).
-		Returns(http.StatusOK, "success to get recommend list", &models.ResponseBase{}))
-
-	ws.Route(ws.GET("/category-recommends").
-		To(handler.getCateRecommends).
-		Doc("set category recommend list").
-		Returns(http.StatusOK, "success to set category recommend list", &models.CmsCategoryRecommendListResponse{}))
-
-	ws.Route(ws.PUT("/category-recommends").
 		To(handler.setCateRecommends).
-		Doc("get category recommend list").
-		Param(ws.BodyParameter("category recommends", "category recommend list").DataFormat("json").DataType("json").PossibleValues([]string{cateRecommendsExample}).Required(true)).
-		Returns(http.StatusOK, "success to get category recommend list", &models.ResponseBase{}))
+		Doc("get recommend list").
+		Param(ws.BodyParameter("recommends", "recommend list").DataFormat("json").DataType("json").PossibleValues([]string{cateRecommendsExample}).Required(true)).
+		Returns(http.StatusOK, "success to get recommend list", &models.ResponseBase{}))
 
 	c.Add(ws)
 	return nil

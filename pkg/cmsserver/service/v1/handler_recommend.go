@@ -7,40 +7,6 @@ import (
 	"github.com/emicklei/go-restful/v3"
 )
 
-func (h *Handler) getRecommends(req *restful.Request, resp *restful.Response) {
-	lists, err := mongo.GetRecommends()
-	if err != nil {
-		api.HandleError(resp, req, err)
-	}
-
-	res := &models.CmsRecommendListResponse{
-		ResponseBase: models.ResponseBase{
-			Code: 200,
-			Msg:  api.Success,
-		},
-		Data: lists,
-	}
-
-	resp.WriteEntity(res)
-}
-
-func (h *Handler) setRecommends(req *restful.Request, resp *restful.Response) {
-	var lists []models.CmsRecommend
-	err := req.ReadEntity(&lists)
-	if err != nil {
-		api.HandleError(resp, req, err)
-		return
-	}
-
-	err = mongo.SetRecommends(lists)
-	if err != nil {
-		api.HandleError(resp, req, err)
-		return
-	}
-
-	resp.WriteEntity(&models.ResponseBase{Code: api.OK, Msg: api.Success})
-}
-
 func (h *Handler) getCateRecommends(req *restful.Request, resp *restful.Response) {
 	lists, err := mongo.GetCategoryRecommends()
 	if err != nil {

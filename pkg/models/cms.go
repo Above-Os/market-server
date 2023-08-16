@@ -9,11 +9,6 @@ type CmsTopic struct {
 	RichText      string `json:"richText"`
 }
 
-type CmsTopicResponse struct {
-	ResponseBase
-	Data CmsTopic `json:"data"`
-}
-
 type CmsTopicListResponse struct {
 	ResponseBase
 	Data []*CmsTopic `json:"data"`
@@ -22,11 +17,6 @@ type CmsTopicListResponse struct {
 type CmsRecommend struct {
 	Name string `json:"name"`
 	Desc string `json:"desc"`
-}
-
-type CmsRecommendListResponse struct {
-	ResponseBase
-	Data []*CmsRecommend `json:"data"`
 }
 
 type CmsCategoryRecommend struct {
