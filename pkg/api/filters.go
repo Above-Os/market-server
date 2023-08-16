@@ -12,10 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package apiserver
+package api
 
 import (
-	"app-store-server/pkg/api"
 	"app-store-server/pkg/utils"
 	"bytes"
 	"fmt"
@@ -27,7 +26,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func logStackOnRecover(panicReason interface{}, w http.ResponseWriter) {
+func LogStackOnRecover(panicReason interface{}, w http.ResponseWriter) {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("recover from panic situation: - %v\r\n", panicReason))
 	for i := 2; ; i += 1 {
@@ -45,12 +44,12 @@ func logStackOnRecover(panicReason interface{}, w http.ResponseWriter) {
 	}
 
 	w.WriteHeader(http.StatusInternalServerError)
-	err := api.NewError(api.ErrorInternalServerError, http.StatusText(http.StatusInternalServerError))
+	err := NewError(ErrorInternalServerError, http.StatusText(http.StatusInternalServerError))
 	w.Write([]byte(err.Error()))
 	//w.Write([]byte("Internal server error"))
 }
 
-func logRequestAndResponse(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
+func LogRequestAndResponse(req *restful.Request, resp *restful.Response, chain *restful.FilterChain) {
 	start := time.Now()
 	chain.ProcessFilter(req, resp)
 

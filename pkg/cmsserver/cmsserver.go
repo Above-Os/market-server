@@ -1,27 +1,10 @@
-// Copyright 2022 bytetrade
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
-package apiserver
+package cmsserver
 
 import (
-	"app-store-server/internal/app"
 	"app-store-server/internal/constants"
-	"app-store-server/internal/es"
-	"app-store-server/internal/gitapp"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
-	servicev1 "app-store-server/pkg/apiserver/service/v1"
+	servicev1 "app-store-server/pkg/cmsserver/service/v1"
 	"net/http"
 
 	restfulspec "github.com/emicklei/go-restful-openapi/v2"
@@ -30,25 +13,25 @@ import (
 	"github.com/golang/glog"
 )
 
-type APIServer struct {
+type CMSServer struct {
 	Server *http.Server
 
 	// RESTful Server
 	container *restful.Container
 }
 
-func New() (*APIServer, error) {
-	as := &APIServer{}
+func New() (*CMSServer, error) {
+	as := &CMSServer{}
 
 	server := &http.Server{
-		Addr: constants.APIServerListenAddress,
+		Addr: constants.CMSServerListenAddress,
 	}
 
 	as.Server = server
 	return as, nil
 }
 
-func (s *APIServer) PrepareRun() error {
+func (s *CMSServer) PrepareRun() error {
 	s.container = restful.NewContainer()
 	s.container.Filter(api.LogRequestAndResponse)
 	s.container.Router(restful.CurlyRouter{})
@@ -75,31 +58,16 @@ func initMiddlewares() {
 	if err != nil {
 		glog.Fatalln(err)
 	}
-
-	err = es.Init()
-	if err != nil {
-		glog.Fatalln(err)
-	}
-
-	err = gitapp.Init()
-	if err != nil {
-		glog.Fatalln(err)
-	}
-
-	err = app.Init()
-	if err != nil {
-		glog.Fatalln(err)
-	}
 }
 
-func (s *APIServer) Run() error {
+func (s *CMSServer) Run() error {
 	return s.Server.ListenAndServe()
 }
 
-func (s *APIServer) installAPIDocs() {
+func (s *CMSServer) installAPIDocs() {
 	config := restfulspec.Config{
 		WebServices:                   s.container.RegisteredWebServices(), // you control what services are visible
-		APIPath:                       "/app-store-server/v1/apidocs.json",
+		APIPath:                       "/app-store-admin-server/v1/apidocs.json",
 		PostBuildSwaggerObjectHandler: enrichSwaggerObject}
 	s.container.Add(restfulspec.NewOpenAPIService(config))
 
@@ -111,15 +79,15 @@ func (s *APIServer) installAPIDocs() {
 	s.container.Filter(cors.Filter)
 }
 
-func (s *APIServer) installModuleAPI() {
+func (s *CMSServer) installModuleAPI() {
 	servicev1.AddToContainer(s.container)
 }
 
 func enrichSwaggerObject(swo *spec.Swagger) {
 	swo.Info = &spec.Info{
 		InfoProps: spec.InfoProps{
-			Title:       "App Store Server",
-			Description: "App Store Server",
+			Title:       "App Store Admin Server",
+			Description: "App Store Admin Server",
 			Contact: &spec.ContactInfo{
 				ContactInfoProps: spec.ContactInfoProps{
 					Name:  "bytetrade",
@@ -137,7 +105,7 @@ func enrichSwaggerObject(swo *spec.Swagger) {
 		},
 	}
 	swo.Tags = []spec.Tag{{TagProps: spec.TagProps{
-		Name:        "App Store Server",
-		Description: "App Store Server"}}}
+		Name:        "App Store Admin Server",
+		Description: "App Store Admin Server"}}}
 	swo.Schemes = []string{"http", "https"}
 }

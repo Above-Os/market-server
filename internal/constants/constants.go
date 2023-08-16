@@ -16,6 +16,7 @@ package constants
 
 const (
 	APIServerListenAddress = ":8081"
+	CMSServerListenAddress = ":8082"
 
 	AppGitLocalDir    = "./app_git"
 	AppGitZipLocalDir = "./charts"
@@ -25,6 +26,7 @@ const (
 
 	DefaultPage     = 1
 	DefaultPageSize = 100
+	DefaultFrom     = 0
 
 	MongoDBUri = "MONGODB_URI"
 
