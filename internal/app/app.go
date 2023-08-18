@@ -7,6 +7,7 @@ import (
 	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -61,7 +62,7 @@ func pullAndUpdateLoop() {
 
 func GitPullAndUpdate() error {
 	err := gitapp.Pull()
-	if err == git.NoErrAlreadyUpToDate {
+	if errors.Is(err, git.NoErrAlreadyUpToDate) {
 		glog.Infof("info:%s", err.Error())
 		return nil
 	}

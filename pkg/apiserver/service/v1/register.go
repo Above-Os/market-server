@@ -23,9 +23,10 @@ import (
 )
 
 const (
-	APIRootPath  = "/app-store-server"
-	Version      = "v1"
-	ParamAppName = "name"
+	APIRootPath   = "/app-store-server"
+	Version       = "v1"
+	ParamAppName  = "name"
+	ParamAppNames = "names"
 )
 
 func newWebService() *restful.WebService {
@@ -95,6 +96,18 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.PathParameter(ParamAppName, "the name of the application")).
 		Doc("does the application exist by name").
 		Returns(http.StatusOK, "success to judge the application exist by name", nil))
+
+	ws.Route(ws.POST("/applications/counter/{"+ParamAppName+"}").
+		To(handler.handleCount).
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Doc("the application counter of install").
+		Returns(http.StatusOK, "success to inc the application counter of install", nil))
+
+	ws.Route(ws.POST("/applications/check-update").
+		To(handler.handleCheckUpdate).
+		Param(ws.BodyParameter(ParamAppNames, "the name list of the application")).
+		Doc("check app updates").
+		Returns(http.StatusOK, "success to check app updates", nil))
 
 	c.Add(ws)
 	return nil
