@@ -1,6 +1,7 @@
 package mongo
 
 import (
+	"errors"
 	"github.com/golang/glog"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,11 +18,11 @@ func SetLastCommitHashToDB(hash string) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 
 	err := mgoClient.findOneAndUpdate(AppStoreDb, AppGitCollection, bson.D{}, u, opts).Decode(updatedDocument)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
-	}
-	if err == mongo.ErrNoDocuments {
-		return nil
 	}
 
 	return err

@@ -3,6 +3,7 @@ package mongo
 import (
 	"app-store-server/pkg/models"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang/glog"
@@ -64,6 +65,45 @@ func GetAppLists(offset, size int64, category string) (list []*models.Applicatio
 	return
 }
 
+func GetAppInfos(names []string) (mapInfo map[string]*models.ApplicationInfo, err error) {
+	filter := make(bson.M)
+	if len(names) > 0 {
+		filter["name"] = bson.M{"$in": names}
+	}
+
+	var lastCommitHash string
+	lastCommitHash, err = GetLastCommitHashFromDB()
+	if err != nil {
+		return
+	}
+	if lastCommitHash != "" {
+		filter["lastCommitHash"] = lastCommitHash
+	}
+
+	cur, err := mgoClient.queryMany(AppStoreDb, AppInfosCollection, filter)
+	if err != nil {
+		glog.Warningf("err:%s", err.Error())
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	defer cur.Close(ctx)
+
+	mapInfo = make(map[string]*models.ApplicationInfo)
+	for cur.Next(ctx) {
+		// To decode into a struct, use cursor.Decode()
+		result := &models.ApplicationInfo{}
+		err := cur.Decode(result)
+		if err != nil {
+			glog.Warningf("err:%s", err.Error())
+			continue
+		}
+		mapInfo[result.Name] = result
+	}
+
+	return
+}
+
 func GetAppInfoByName(name string) (*models.ApplicationInfo, error) {
 	filter := bson.M{"name": name}
 	info := &models.ApplicationInfo{}
@@ -84,12 +124,13 @@ func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 
 	err := mgoClient.findOneAndUpdate(AppStoreDb, AppInfosCollection, filter, u, opts).Decode(updatedDocument)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return nil
+	}
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
 	}
-	if err == mongo.ErrNoDocuments {
-		return nil
-	}
+
 	return err
 }
 

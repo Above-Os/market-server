@@ -6,15 +6,17 @@ type ResponseBase struct {
 }
 
 type Response struct {
-	Code int    `json:"code"`
-	Msg  string `json:"message,omitempty"`
-	Data any    `json:"data,omitempty"`
+	ResponseBase
+	Data any `json:"data,omitempty"`
 }
 
 func NewResponse(code int, msg string, data any) *Response {
 	return &Response{
-		Code: code,
-		Msg:  msg,
+		ResponseBase: ResponseBase{
+			Code: code,
+			Msg:  msg,
+		},
+
 		Data: data,
 	}
 }

@@ -32,6 +32,7 @@ func main() {
 		glog.Fatalln(err)
 	}
 }
+
 func newAppStoreAdminServerCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "app-store-server",
@@ -49,6 +50,7 @@ func newAppStoreAdminServerCommand() *cobra.Command {
 
 	return cmd
 }
+
 func Run() error {
 	// new server
 	s, err := cmsserver.New()
