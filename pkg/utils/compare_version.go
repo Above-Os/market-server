@@ -5,7 +5,7 @@ import (
 	"github.com/golang/glog"
 )
 
-func CheckVersion(curVersion, latestVersion string) bool {
+func NeedUpdate(curVersion, latestVersion string) bool {
 	vCur, err := semver.NewVersion(curVersion)
 	if err != nil {
 		glog.Warningf("invalid curVersion:%s %s", curVersion, err.Error())

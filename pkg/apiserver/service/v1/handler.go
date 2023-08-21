@@ -185,7 +185,7 @@ func (h *Handler) handleCheckUpdate(req *restful.Request, resp *restful.Response
 		updateRes.Updates[i].CurVersion = updateReq.Updates[i].CurVersion
 		if info, exist := mapInfo[updateRes.Updates[i].AppName]; exist {
 			updateRes.Updates[i].LatestVersion = info.Version
-			updateRes.Updates[i].NeedUpdate = utils.CheckVersion(updateRes.Updates[i].CurVersion, updateRes.Updates[i].LatestVersion)
+			updateRes.Updates[i].NeedUpdate = utils.NeedUpdate(updateRes.Updates[i].CurVersion, updateRes.Updates[i].LatestVersion)
 		}
 	}
 
