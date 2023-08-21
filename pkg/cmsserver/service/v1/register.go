@@ -54,6 +54,7 @@ func AddToContainer(c *restful.Container) error {
 	ws.Route(ws.PUT("/topics").
 		To(handler.setTopics).
 		Doc("set topic list").
+		Reads([]models.CmsTopic{}).
 		Param(ws.BodyParameter("topics", "topic list").DataFormat("json").DataType("json").PossibleValues([]string{topicsExample}).Required(true)).
 		Returns(http.StatusOK, "success to set the topic list", &models.ResponseBase{}))
 
@@ -65,6 +66,7 @@ func AddToContainer(c *restful.Container) error {
 	ws.Route(ws.PUT("/recommends").
 		To(handler.setCateRecommends).
 		Doc("get recommend list").
+		Reads([]models.CmsCategoryRecommend{}).
 		Param(ws.BodyParameter("recommends", "recommend list").DataFormat("json").DataType("json").PossibleValues([]string{cateRecommendsExample}).Required(true)).
 		Returns(http.StatusOK, "success to get recommend list", &models.ResponseBase{}))
 

@@ -15,6 +15,7 @@
 package v1
 
 import (
+	"app-store-server/pkg/models"
 	"fmt"
 	"net/http"
 
@@ -107,6 +108,7 @@ func AddToContainer(c *restful.Container) error {
 		To(handler.handleCheckUpdate).
 		Param(ws.BodyParameter(ParamAppNames, "the name list of the application")).
 		Doc("check app updates").
+		Reads(&models.UpdateReq{}).
 		Returns(http.StatusOK, "success to check app updates", nil))
 
 	c.Add(ws)
