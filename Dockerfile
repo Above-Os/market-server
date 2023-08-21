@@ -20,15 +20,14 @@ WORKDIR /workspace
 COPY go.mod bytetrade.io/web3os/app-store-server/go.mod
 COPY go.sum bytetrade.io/web3os/app-store-server/go.sum
 
-RUN cd bytetrade.io/web3os/app-store-server && \
-        go mod tidy
-
 # Copy the go source
 COPY cmd/ bytetrade.io/web3os/app-store-server/cmd/
 COPY pkg/ bytetrade.io/web3os/app-store-server/pkg/
 COPY internal/ bytetrade.io/web3os/app-store-server/internal/
 
 # Build
+RUN cd bytetrade.io/web3os/app-store-server && \
+        go mod tidy
 RUN cd bytetrade.io/web3os/app-store-server && \
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app-store-server cmd/app-store-server/main.go
 
