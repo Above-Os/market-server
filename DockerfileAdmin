@@ -28,9 +28,10 @@ COPY cmd/ bytetrade.io/web3os/app-store-server/cmd/
 COPY pkg/ bytetrade.io/web3os/app-store-server/pkg/
 COPY internal/ bytetrade.io/web3os/app-store-server/internal/
 
+
 # Build
 RUN cd bytetrade.io/web3os/app-store-server && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app-store-server cmd/app-store-server/main.go
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o app-store-admin-server cmd/app-store-admin-server/main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
@@ -41,6 +42,6 @@ RUN apk update && \
     apk add --no-cache bash git openssh
 
 WORKDIR /opt/app
-COPY --from=builder /workspace/bytetrade.io/web3os/app-store-server/app-store-server .
+COPY --from=builder /workspace/bytetrade.io/web3os/app-store-server/app-store-admin-server .
 
-CMD ["/opt/app/app-store-server", "-v", "4", "--logtostderr"]
+CMD ["/opt/app/app-store-admin-server", "-v", "4", "--logtostderr"]

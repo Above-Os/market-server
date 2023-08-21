@@ -41,6 +41,18 @@ services:
     depends_on:
       - mongodb
       - elasticsearch
+  app-store-admin-server:
+    image: yangt1314/app-store-admin-server:v0.1.0-gh
+    container_name: app-store-admin-server
+    restart: always
+    networks:
+      - appstore-network
+    ports:
+      - '8082:8082'
+    environment:
+      - MONGODB_URI=mongodb://root:123456@mongodb:27017
+    depends_on:
+      - mongodb
   mongodb:
     image: mongo:latest
     container_name: mongodb
