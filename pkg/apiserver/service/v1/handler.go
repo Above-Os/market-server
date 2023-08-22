@@ -160,34 +160,19 @@ func (h *Handler) handleCount(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, nil))
 }
 
-func (h *Handler) handleCheckUpdate(req *restful.Request, resp *restful.Response) {
-	updateReq := &models.UpdateReq{}
-	err := req.ReadEntity(&updateReq)
+func (h *Handler) handleInfos(req *restful.Request, resp *restful.Response) {
+	var names []string
+	err := req.ReadEntity(&names)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
 	}
 
-	names := make([]string, len(updateReq.Updates))
-	for i, _ := range updateReq.Updates {
-		names[i] = updateReq.Updates[i].AppName
-	}
 	mapInfo, err := mongo.GetAppInfos(names)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
 	}
 
-	updateRes := &models.UpdateRes{}
-	updateRes.Updates = make([]models.UpdateResData, len(updateReq.Updates))
-	for i, _ := range updateReq.Updates {
-		updateRes.Updates[i].AppName = updateReq.Updates[i].AppName
-		updateRes.Updates[i].CurVersion = updateReq.Updates[i].CurVersion
-		if info, exist := mapInfo[updateRes.Updates[i].AppName]; exist {
-			updateRes.Updates[i].LatestVersion = info.Version
-			updateRes.Updates[i].NeedUpdate = utils.NeedUpdate(updateRes.Updates[i].CurVersion, updateRes.Updates[i].LatestVersion)
-		}
-	}
-
-	glog.Infof("updateReq:%#v", updateReq)
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, mapInfo))
 }
