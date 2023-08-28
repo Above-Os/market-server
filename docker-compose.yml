@@ -37,7 +37,7 @@ services:
       - /bin/sh
       - -c
       - |
-        /usr/local/bin/wait-for-it.sh elasticsearch:9200 -t 120 -- /app-store-server -v 4 --logtostderr
+        /usr/local/bin/wait-for-it.sh elasticsearch:9200 -t 120 -- /opt/app/app-store-server -v 4 --logtostderr
     depends_on:
       - mongodb
       - elasticsearch
@@ -50,8 +50,8 @@ services:
     ports:
       - '27017:27017'
     volumes:
-      - ./mongo/db:/data/db
-      - ./mongo/log:/var/log/mongodb
+      - ./volumes/mongo/db:/data/db
+      - ./volumes/mongo/log:/var/log/mongodb
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=123456
@@ -65,7 +65,7 @@ services:
       - '9200:9200'
       - '9300:9300'
     volumes:
-      - ./elasticsearch/data:/usr/share/elasticsearch/data
+      - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
