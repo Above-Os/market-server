@@ -38,13 +38,15 @@ func CheckDir(path string) error {
 
 func RetryFunction(f func() error, maxAttempts int, delay time.Duration) error {
 	var err error
+	sleepyTime := delay
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		err = f()
 		if err == nil {
 			return nil
 		}
 		glog.Infof("retry failed,err:%s, retry times:%d\n", err.Error(), attempt+1)
-		time.Sleep(delay)
+		time.Sleep(sleepyTime)
+		sleepyTime *= 2
 	}
 
 	return err
