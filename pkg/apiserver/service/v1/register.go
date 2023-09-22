@@ -15,7 +15,6 @@
 package v1
 
 import (
-	"app-store-server/pkg/models"
 	"fmt"
 	"net/http"
 
@@ -104,11 +103,11 @@ func AddToContainer(c *restful.Container) error {
 		Doc("the application counter of install").
 		Returns(http.StatusOK, "success to inc the application counter of install", nil))
 
-	ws.Route(ws.POST("/applications/check-update").
-		To(handler.handleCheckUpdate).
+	ws.Route(ws.POST("/applications/infos").
+		To(handler.handleInfos).
 		Param(ws.BodyParameter(ParamAppNames, "the name list of the application")).
 		Doc("check app updates").
-		Reads(&models.UpdateReq{}).
+		Reads([]string{}).
 		Returns(http.StatusOK, "success to check app updates", nil))
 
 	c.Add(ws)

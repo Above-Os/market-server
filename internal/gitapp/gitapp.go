@@ -19,7 +19,7 @@ import (
 
 const (
 	AppGitHttpsAddr = "https://github.com/Above-Os/terminus-apps.git"
-	AppGitBranch    = "dev"
+	AppGitBranch    = "main"
 
 	GitAddrEnv   = "GIT_ADDR"
 	GitBranchEnv = "GIT_BRANCH"

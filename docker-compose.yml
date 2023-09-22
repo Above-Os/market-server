@@ -37,22 +37,10 @@ services:
       - /bin/sh
       - -c
       - |
-        /usr/local/bin/wait-for-it.sh elasticsearch:9200 -t 120 -- /app-store-server -v 4 --logtostderr
+        /usr/local/bin/wait-for-it.sh elasticsearch:9200 -t 120 -- /opt/app/app-store-server -v 4 --logtostderr
     depends_on:
       - mongodb
       - elasticsearch
-  app-store-admin-server:
-    image: yangt1314/app-store-admin-server:v0.1.0-gh
-    container_name: app-store-admin-server
-    restart: always
-    networks:
-      - appstore-network
-    ports:
-      - '8082:8082'
-    environment:
-      - MONGODB_URI=mongodb://root:123456@mongodb:27017
-    depends_on:
-      - mongodb
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -62,8 +50,8 @@ services:
     ports:
       - '27017:27017'
     volumes:
-      - ./mongo/db:/data/db
-      - ./mongo/log:/var/log/mongodb
+      - ./volumes/mongo/db:/data/db
+      - ./volumes/mongo/log:/var/log/mongodb
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=123456
@@ -77,7 +65,7 @@ services:
       - '9200:9200'
       - '9300:9300'
     volumes:
-      - ./elasticsearch/data:/usr/share/elasticsearch/data
+      - ./volumes/elasticsearch/data:/usr/share/elasticsearch/data
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms1g -Xmx1g"

@@ -28,7 +28,11 @@ func existIndex() bool {
 
 func createIndex() error {
 	props := map[string]types.Property{
-		"name":           types.KeywordProperty{},
+		"name": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{},
+			},
+		},
 		"categories":     types.KeywordProperty{},
 		"lastCommitHash": types.KeywordProperty{},
 		"createTime":     types.DateProperty{},
@@ -138,8 +142,8 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 				},
 				Sort: []types.SortCombinations{
 					types.SortOptions{SortOptions: map[string]types.FieldSort{
-						"updateTime": {Order: &sortorder.Desc},
-						"name":       {Order: &sortorder.Asc},
+						"updateTime":   {Order: &sortorder.Desc},
+						"name.keyword": {Order: &sortorder.Asc},
 					}},
 				},
 			}).
@@ -192,8 +196,8 @@ func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
 				},
 				Sort: []types.SortCombinations{
 					types.SortOptions{SortOptions: map[string]types.FieldSort{
-						"updateTime": {Order: &sortorder.Desc},
-						"name":       {Order: &sortorder.Asc},
+						"updateTime":   {Order: &sortorder.Desc},
+						"name.keyword": {Order: &sortorder.Asc},
 					}},
 				},
 			}).
@@ -226,6 +230,13 @@ func SearchByNameFuzzy(from, size int, name string) (infos []*models.Application
 		return
 	}
 
+	if name != "" {
+		if name[len(name)-1] != '*' {
+			name += "*"
+		}
+	} else {
+		name = "*"
+	}
 	resp, err = esClient.typedClient.Search().
 		Index(indexName).
 		Request(
@@ -243,8 +254,8 @@ func SearchByNameFuzzy(from, size int, name string) (infos []*models.Application
 								Bool: &types.BoolQuery{
 									Filter: []types.Query{
 										{
-											Match: map[string]types.MatchQuery{
-												"name": {Query: name},
+											Wildcard: map[string]types.WildcardQuery{
+												"name": {Value: &name},
 											},
 										},
 									},
@@ -255,8 +266,8 @@ func SearchByNameFuzzy(from, size int, name string) (infos []*models.Application
 				},
 				Sort: []types.SortCombinations{
 					types.SortOptions{SortOptions: map[string]types.FieldSort{
-						"updateTime": {Order: &sortorder.Desc},
-						"name":       {Order: &sortorder.Asc},
+						"updateTime":   {Order: &sortorder.Desc},
+						"name.keyword": {Order: &sortorder.Asc},
 					}},
 				},
 			}).
