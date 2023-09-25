@@ -26,6 +26,17 @@ func existIndex() bool {
 	return false
 }
 
+func delIndex() {
+	suc, err := esClient.typedClient.Indices.Delete(indexName).IsSuccess(context.Background())
+	if err != nil {
+		glog.Warningf("index %s Delete err:%s", indexName, err.Error())
+	}
+
+	if !suc {
+		glog.Warningf("index %s Delete failed", indexName)
+	}
+}
+
 func createIndex() error {
 	props := map[string]types.Property{
 		"name": types.TextProperty{

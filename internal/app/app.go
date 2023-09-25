@@ -120,7 +120,7 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 }
 
 func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err error) {
-	charts, err := ioutil.ReadDir(dir)
+	charts, err := os.ReadDir(dir)
 	if err != nil {
 		glog.Warningf("read dir %s error: %s", dir, err.Error())
 		return nil, err

@@ -46,9 +46,10 @@ func initWithRetry() error {
 		return err
 	}
 
-	if !existIndex() {
-		createIndex()
+	if existIndex() {
+		delIndex()
 	}
+	createIndex()
 
 	return nil
 }

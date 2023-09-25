@@ -163,6 +163,8 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["target"] = appInfoNew.Target
 	update["permission"] = appInfoNew.Permission
 	update["entrance"] = appInfoNew.Entrance
+	update["middleware"] = appInfoNew.Middleware
+	update["options"] = appInfoNew.Options
 
 	return &update
 }
