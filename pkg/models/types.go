@@ -15,10 +15,6 @@
 package models
 
 import (
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
-
 	"app-store-server/pkg/models/tapr"
 )
 
@@ -64,12 +60,6 @@ type ApplicationInfo struct {
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
 	//Status      AppStatus `json:"status"`
-}
-
-func (info *ApplicationInfo) InitBsonId() {
-	info.Id = primitive.NewObjectID().Hex()
-	info.CreateTime = time.Now().UnixMilli()
-	info.UpdateTime = info.CreateTime
 }
 
 type AppService struct {

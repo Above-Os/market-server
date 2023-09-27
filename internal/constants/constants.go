@@ -22,7 +22,7 @@ const (
 	AppGitZipLocalDir = "./charts"
 	AppCfgFileName    = "app.cfg"
 
-	TimeFormatStr = "Mon Jan 02 15:04:05 2006 -0700"
+	TimeFormatStr = "Mon Jan 2 15:04:05 2006 -0700"
 
 	DefaultPage     = 1
 	DefaultPageSize = 100
