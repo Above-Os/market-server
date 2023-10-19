@@ -72,5 +72,11 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		Entrance:           ac.Entrance,
 		Middleware:         ac.Middleware,
 		Options:            ac.Options,
+		Language:           ac.Spec.Language,
+		Submitter:          ac.Spec.Submitter,
+		Doc:                ac.Spec.Doc,
+		Website:            ac.Spec.Website,
+		License:            ac.Spec.License,
+		Legal:              ac.Spec.Legal,
 	}
 }

@@ -41,6 +41,7 @@ type ApplicationInfo struct {
 	PromoteImage       []string         `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
 	PromoteVideo       string           `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
 	SubCategory        string           `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
+	Language           []string         `yaml:"language" json:"language" bson:"language"`
 	Developer          string           `yaml:"developer" json:"developer" bson:"developer"`
 	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
 	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
@@ -53,13 +54,17 @@ type ApplicationInfo struct {
 	Entrance           AppService       `yaml:"entrance" json:"entrance" bson:"entrance"`
 	Middleware         *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
 	Options            Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
-	//Interface string
-	//Endpoint  string
+
+	Submitter string       `yaml:"submitter" json:"submitter" bson:"submitter"`
+	Doc       string       `yaml:"doc" json:"doc" bson:"doc"`
+	Website   string       `yaml:"website" json:"website" bson:"website"`
+	License   []TextAndURL `yaml:"license" json:"license" bson:"license"`
+	Legal     []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
-	//Status      AppStatus `json:"status"`
+	Status         string `yaml:"status" json:"status" bson:"status"`
 }
 
 type AppService struct {
@@ -74,12 +79,24 @@ type AppSpec struct {
 	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage"`
 	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo"`
 	SubCategory        string        `yaml:"subCategory" json:"subCategory"`
+	Language           []string      `yaml:"language" json:"language"`
 	Developer          string        `yaml:"developer" json:"developer"`
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk"`
 	SupportClient      SupportClient `yaml:"supportClient" json:"supportClient"`
 	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty"`
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu"`
+
+	Submitter string       `yaml:"submitter" json:"submitter"`
+	Doc       string       `yaml:"doc" json:"doc"`
+	Website   string       `yaml:"website" json:"website"`
+	License   []TextAndURL `yaml:"license" json:"license"`
+	Legal     []TextAndURL `yaml:"legal" json:"legal"`
+}
+
+type TextAndURL struct {
+	Text string `yaml:"text" json:"text" bson:"text"`
+	URL  string `yaml:"url" json:"url" bson:"url"`
 }
 
 type SupportClient struct {
@@ -116,7 +133,6 @@ type Analytics struct {
 }
 
 type Options struct {
-	Language     []string     `yaml:"language" json:"language" bson:"language"`
 	Policies     []Policy     `yaml:"policies" json:"policies" bson:"policies"`
 	Analytics    Analytics    `yaml:"analytics" json:"analytics" bson:"analytics"`
 	Dependencies []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
