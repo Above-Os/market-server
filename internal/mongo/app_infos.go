@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"app-store-server/pkg/models"
+	"app-store-server/pkg/utils"
 	"context"
 	"errors"
 	"time"
@@ -143,7 +144,9 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["chartName"] = appInfoNew.ChartName
 	update["icon"] = appInfoNew.Icon
 	update["desc"] = appInfoNew.Description
-	update["appid"] = appInfoNew.AppID
+	nameMd58 := utils.Md5String(appInfoNew.Name)[:8]
+	update["appid"] = nameMd58
+	update["id"] = nameMd58
 	update["title"] = appInfoNew.Title
 	update["version"] = appInfoNew.Version
 	update["categories"] = appInfoNew.Categories

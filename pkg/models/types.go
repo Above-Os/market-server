@@ -24,7 +24,7 @@ type TopResultItem struct {
 }
 
 type ApplicationInfo struct {
-	Id string `yaml:"id" json:"id" bson:"_id"`
+	Id string `yaml:"id" json:"id" bson:"id"`
 
 	Name        string `yaml:"name" json:"name" bson:"name"`
 	ChartName   string `yaml:"chartName" json:"chartName" bson:"chartName"`
