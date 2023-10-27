@@ -8,6 +8,7 @@ import (
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -17,6 +18,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func Init() error {
@@ -116,7 +118,43 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 		return nil, err
 	}
 
-	return appCfg.ToAppInfo(), nil
+	return appInfoParseQuantity(appCfg.ToAppInfo()), nil
+}
+
+func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo {
+	if info == nil {
+		return info
+	}
+
+	if info.RequiredMemory != "" {
+		r, err := resource.ParseQuantity(info.RequiredMemory)
+		if err == nil {
+			info.RequiredMemory = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+		}
+	}
+
+	if info.RequiredDisk != "" {
+		r, err := resource.ParseQuantity(info.RequiredDisk)
+		if err == nil {
+			info.RequiredDisk = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+		}
+	}
+
+	if info.RequiredGPU != "" {
+		r, err := resource.ParseQuantity(info.RequiredGPU)
+		if err == nil {
+			info.RequiredGPU = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+		}
+	}
+
+	if info.RequiredCPU != "" {
+		r, err := resource.ParseQuantity(info.RequiredCPU)
+		if err == nil {
+			info.RequiredCPU = fmt.Sprintf("%v", r.AsApproximateFloat64())
+		}
+	}
+	
+	return info
 }
 
 func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err error) {
