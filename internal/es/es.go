@@ -146,6 +146,22 @@ func (c *Client) CreateIndexWithMapping(indexName string, prop map[string]types.
 		Mappings(&types.TypeMapping{
 			Properties: prop,
 		}).
+		Settings(&types.IndexSettings{
+			Analysis: &types.IndexSettingsAnalysis{
+				Analyzer: map[string]types.Analyzer{
+					"caseSensitive": types.CustomAnalyzer{
+						Filter:    []string{"lowercase"},
+						Type:      "custom",
+						Tokenizer: "keyword",
+					},
+					"caseSensitiveSearch": types.CustomAnalyzer{
+						Filter:    []string{"lowercase"},
+						Type:      "custom",
+						Tokenizer: "keyword",
+					},
+				},
+			},
+		}).
 		Do(nil)
 	if err != nil {
 		glog.Warningf("es8.CreateIndex indexName:%s with map err:%s", indexName, err.Error())

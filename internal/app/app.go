@@ -130,6 +130,7 @@ func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo 
 		r, err := resource.ParseQuantity(info.RequiredMemory)
 		if err == nil {
 			info.RequiredMemory = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+			//info.RequiredMemory = fmt.Sprintf("%d", int(r.AsApproximateFloat64()/1024/1024))
 		}
 	}
 
@@ -137,6 +138,7 @@ func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo 
 		r, err := resource.ParseQuantity(info.RequiredDisk)
 		if err == nil {
 			info.RequiredDisk = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+			//info.RequiredDisk = fmt.Sprintf("%d", int(r.AsApproximateFloat64()/1024/1024))
 		}
 	}
 
@@ -144,6 +146,7 @@ func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo 
 		r, err := resource.ParseQuantity(info.RequiredGPU)
 		if err == nil {
 			info.RequiredGPU = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+			//info.RequiredGPU = fmt.Sprintf("%d", int(r.AsApproximateFloat64()/1024/1024/1024))
 		}
 	}
 
@@ -153,7 +156,7 @@ func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo 
 			info.RequiredCPU = fmt.Sprintf("%v", r.AsApproximateFloat64())
 		}
 	}
-	
+
 	return info
 }
 

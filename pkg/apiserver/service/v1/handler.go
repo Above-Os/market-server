@@ -23,7 +23,7 @@ import (
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/golang/glog"
@@ -72,7 +72,7 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	fileBytes, err := ioutil.ReadFile(fileName)
+	fileBytes, err := os.ReadFile(fileName)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
@@ -130,7 +130,7 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	page := req.QueryParameter("page")
 	size := req.QueryParameter("size")
 	from, sizeN := utils.VerifyFromAndSize(page, size)
-	appList, count, err := es.SearchByNameFuzzy(from, sizeN, appName)
+	appList, count, err := es.SearchByNameWildcard(from, sizeN, appName)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
