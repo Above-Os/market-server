@@ -7,9 +7,10 @@ import (
 	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
+	"app-store-server/pkg/utils"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -106,19 +107,50 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 		return nil, err
 	}
 
-	info, err := ioutil.ReadAll(f)
+	cfgContent, err := io.ReadAll(f)
 	if err != nil {
 		glog.Warningf("%s", err.Error())
 		return nil, err
 	}
 
 	var appCfg models.AppConfiguration
-	if err = yaml.Unmarshal(info, &appCfg); err != nil {
+	if err = yaml.Unmarshal(cfgContent, &appCfg); err != nil {
 		glog.Warningf("%s", err.Error())
 		return nil, err
 	}
 
-	return appInfoParseQuantity(appCfg.ToAppInfo()), nil
+	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
+
+	appDir := path.Join(constants.AppGitLocalDir, dirName)
+	checkAppContainSpecialFile(appInfo, appDir)
+
+	return appInfo, nil
+}
+
+func checkAppContainSpecialFile(info *models.ApplicationInfo, appDir string) {
+	if isContainRemove(appDir) {
+		info.AppLabels = append(info.AppLabels, constants.RemoveLabel)
+	}
+
+	if isContainSuspend(appDir) {
+		info.AppLabels = append(info.AppLabels, constants.SuspendLabel)
+	}
+
+	if isContainNsfw(appDir) {
+		info.AppLabels = append(info.AppLabels, constants.NsfwLabel)
+	}
+}
+
+func isContainSuspend(appDir string) bool {
+	return utils.IsDirContainFile(appDir, constants.SuspendFile)
+}
+
+func isContainRemove(appDir string) bool {
+	return utils.IsDirContainFile(appDir, constants.RemoveFile)
+}
+
+func isContainNsfw(appDir string) bool {
+	return utils.IsDirContainFile(appDir, constants.NsfwFile)
 }
 
 func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo {

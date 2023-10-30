@@ -64,7 +64,8 @@ type ApplicationInfo struct {
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
-	Status         string `yaml:"status" json:"status" bson:"status"`
+	//Status         string   `yaml:"status" json:"status" bson:"status"`
+	AppLabels []string `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 }
 
 type AppService struct {

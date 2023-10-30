@@ -175,7 +175,8 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["website"] = appInfoNew.Website
 	update["license"] = appInfoNew.License
 	update["legal"] = appInfoNew.Legal
-	update["status"] = appInfoNew.Status
+	//update["status"] = appInfoNew.Status
+	update["appLabels"] = appInfoNew.AppLabels
 
 	return &update
 }

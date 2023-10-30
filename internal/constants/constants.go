@@ -35,6 +35,16 @@ const (
 	EsPassword = "ES_PASSWORD"
 )
 
+const (
+	RemoveFile  = ".remove"
+	SuspendFile = ".suspend"
+	NsfwFile    = ".nsfw"
+
+	RemoveLabel  = "remove"
+	SuspendLabel = "suspend"
+	NsfwLabel    = "nsfw"
+)
+
 var (
 	//`{
 	//   "appTypes":[
