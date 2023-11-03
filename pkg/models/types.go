@@ -36,24 +36,24 @@ type ApplicationInfo struct {
 	Categories  string `yaml:"categories" json:"categories" bson:"categories"` //[]string
 	VersionName string `yaml:"versionName" json:"versionName" bson:"versionName"`
 
-	FullDescription    string           `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
-	UpgradeDescription string           `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
-	PromoteImage       []string         `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
-	PromoteVideo       string           `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
-	SubCategory        string           `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
-	Language           []string         `yaml:"language" json:"language" bson:"language"`
-	Developer          string           `yaml:"developer" json:"developer" bson:"developer"`
-	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
-	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
-	SupportClient      SupportClient    `yaml:"supportClient" json:"supportClient" bson:"supportClient"`
-	RequiredGPU        string           `yaml:"requiredGpu" json:"requiredGpu,omitempty" bson:"requiredGpu"`
-	RequiredCPU        string           `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
-	Rating             float32          `yaml:"rating" json:"rating" bson:"rating"`
-	Target             string           `yaml:"target" json:"target" bson:"target"`
-	Permission         Permission       `yaml:"permission" json:"permission"  bson:"permission" description:"app permission request"`
-	Entrance           AppService       `yaml:"entrance" json:"entrance" bson:"entrance"`
-	Middleware         *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
-	Options            Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
+	FullDescription    string        `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
+	UpgradeDescription string        `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
+	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
+	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
+	SubCategory        string        `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
+	Language           []string      `yaml:"language" json:"language" bson:"language"`
+	Developer          string        `yaml:"developer" json:"developer" bson:"developer"`
+	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
+	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
+	SupportClient      SupportClient `yaml:"supportClient" json:"supportClient" bson:"supportClient"`
+	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty" bson:"requiredGpu"`
+	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
+	Rating             float32       `yaml:"rating" json:"rating" bson:"rating"`
+	Target             string        `yaml:"target" json:"target" bson:"target"`
+	Permission         Permission    `yaml:"permission" json:"permission"  bson:"permission" description:"app permission request"`
+	//Entrance           AppService       `yaml:"entrance" json:"entrance" bson:"entrance"`
+	Middleware *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
+	Options    Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
 
 	Submitter string       `yaml:"submitter" json:"submitter" bson:"submitter"`
 	Doc       string       `yaml:"doc" json:"doc" bson:"doc"`

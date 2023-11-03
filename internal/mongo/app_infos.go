@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/glog"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -16,7 +17,9 @@ import (
 func GetAppLists(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
-		filter["categories"] = category
+		//filter["categories"] = category
+		regex := primitive.Regex{Pattern: category, Options: "i"}
+		filter["categories"] = bson.M{"$in": bson.A{regex}}
 	}
 
 	var lastCommitHash string
@@ -165,7 +168,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["rating"] = appInfoNew.Rating
 	update["target"] = appInfoNew.Target
 	update["permission"] = appInfoNew.Permission
-	update["entrance"] = appInfoNew.Entrance
+	//update["entrance"] = appInfoNew.Entrance
 	update["middleware"] = appInfoNew.Middleware
 	update["options"] = appInfoNew.Options
 	update["language"] = appInfoNew.Language
