@@ -1,8 +1,6 @@
 package models
 
 import (
-	"strings"
-
 	"app-store-server/pkg/models/tapr"
 )
 
@@ -53,7 +51,7 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		Description:        ac.Metadata.Description,
 		Title:              ac.Metadata.Title,
 		Version:            ac.Metadata.Version,
-		Categories:         strings.Join(ac.Metadata.Categories, ","),
+		Categories:         ac.Metadata.Categories,
 		VersionName:        ac.Spec.VersionName,
 		FullDescription:    ac.Spec.FullDescription,
 		UpgradeDescription: ac.Spec.UpgradeDescription,

@@ -36,6 +36,15 @@ const (
 )
 
 const (
+	AppAdminServiceTopicsDetailURLTempl     = "https://%s:%s/topics/detail"
+	AppAdminServiceRecommendsDetailURLTempl = "https://%s:%s/recommends/detail"
+	AppAdminServiceCategoriesURLTempl       = "https://%s:%s/categories"
+
+	AppAdminSeviceHostEnv = "APP_ADMIN_HOST"
+	AppAdminSevicePortEnv = "APP_ADMIN_PORT"
+)
+
+const (
 	RemoveFile  = ".remove"
 	SuspendFile = ".suspend"
 	NsfwFile    = ".nsfw"

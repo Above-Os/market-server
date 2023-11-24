@@ -5,6 +5,7 @@ import (
 	"app-store-server/pkg/utils"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang/glog"
@@ -18,8 +19,21 @@ func GetAppLists(offset, size int64, category string) (list []*models.Applicatio
 	filter := make(bson.M)
 	if category != "" {
 		//filter["categories"] = category
-		regex := primitive.Regex{Pattern: category, Options: "i"}
-		filter["categories"] = bson.M{"$in": bson.A{regex}}
+		//regex := primitive.Regex{Pattern: category, Options: "i"}
+		//filter["categories"] = bson.M{"$in": bson.A{regex}}
+		//filter["categories"] = bson.M{
+		//	"$elemMatch": bson.M{
+		//		"$eq": category,
+		//	},
+		//}
+
+		categoriesRegex := bson.M{
+			"$regex": primitive.Regex{Pattern: fmt.Sprintf("^%s$", category), Options: "i"},
+		}
+
+		filter["categories"] = bson.M{
+			"$elemMatch": categoriesRegex,
+		}
 	}
 
 	var lastCommitHash string

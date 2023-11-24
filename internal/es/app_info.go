@@ -91,7 +91,7 @@ func createIndex() error {
 			Analyzer:       some.String("caseSensitive"),
 			SearchAnalyzer: some.String("caseSensitiveSearch"),
 		},
-		"categories":     types.KeywordProperty{},
+		"categories":     types.TextProperty{},
 		"lastCommitHash": types.KeywordProperty{},
 		"createTime":     types.DateProperty{},
 		"updateTime":     types.DateProperty{},

@@ -17,7 +17,7 @@ type Client struct {
 }
 
 const (
-	AppStoreDb                      = "AppStore"
+	AppStoreDb                      = "AppStoreServer"
 	AppStoreAdminDb                 = "AppStoreAdmin"
 	AppTypesCollection              = "AppTypes"
 	AppInfosCollection              = "AppInfos"
@@ -33,6 +33,9 @@ var mgoClient *Client
 func Init() error {
 	var err error
 	mgoClient, err = NewMongoClient()
+	if mgoClient != nil {
+		_ = mgoClient.dropCollection(AppStoreDb, AppInfosCollection)
+	}
 	return err
 }
 
@@ -55,6 +58,14 @@ func NewMongoClient() (*Client, error) {
 	}
 
 	return &Client{client}, nil
+}
+
+func (mc *Client) dropCollection(db, collection string) error {
+	coll := mc.mgo.Database(db).Collection(collection)
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+
+	return coll.Drop(ctx)
 }
 
 func (mc *Client) insertOne(db, collection string, document interface{}, opts ...*options.InsertOneOptions) (*mongo.InsertOneResult, error) {

@@ -26,15 +26,15 @@ type TopResultItem struct {
 type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"id"`
 
-	Name        string `yaml:"name" json:"name" bson:"name"`
-	ChartName   string `yaml:"chartName" json:"chartName" bson:"chartName"`
-	Icon        string `yaml:"icon" json:"icon" bson:"icon"`
-	Description string `yaml:"desc" json:"desc" bson:"desc"`
-	AppID       string `yaml:"appid" json:"appid" bson:"appid"`
-	Title       string `yaml:"title" json:"title" bson:"title"`
-	Version     string `yaml:"version" json:"version" bson:"version"`
-	Categories  string `yaml:"categories" json:"categories" bson:"categories"` //[]string
-	VersionName string `yaml:"versionName" json:"versionName" bson:"versionName"`
+	Name        string   `yaml:"name" json:"name" bson:"name"`
+	ChartName   string   `yaml:"chartName" json:"chartName" bson:"chartName"`
+	Icon        string   `yaml:"icon" json:"icon" bson:"icon"`
+	Description string   `yaml:"desc" json:"desc" bson:"desc"`
+	AppID       string   `yaml:"appid" json:"appid" bson:"appid"`
+	Title       string   `yaml:"title" json:"title" bson:"title"`
+	Version     string   `yaml:"version" json:"version" bson:"version"`
+	Categories  []string `yaml:"categories" json:"categories" bson:"categories"` //[]string
+	VersionName string   `yaml:"versionName" json:"versionName" bson:"versionName"`
 
 	FullDescription    string        `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
 	UpgradeDescription string        `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
