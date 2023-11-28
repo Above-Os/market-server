@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,7 +34,8 @@ var mgoClient *Client
 func Init() error {
 	var err error
 	mgoClient, err = NewMongoClient()
-	if mgoClient != nil {
+	dropAppInfo := os.Getenv(constants.MongoDBDropAppInfo)
+	if mgoClient != nil && strings.EqualFold(dropAppInfo, "true") {
 		_ = mgoClient.dropCollection(AppStoreDb, AppInfosCollection)
 	}
 	return err

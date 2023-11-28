@@ -28,7 +28,10 @@ const (
 	DefaultPageSize = 100
 	DefaultFrom     = 0
 
-	MongoDBUri = "MONGODB_URI"
+	DefaultTopCount = 20
+
+	MongoDBUri         = "MONGODB_URI"
+	MongoDBDropAppInfo = "MONGODB_DROP_APPINFO"
 
 	EsAddr     = "ES_ADDR"
 	EsName     = "ES_NAME"

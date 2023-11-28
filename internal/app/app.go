@@ -91,7 +91,11 @@ func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
 		err := mongo.UpsertAppInfoToDb(info)
 		if err != nil {
 			glog.Warningf("mongo.UpsertAppInfoToDb info:%#v, err:%s", info, err.Error())
-			continue
+		}
+
+		err = mongo.InitCounterByApp(info.Name)
+		if err != nil {
+			glog.Warningf("mongo.InitCounterByApp info.Name:%s, err:%s", info.Name, err.Error())
 		}
 	}
 

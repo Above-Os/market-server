@@ -65,7 +65,8 @@ type ApplicationInfo struct {
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
 	//Status         string   `yaml:"status" json:"status" bson:"status"`
-	AppLabels []string `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
+	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
+	Count     interface{} `yaml:"count" json:"count" bson:"count"`
 }
 
 type AppService struct {

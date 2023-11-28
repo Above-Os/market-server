@@ -105,24 +105,13 @@ func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
 
 func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 	//todo local cache results
-	var results []models.TopResultItem
-	categories := es.GetCategories()
-	glog.Infof("categories:%+v", categories)
-	for _, category := range categories {
-		var result models.TopResultItem
-		result.Category = category
-		//default every category 3 apps
-		infos, err := es.SearchByCategory(0, 3, category)
-		if err != nil {
-			continue
-		}
-		for _, info := range infos {
-			result.Apps = append(result.Apps, info)
-		}
-		results = append(results, result)
+	category := req.QueryParameter("category")
+	infos, err := mongo.GetTopApplicationInfos(category, 20)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
 	}
-
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(results)))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(infos)))
 }
 
 func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {

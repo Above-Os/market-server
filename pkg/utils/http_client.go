@@ -51,7 +51,7 @@ func SendHttpRequest(req *http.Request) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	glog.Infof("%s, res:%s\n", req.URL, string(body))
+	//glog.Infof("%s, res:%s\n", req.URL, string(body))
 
 	if resp.StatusCode != http.StatusOK {
 		glog.Warningf("res:%s, resp.StatusCode:%d", string(body), resp.StatusCode)
