@@ -22,17 +22,39 @@ const (
 	AppGitZipLocalDir = "./charts"
 	AppCfgFileName    = "app.cfg"
 
-	TimeFormatStr = "Mon Jan 02 15:04:05 2006 -0700"
+	TimeFormatStr = "Mon Jan 2 15:04:05 2006 -0700"
 
 	DefaultPage     = 1
 	DefaultPageSize = 100
 	DefaultFrom     = 0
 
-	MongoDBUri = "MONGODB_URI"
+	DefaultTopCount = 20
+
+	MongoDBUri         = "MONGODB_URI"
+	MongoDBDropAppInfo = "MONGODB_DROP_APPINFO"
 
 	EsAddr     = "ES_ADDR"
 	EsName     = "ES_NAME"
 	EsPassword = "ES_PASSWORD"
+)
+
+const (
+	AppAdminServiceTopicsDetailURLTempl     = "https://%s:%s/topics/detail"
+	AppAdminServiceRecommendsDetailURLTempl = "https://%s:%s/recommends/detail"
+	AppAdminServiceCategoriesURLTempl       = "https://%s:%s/categories"
+
+	AppAdminSeviceHostEnv = "APP_ADMIN_HOST"
+	AppAdminSevicePortEnv = "APP_ADMIN_PORT"
+)
+
+const (
+	RemoveFile  = ".remove"
+	SuspendFile = ".suspend"
+	NsfwFile    = ".nsfw"
+
+	RemoveLabel  = "remove"
+	SuspendLabel = "suspend"
+	NsfwLabel    = "nsfw"
 )
 
 var (

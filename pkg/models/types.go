@@ -15,9 +15,7 @@
 package models
 
 import (
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"app-store-server/pkg/models/tapr"
 )
 
 type TopResultItem struct {
@@ -26,23 +24,24 @@ type TopResultItem struct {
 }
 
 type ApplicationInfo struct {
-	Id string `yaml:"id" json:"id" bson:"_id"`
+	Id string `yaml:"id" json:"id" bson:"id"`
 
-	Name        string `yaml:"name" json:"name" bson:"name"`
-	ChartName   string `yaml:"chartName" json:"chartName" bson:"chartName"`
-	Icon        string `yaml:"icon" json:"icon" bson:"icon"`
-	Description string `yaml:"desc" json:"desc" bson:"desc"`
-	AppID       string `yaml:"appid" json:"appid" bson:"appid"`
-	Title       string `yaml:"title" json:"title" bson:"title"`
-	Version     string `yaml:"version" json:"version" bson:"version"`
-	Categories  string `yaml:"categories" json:"categories" bson:"categories"` //[]string
-	VersionName string `yaml:"versionName" json:"versionName" bson:"versionName"`
+	Name        string   `yaml:"name" json:"name" bson:"name"`
+	ChartName   string   `yaml:"chartName" json:"chartName" bson:"chartName"`
+	Icon        string   `yaml:"icon" json:"icon" bson:"icon"`
+	Description string   `yaml:"desc" json:"desc" bson:"desc"`
+	AppID       string   `yaml:"appid" json:"appid" bson:"appid"`
+	Title       string   `yaml:"title" json:"title" bson:"title"`
+	Version     string   `yaml:"version" json:"version" bson:"version"`
+	Categories  []string `yaml:"categories" json:"categories" bson:"categories"` //[]string
+	VersionName string   `yaml:"versionName" json:"versionName" bson:"versionName"`
 
 	FullDescription    string        `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
 	UpgradeDescription string        `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
 	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
 	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
 	SubCategory        string        `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
+	Language           []string      `yaml:"language" json:"language" bson:"language"`
 	Developer          string        `yaml:"developer" json:"developer" bson:"developer"`
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
@@ -52,21 +51,22 @@ type ApplicationInfo struct {
 	Rating             float32       `yaml:"rating" json:"rating" bson:"rating"`
 	Target             string        `yaml:"target" json:"target" bson:"target"`
 	Permission         Permission    `yaml:"permission" json:"permission"  bson:"permission" description:"app permission request"`
-	Entrance           AppService    `yaml:"entrance" json:"entrance" bson:"entrance"`
+	//Entrance           AppService       `yaml:"entrance" json:"entrance" bson:"entrance"`
+	Middleware *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
+	Options    Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
 
-	//Interface string
-	//Endpoint  string
+	Submitter string       `yaml:"submitter" json:"submitter" bson:"submitter"`
+	Doc       string       `yaml:"doc" json:"doc" bson:"doc"`
+	Website   string       `yaml:"website" json:"website" bson:"website"`
+	License   []TextAndURL `yaml:"license" json:"license" bson:"license"`
+	Legal     []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
-	//Status      AppStatus `json:"status"`
-}
-
-func (info *ApplicationInfo) InitBsonId() {
-	info.Id = primitive.NewObjectID().Hex()
-	info.CreateTime = time.Now().UnixMilli()
-	info.UpdateTime = info.CreateTime
+	//Status         string   `yaml:"status" json:"status" bson:"status"`
+	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
+	Count     interface{} `yaml:"count" json:"count" bson:"count"`
 }
 
 type AppService struct {
@@ -81,12 +81,24 @@ type AppSpec struct {
 	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage"`
 	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo"`
 	SubCategory        string        `yaml:"subCategory" json:"subCategory"`
+	Language           []string      `yaml:"language" json:"language"`
 	Developer          string        `yaml:"developer" json:"developer"`
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk"`
 	SupportClient      SupportClient `yaml:"supportClient" json:"supportClient"`
 	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty"`
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu"`
+
+	Submitter string       `yaml:"submitter" json:"submitter"`
+	Doc       string       `yaml:"doc" json:"doc"`
+	Website   string       `yaml:"website" json:"website"`
+	License   []TextAndURL `yaml:"license" json:"license"`
+	Legal     []TextAndURL `yaml:"legal" json:"legal"`
+}
+
+type TextAndURL struct {
+	Text string `yaml:"text" json:"text" bson:"text"`
+	URL  string `yaml:"url" json:"url" bson:"url"`
 }
 
 type SupportClient struct {
@@ -108,6 +120,31 @@ type SysDataCfg struct {
 	DataType string   `yaml:"dataType" json:"dataType"`
 	Version  string   `yaml:"version" json:"version"`
 	Ops      []string `yaml:"ops" json:"ops"`
+}
+
+type Policy struct {
+	Description string `yaml:"description" json:"description" bson:"description" description:"the description of the policy"`
+	URIRegex    string `yaml:"uriRegex" json:"uriRegex" description:"uri regular expression"`
+	Level       string `yaml:"level" json:"level"`
+	OneTime     bool   `yaml:"oneTime" json:"oneTime"`
+	Duration    string `yaml:"validDuration" json:"validDuration"`
+}
+
+type Analytics struct {
+	Enabled bool `yaml:"enabled" json:"enabled"`
+}
+
+type Options struct {
+	Policies     []Policy     `yaml:"policies" json:"policies" bson:"policies"`
+	Analytics    Analytics    `yaml:"analytics" json:"analytics" bson:"analytics"`
+	Dependencies []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
+}
+
+type Dependency struct {
+	Name    string `yaml:"name" json:"name" bson:"name"`
+	Version string `yaml:"version" json:"version" bson:"version"`
+	// dependency type: system, application.
+	Type string `yaml:"type" json:"type" bson:"type"`
 }
 
 type ExistRes struct {

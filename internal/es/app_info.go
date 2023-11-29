@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/some"
@@ -26,14 +27,71 @@ func existIndex() bool {
 	return false
 }
 
+func delIndex() {
+	suc, err := esClient.typedClient.Indices.Delete(indexName).IsSuccess(context.Background())
+	if err != nil {
+		glog.Warningf("index %s Delete err:%s", indexName, err.Error())
+	}
+
+	if !suc {
+		glog.Warningf("index %s Delete failed", indexName)
+	}
+}
+
 func createIndex() error {
 	props := map[string]types.Property{
 		"name": types.TextProperty{
 			Fields: map[string]types.Property{
 				"keyword": types.KeywordProperty{},
 			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
 		},
-		"categories":     types.KeywordProperty{},
+		"title": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{},
+			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
+		},
+		"desc": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{},
+			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
+		},
+		"fullDescription": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{},
+			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
+		},
+		"upgradeDescription": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{},
+			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
+		},
+		"submitter": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{},
+			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
+		},
+		"developer": types.TextProperty{
+			Fields: map[string]types.Property{
+				"keyword": types.KeywordProperty{
+					//Normalizer: some.String(""),
+				},
+			},
+			Analyzer:       some.String("caseSensitive"),
+			SearchAnalyzer: some.String("caseSensitiveSearch"),
+		},
+		"categories":     types.TextProperty{},
 		"lastCommitHash": types.KeywordProperty{},
 		"createTime":     types.DateProperty{},
 		"updateTime":     types.DateProperty{},
@@ -221,7 +279,23 @@ func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
 	return nil, fmt.Errorf("get info failed")
 }
 
-func SearchByNameFuzzy(from, size int, name string) (infos []*models.ApplicationInfo, count int64, err error) {
+func getWildcardName(word string) string {
+	if word == "" {
+		return "*"
+	}
+
+	if word[0] != '*' {
+		word = "*" + word
+	}
+
+	if word[len(word)-1] != '*' {
+		word += "*"
+	}
+
+	return strings.ToLower(word)
+}
+
+func SearchByNameWildcard(from, size int, name string) (infos []*models.ApplicationInfo, count int64, err error) {
 	var resp *search.Response
 	var lastCommitHash string
 	lastCommitHash, err = gitapp.GetLastHash()
@@ -230,13 +304,7 @@ func SearchByNameFuzzy(from, size int, name string) (infos []*models.Application
 		return
 	}
 
-	if name != "" {
-		if name[len(name)-1] != '*' {
-			name += "*"
-		}
-	} else {
-		name = "*"
-	}
+	wildcardName := getWildcardName(name)
 	resp, err = esClient.typedClient.Search().
 		Index(indexName).
 		Request(
@@ -252,10 +320,61 @@ func SearchByNameFuzzy(from, size int, name string) (infos []*models.Application
 							},
 							{
 								Bool: &types.BoolQuery{
-									Filter: []types.Query{
+									Should: []types.Query{
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"name": {Value: &name},
+												"name": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
+											},
+										},
+										{
+											Wildcard: map[string]types.WildcardQuery{
+												"title": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
+											},
+										},
+										{
+											Wildcard: map[string]types.WildcardQuery{
+												"desc": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
+											},
+										},
+										{
+											Wildcard: map[string]types.WildcardQuery{
+												"fullDescription": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
+											},
+										},
+										{
+											Wildcard: map[string]types.WildcardQuery{
+												"upgradeDescription": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
+											},
+										},
+										{
+											Wildcard: map[string]types.WildcardQuery{
+												"submitter": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
+											},
+										},
+										{
+											Wildcard: map[string]types.WildcardQuery{
+												"developer": {
+													Value:           &wildcardName,
+													CaseInsensitive: some.Bool(true),
+												},
 											},
 										},
 									},

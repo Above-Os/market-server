@@ -7,8 +7,10 @@ import (
 	"app-store-server/internal/helm"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
+	"app-store-server/pkg/utils"
 	"errors"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -17,6 +19,7 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 func Init() error {
@@ -88,7 +91,11 @@ func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
 		err := mongo.UpsertAppInfoToDb(info)
 		if err != nil {
 			glog.Warningf("mongo.UpsertAppInfoToDb info:%#v, err:%s", info, err.Error())
-			continue
+		}
+
+		err = mongo.InitCounterByApp(info.Name)
+		if err != nil {
+			glog.Warningf("mongo.InitCounterByApp info.Name:%s, err:%s", info.Name, err.Error())
 		}
 	}
 
@@ -104,23 +111,93 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 		return nil, err
 	}
 
-	info, err := ioutil.ReadAll(f)
+	cfgContent, err := io.ReadAll(f)
 	if err != nil {
 		glog.Warningf("%s", err.Error())
 		return nil, err
 	}
 
 	var appCfg models.AppConfiguration
-	if err = yaml.Unmarshal(info, &appCfg); err != nil {
+	if err = yaml.Unmarshal(cfgContent, &appCfg); err != nil {
 		glog.Warningf("%s", err.Error())
 		return nil, err
 	}
 
-	return appCfg.ToAppInfo(), nil
+	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
+
+	appDir := path.Join(constants.AppGitLocalDir, dirName)
+	checkAppContainSpecialFile(appInfo, appDir)
+
+	return appInfo, nil
+}
+
+func checkAppContainSpecialFile(info *models.ApplicationInfo, appDir string) {
+	if isContainRemove(appDir) {
+		info.AppLabels = append(info.AppLabels, constants.RemoveLabel)
+	}
+
+	if isContainSuspend(appDir) {
+		info.AppLabels = append(info.AppLabels, constants.SuspendLabel)
+	}
+
+	if isContainNsfw(appDir) {
+		info.AppLabels = append(info.AppLabels, constants.NsfwLabel)
+	}
+}
+
+func isContainSuspend(appDir string) bool {
+	return utils.IsDirContainFile(appDir, constants.SuspendFile)
+}
+
+func isContainRemove(appDir string) bool {
+	return utils.IsDirContainFile(appDir, constants.RemoveFile)
+}
+
+func isContainNsfw(appDir string) bool {
+	return utils.IsDirContainFile(appDir, constants.NsfwFile)
+}
+
+func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo {
+	if info == nil {
+		return info
+	}
+
+	if info.RequiredMemory != "" {
+		r, err := resource.ParseQuantity(info.RequiredMemory)
+		if err == nil {
+			info.RequiredMemory = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+			//info.RequiredMemory = fmt.Sprintf("%d", int(r.AsApproximateFloat64()/1024/1024))
+		}
+	}
+
+	if info.RequiredDisk != "" {
+		r, err := resource.ParseQuantity(info.RequiredDisk)
+		if err == nil {
+			info.RequiredDisk = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+			//info.RequiredDisk = fmt.Sprintf("%d", int(r.AsApproximateFloat64()/1024/1024))
+		}
+	}
+
+	if info.RequiredGPU != "" {
+		r, err := resource.ParseQuantity(info.RequiredGPU)
+		if err == nil {
+			info.RequiredGPU = fmt.Sprintf("%d", int(r.AsApproximateFloat64()))
+			//info.RequiredGPU = fmt.Sprintf("%d", int(r.AsApproximateFloat64()/1024/1024/1024))
+		}
+	}
+
+	if info.RequiredCPU != "" {
+		r, err := resource.ParseQuantity(info.RequiredCPU)
+		if err == nil {
+			info.RequiredCPU = fmt.Sprintf("%v", r.AsApproximateFloat64())
+		}
+	}
+
+	return info
 }
 
 func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err error) {
-	charts, err := ioutil.ReadDir(dir)
+	charts, err := os.ReadDir(dir)
 	if err != nil {
 		glog.Warningf("read dir %s error: %s", dir, err.Error())
 		return nil, err

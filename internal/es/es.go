@@ -46,9 +46,10 @@ func initWithRetry() error {
 		return err
 	}
 
-	if !existIndex() {
-		createIndex()
+	if existIndex() {
+		delIndex()
 	}
+	createIndex()
 
 	return nil
 }
@@ -144,6 +145,22 @@ func (c *Client) CreateIndexWithMapping(indexName string, prop map[string]types.
 	response, err := c.typedClient.Indices.Create(indexName).
 		Mappings(&types.TypeMapping{
 			Properties: prop,
+		}).
+		Settings(&types.IndexSettings{
+			Analysis: &types.IndexSettingsAnalysis{
+				Analyzer: map[string]types.Analyzer{
+					"caseSensitive": types.CustomAnalyzer{
+						Filter:    []string{"lowercase"},
+						Type:      "custom",
+						Tokenizer: "keyword",
+					},
+					"caseSensitiveSearch": types.CustomAnalyzer{
+						Filter:    []string{"lowercase"},
+						Type:      "custom",
+						Tokenizer: "keyword",
+					},
+				},
+			},
 		}).
 		Do(nil)
 	if err != nil {

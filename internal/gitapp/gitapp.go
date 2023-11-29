@@ -224,7 +224,7 @@ func GetLastUpdateTimeSecond(dirPath, subDirPath string) (int64, error) {
 	return t.Unix(), nil
 }
 
-func getCreateTime(dirPath, subDirPath string) (string, error) {
+func getLastUpdateTime(dirPath, subDirPath string) (string, error) {
 	curDir, err := os.Getwd()
 	if err != nil {
 		return "", err
@@ -254,7 +254,7 @@ func getCreateTime(dirPath, subDirPath string) (string, error) {
 	return string(out), nil
 }
 
-func getLastUpdateTime(dirPath, subDirPath string) (string, error) {
+func getCreateTime(dirPath, subDirPath string) (string, error) {
 	curDir, err := os.Getwd()
 	if err != nil {
 		return "", err

@@ -2,12 +2,15 @@ package mongo
 
 import (
 	"app-store-server/pkg/models"
+	"app-store-server/pkg/utils"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang/glog"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -15,7 +18,22 @@ import (
 func GetAppLists(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
-		filter["categories"] = category
+		//filter["categories"] = category
+		//regex := primitive.Regex{Pattern: category, Options: "i"}
+		//filter["categories"] = bson.M{"$in": bson.A{regex}}
+		//filter["categories"] = bson.M{
+		//	"$elemMatch": bson.M{
+		//		"$eq": category,
+		//	},
+		//}
+
+		categoriesRegex := bson.M{
+			"$regex": primitive.Regex{Pattern: fmt.Sprintf("^%s$", category), Options: "i"},
+		}
+
+		filter["categories"] = bson.M{
+			"$elemMatch": categoriesRegex,
+		}
 	}
 
 	var lastCommitHash string
@@ -143,7 +161,9 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["chartName"] = appInfoNew.ChartName
 	update["icon"] = appInfoNew.Icon
 	update["desc"] = appInfoNew.Description
-	update["appid"] = appInfoNew.AppID
+	nameMd58 := utils.Md5String(appInfoNew.Name)[:8]
+	update["appid"] = nameMd58
+	update["id"] = nameMd58
 	update["title"] = appInfoNew.Title
 	update["version"] = appInfoNew.Version
 	update["categories"] = appInfoNew.Categories
@@ -162,7 +182,18 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["rating"] = appInfoNew.Rating
 	update["target"] = appInfoNew.Target
 	update["permission"] = appInfoNew.Permission
-	update["entrance"] = appInfoNew.Entrance
+	//update["entrance"] = appInfoNew.Entrance
+	update["middleware"] = appInfoNew.Middleware
+	update["options"] = appInfoNew.Options
+	update["language"] = appInfoNew.Language
+
+	update["submitter"] = appInfoNew.Submitter
+	update["doc"] = appInfoNew.Doc
+	update["website"] = appInfoNew.Website
+	update["license"] = appInfoNew.License
+	update["legal"] = appInfoNew.Legal
+	//update["status"] = appInfoNew.Status
+	update["appLabels"] = appInfoNew.AppLabels
 
 	return &update
 }
