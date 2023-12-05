@@ -50,3 +50,22 @@ func (h *Handler) categories(req *restful.Request, resp *restful.Response) {
 		glog.Warningf("err:%s", err)
 	}
 }
+
+func (h *Handler) handleVersionHistory(req *restful.Request, resp *restful.Response) {
+	appName := req.PathParameter(ParamAppName)
+	if appName == "" {
+		api.HandleError(resp, req, errors.New("param invalid"))
+		return
+	}
+
+	respBody, err := appadmin.GetAppHistory(appName)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+	
+	_, err = resp.Write([]byte(respBody))
+	if err != nil {
+		glog.Warningf("err:%s", err)
+	}
+}

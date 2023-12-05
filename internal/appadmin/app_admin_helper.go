@@ -43,11 +43,19 @@ type CategoriesResponse struct {
 }
 
 func getAppAdminServiceHost() string {
-	return os.Getenv(constants.AppAdminSeviceHostEnv)
+	return os.Getenv(constants.AppAdminHostEnv)
 }
 
 func getAppAdminServicePort() string {
-	return os.Getenv(constants.AppAdminSevicePortEnv)
+	return os.Getenv(constants.AppAdminPortEnv)
+}
+
+func getAppGitBotHost() string {
+	return os.Getenv(constants.AppGitBotHostEnv)
+}
+
+func getAppGitBotPort() string {
+	return os.Getenv(constants.AppGitBotPortEnv)
 }
 
 func sendHttpRequest(method, url string, reader io.Reader) (string, error) {

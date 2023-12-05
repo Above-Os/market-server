@@ -43,8 +43,13 @@ const (
 	AppAdminServiceRecommendsDetailURLTempl = "https://%s:%s/recommends/detail"
 	AppAdminServiceCategoriesURLTempl       = "https://%s:%s/categories"
 
-	AppAdminSeviceHostEnv = "APP_ADMIN_HOST"
-	AppAdminSevicePortEnv = "APP_ADMIN_PORT"
+	AppAdminHostEnv = "APP_ADMIN_HOST"
+	AppAdminPortEnv = "APP_ADMIN_PORT"
+
+	AppGitBotAppVersionHistoryURLTempl = "http://%s:%s/appstore-git-bot/v1/app-version-history/%s"
+
+	AppGitBotHostEnv = "APP_GIT_BOT_HOST"
+	AppGitBotPortEnv = "APP_GIT_BOT_PORT"
 )
 
 const (

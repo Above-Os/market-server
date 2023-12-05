@@ -98,6 +98,12 @@ func AddToContainer(c *restful.Container) error {
 		Doc("search application list by name").
 		Returns(http.StatusOK, "success to search application list by name", nil))
 
+	ws.Route(ws.GET("/applications/version-history/{"+ParamAppName+"}").
+		To(handler.handleVersionHistory).
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Doc("get application version history by name").
+		Returns(http.StatusOK, "success to get application version history by name", nil))
+
 	ws.Route(ws.GET("/applications/exist/{"+ParamAppName+"}").
 		To(handler.handleExist).
 		Param(ws.PathParameter(ParamAppName, "the name of the application")).
