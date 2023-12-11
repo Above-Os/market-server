@@ -50,7 +50,8 @@ type ApplicationInfo struct {
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
 	Rating             float32       `yaml:"rating" json:"rating" bson:"rating"`
 	Target             string        `yaml:"target" json:"target" bson:"target"`
-	Permission         Permission    `yaml:"permission" json:"permission"  bson:"permission" description:"app permission request"`
+	Permission         Permission    `yaml:"permission" json:"permission" bson:"permission" description:"app permission request"`
+	Entrances          []Entrance    `yaml:"entrances" json:"entrances" bson:"entrances"`
 	//Entrance           AppService       `yaml:"entrance" json:"entrance" bson:"entrance"`
 	Middleware *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
 	Options    Options          `yaml:"options" json:"options" bson:"options" description:"app options"`

@@ -182,7 +182,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["rating"] = appInfoNew.Rating
 	update["target"] = appInfoNew.Target
 	update["permission"] = appInfoNew.Permission
-	//update["entrance"] = appInfoNew.Entrance
+	update["entrances"] = appInfoNew.Entrances
 	update["middleware"] = appInfoNew.Middleware
 	update["options"] = appInfoNew.Options
 	update["language"] = appInfoNew.Language

@@ -34,13 +34,22 @@ type AppMetaData struct {
 }
 
 type AppConfiguration struct {
-	ConfigVersion string      `yaml:"app.cfg.version" json:"app.cfg.version"`
-	Metadata      AppMetaData `yaml:"metadata" json:"metadata"`
-	//Entrance      AppService       `yaml:"entrance" json:"entrance"`
-	Spec       AppSpec          `yaml:"spec" json:"spec"`
-	Permission Permission       `yaml:"permission" json:"permission" description:"app permission request"`
-	Middleware *tapr.Middleware `yaml:"middleware" json:"middleware" description:"app middleware request"`
-	Options    Options          `yaml:"options" json:"options" description:"app options"`
+	ConfigVersion string           `yaml:"app.cfg.version" json:"app.cfg.version"`
+	Metadata      AppMetaData      `yaml:"metadata" json:"metadata"`
+	Entrances     []Entrance       `yaml:"entrances" json:"entrances"`
+	Spec          AppSpec          `yaml:"spec" json:"spec"`
+	Permission    Permission       `yaml:"permission" json:"permission" description:"app permission request"`
+	Middleware    *tapr.Middleware `yaml:"middleware" json:"middleware" description:"app middleware request"`
+	Options       Options          `yaml:"options" json:"options" description:"app options"`
+}
+
+type Entrance struct {
+	Name      string `yaml:"name" json:"name" bson:"name"`
+	Host      string `yaml:"host" json:"host" bson:"host"`
+	Port      int32  `yaml:"port" json:"port" bson:"port"`
+	Icon      string `yaml:"icon,omitempty" json:"icon,omitempty" bson:"icon,omitempty"`
+	Title     string `yaml:"title" json:"title" bson:"title"`
+	AuthLevel string `yaml:"authLevel,omitempty" json:"authLevel,omitempty" bson:"authLevel,omitempty"`
 }
 
 func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
@@ -67,14 +76,14 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		Rating:             ac.Metadata.Rating,
 		Target:             ac.Metadata.Target,
 		Permission:         ac.Permission,
-		//Entrance:           ac.Entrance,
-		Middleware: ac.Middleware,
-		Options:    ac.Options,
-		Language:   ac.Spec.Language,
-		Submitter:  ac.Spec.Submitter,
-		Doc:        ac.Spec.Doc,
-		Website:    ac.Spec.Website,
-		License:    ac.Spec.License,
-		Legal:      ac.Spec.Legal,
+		Entrances:          ac.Entrances,
+		Middleware:         ac.Middleware,
+		Options:            ac.Options,
+		Language:           ac.Spec.Language,
+		Submitter:          ac.Spec.Submitter,
+		Doc:                ac.Spec.Doc,
+		Website:            ac.Spec.Website,
+		License:            ac.Spec.License,
+		Legal:              ac.Spec.Legal,
 	}
 }
