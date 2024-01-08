@@ -90,7 +90,7 @@ func GetTopApps(count int64) ([]string, error) {
 	return names, nil
 }
 
-func GetTopApplicationInfos(category string, count int64) ([]models.ApplicationInfo, error) {
+func GetTopApplicationInfos(category, ty string, count int) ([]models.ApplicationInfo, error) {
 	lastCommitHash, err := GetLastCommitHashFromDB()
 	if err != nil {
 		return nil, err
@@ -117,6 +117,9 @@ func GetTopApplicationInfos(category string, count int64) ([]models.ApplicationI
 	filter := make(bson.M)
 	if lastCommitHash != "" {
 		filter["lastCommitHash"] = lastCommitHash
+	}
+	if ty != "" {
+		filter["cfgType"] = ty
 	}
 
 	if category != "" {

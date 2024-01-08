@@ -40,12 +40,16 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	page := req.QueryParameter("page")
 	size := req.QueryParameter("size")
 	category := req.QueryParameter("category")
+	ty := req.QueryParameter("type")
+	if ty == "" {
+		ty = "app"
+	}
 
 	glog.Infof("page:%s, size:%s, category:%s", page, size, category)
 
 	from, sizeN := utils.VerifyFromAndSize(page, size)
 
-	appList, count, err := mongo.GetAppLists(int64(from), int64(sizeN), category)
+	appList, count, err := mongo.GetAppLists(int64(from), int64(sizeN), category, ty)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
@@ -106,7 +110,13 @@ func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
 func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 	//todo local cache results
 	category := req.QueryParameter("category")
-	infos, err := mongo.GetTopApplicationInfos(category, 20)
+	ty := req.QueryParameter("type")
+	if ty == "" {
+		ty = "app"
+	}
+	size := req.QueryParameter("size")
+	sizeN := utils.VerifyTopSize(size)
+	infos, err := mongo.GetTopApplicationInfos(category, ty, sizeN)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return

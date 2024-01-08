@@ -12,6 +12,7 @@ const (
 app.cfg
 
 app.cfg.version: v1
+app.cfg.type: app/workflow/agent
 metadata:
   name: <chart name>
   description: <desc>
@@ -22,7 +23,8 @@ metadata:
 */
 
 type AppMetaData struct {
-	Name        string   `yaml:"name" json:"name"`
+	Name string `yaml:"name" json:"name"`
+	//Type        string   `yaml:"type" json:"type"`
 	Icon        string   `yaml:"icon" json:"icon"`
 	Description string   `yaml:"description" json:"description"`
 	AppID       string   `yaml:"appid" json:"appid"`
@@ -35,6 +37,7 @@ type AppMetaData struct {
 
 type AppConfiguration struct {
 	ConfigVersion string           `yaml:"app.cfg.version" json:"app.cfg.version"`
+	ConfigType    string           `yaml:"app.cfg.type" json:"app.cfg.type"`
 	Metadata      AppMetaData      `yaml:"metadata" json:"metadata"`
 	Entrances     []Entrance       `yaml:"entrances" json:"entrances"`
 	Spec          AppSpec          `yaml:"spec" json:"spec"`
@@ -55,6 +58,7 @@ type Entrance struct {
 func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 	return &ApplicationInfo{
 		AppID:              ac.Metadata.AppID,
+		CfgType:            ac.ConfigType,
 		Name:               ac.Metadata.Name,
 		Icon:               ac.Metadata.Icon,
 		Description:        ac.Metadata.Description,

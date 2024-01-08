@@ -68,7 +68,7 @@ func SyncInfoFromMongo() error {
 func syncAppInfosFromMongoToEs() error {
 	pageSize := int64(1000)
 	for offset := int64(0); ; {
-		infos, _, err := mongo.GetAppLists(offset, pageSize, "")
+		infos, _, err := mongo.GetAppLists(offset, pageSize, "", "")
 		if err != nil {
 			glog.Warningf("GetAppLists err:%s", err.Error())
 			break

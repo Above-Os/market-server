@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAppLists(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
+func GetAppLists(offset, size int64, category, ty string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
 		//filter["categories"] = category
@@ -34,6 +34,9 @@ func GetAppLists(offset, size int64, category string) (list []*models.Applicatio
 		filter["categories"] = bson.M{
 			"$elemMatch": categoriesRegex,
 		}
+	}
+	if ty != "" {
+		filter["cfgType"] = ty
 	}
 
 	var lastCommitHash string
@@ -159,6 +162,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["createTime"] = appInfoNew.CreateTime
 
 	update["chartName"] = appInfoNew.ChartName
+	update["cfgType"] = appInfoNew.CfgType
 	update["icon"] = appInfoNew.Icon
 	update["desc"] = appInfoNew.Description
 	nameMd58 := utils.Md5String(appInfoNew.Name)[:8]

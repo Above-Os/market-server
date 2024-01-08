@@ -57,3 +57,12 @@ func VerifyFromAndSize(page, size string) (int, int) {
 
 	return from, sizeN
 }
+
+func VerifyTopSize(size string) int {
+	sizeN, err := strconv.Atoi(size)
+	if sizeN < 1 || sizeN > 2*constants.DefaultTopCount || err != nil {
+		sizeN = constants.DefaultTopCount
+	}
+
+	return sizeN
+}

@@ -54,6 +54,7 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.QueryParameter("page", "page")).
 		Param(ws.QueryParameter("size", "size")).
 		Param(ws.QueryParameter("category", "category")).
+		Param(ws.QueryParameter("type", "type")).
 		Returns(http.StatusOK, "success to get application list", nil))
 
 	glog.Infof("registered sub module: %s", ws.RootPath()+"/applications")
@@ -74,7 +75,9 @@ func AddToContainer(c *restful.Container) error {
 	ws.Route(ws.GET("/applications/top").
 		To(handler.handleTop).
 		Doc("Get top application list").
+		Param(ws.QueryParameter("size", "size")).
 		Param(ws.QueryParameter("category", "category")).
+		Param(ws.QueryParameter("type", "type")).
 		Returns(http.StatusOK, "success to get the top application list", nil))
 
 	ws.Route(ws.GET("/applications/info/{"+ParamAppName+"}").
