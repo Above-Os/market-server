@@ -87,6 +87,8 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		Submitter:          ac.Spec.Submitter,
 		Doc:                ac.Spec.Doc,
 		Website:            ac.Spec.Website,
+		FeatureImage:       ac.Spec.FeatureImage,
+		SourceCode:         ac.Spec.SourceCode,
 		License:            ac.Spec.License,
 		Legal:              ac.Spec.Legal,
 	}

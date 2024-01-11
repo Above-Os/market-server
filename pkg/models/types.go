@@ -57,11 +57,13 @@ type ApplicationInfo struct {
 	Middleware *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
 	Options    Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
 
-	Submitter string       `yaml:"submitter" json:"submitter" bson:"submitter"`
-	Doc       string       `yaml:"doc" json:"doc" bson:"doc"`
-	Website   string       `yaml:"website" json:"website" bson:"website"`
-	License   []TextAndURL `yaml:"license" json:"license" bson:"license"`
-	Legal     []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
+	Submitter    string       `yaml:"submitter" json:"submitter" bson:"submitter"`
+	Doc          string       `yaml:"doc" json:"doc" bson:"doc"`
+	Website      string       `yaml:"website" json:"website" bson:"website"`
+	FeatureImage string       `yaml:"featureImage" json:"featureImage" bson:"featureImage"`
+	SourceCode   string       `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
+	License      []TextAndURL `yaml:"license" json:"license" bson:"license"`
+	Legal        []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
@@ -91,11 +93,13 @@ type AppSpec struct {
 	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty"`
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu"`
 
-	Submitter string       `yaml:"submitter" json:"submitter"`
-	Doc       string       `yaml:"doc" json:"doc"`
-	Website   string       `yaml:"website" json:"website"`
-	License   []TextAndURL `yaml:"license" json:"license"`
-	Legal     []TextAndURL `yaml:"legal" json:"legal"`
+	Submitter    string       `yaml:"submitter" json:"submitter"`
+	Doc          string       `yaml:"doc" json:"doc"`
+	Website      string       `yaml:"website" json:"website"`
+	FeatureImage string       `yaml:"featureImage" json:"featureImage"`
+	SourceCode   string       `yaml:"sourceCode" json:"sourceCode"`
+	License      []TextAndURL `yaml:"license" json:"license"`
+	Legal        []TextAndURL `yaml:"legal" json:"legal"`
 }
 
 type TextAndURL struct {
@@ -140,6 +144,8 @@ type Options struct {
 	Policies     []Policy     `yaml:"policies" json:"policies" bson:"policies"`
 	Analytics    Analytics    `yaml:"analytics" json:"analytics" bson:"analytics"`
 	Dependencies []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
+	AppScope     AppScope     `yaml:"appScope" json:"appScope"`
+	WsConfig     WsConfig     `yaml:"websocket" json:"websocket"`
 }
 
 type Dependency struct {
@@ -147,6 +153,16 @@ type Dependency struct {
 	Version string `yaml:"version" json:"version" bson:"version"`
 	// dependency type: system, application.
 	Type string `yaml:"type" json:"type" bson:"type"`
+}
+
+type AppScope struct {
+	ClusterScoped bool     `yaml:"clusterScoped" json:"clusterScoped"`
+	AppRef        []string `yaml:"appRef" json:"appRef"`
+}
+
+type WsConfig struct {
+	Port int    `yaml:"port" json:"port"`
+	URL  string `yaml:"url" json:"url"`
 }
 
 type ExistRes struct {
