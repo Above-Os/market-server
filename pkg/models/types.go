@@ -108,6 +108,7 @@ type TextAndURL struct {
 }
 
 type SupportClient struct {
+	Chrome  string `yaml:"chrome" json:"chrome" bson:"chrome"`
 	Edge    string `yaml:"edge" json:"edge" bson:"edge"`
 	Android string `yaml:"android" json:"android" bson:"android"`
 	Ios     string `yaml:"ios" json:"ios" bson:"ios"`

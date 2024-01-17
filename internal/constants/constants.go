@@ -28,7 +28,7 @@ const (
 	DefaultPageSize = 100
 	DefaultFrom     = 0
 
-	DefaultTopCount = 20
+	DefaultTopCount = 100
 
 	MongoDBUri         = "MONGODB_URI"
 	MongoDBDropAppInfo = "MONGODB_DROP_APPINFO"
@@ -39,9 +39,7 @@ const (
 )
 
 const (
-	AppAdminServiceTopicsDetailURLTempl     = "https://%s:%s/topics/detail"
-	AppAdminServiceRecommendsDetailURLTempl = "https://%s:%s/recommends/detail"
-	AppAdminServiceCategoriesURLTempl       = "https://%s:%s/categories"
+	AppAdminServicePagesDetailURLTempl = "http://%s:%s/api/pages/detail"
 
 	AppAdminHostEnv = "APP_ADMIN_HOST"
 	AppAdminPortEnv = "APP_ADMIN_PORT"

@@ -42,6 +42,35 @@ type CategoriesResponse struct {
 	Data    []string    `json:"data"`
 }
 
+type ContentItem struct {
+	Name         string                   `json:"name"`
+	Introduction string                   `json:"introduction"`
+	Des          string                   `json:"des"`
+	Iconimg      string                   `json:"iconimg"`
+	Detailimg    string                   `json:"detailimg"`
+	Richtext     string                   `json:"richtext"`
+	Apps         []models.ApplicationInfo `json:"apps"`
+}
+
+type DataItem struct {
+	Type        string        `json:"type"`
+	TopicType   string        `json:"topicType"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Content     []interface{} `json:"content"`
+}
+
+type CategoryData struct {
+	Category string     `json:"category"`
+	Data     []DataItem `json:"data"`
+}
+
+type Response struct {
+	Code    int            `json:"code"`
+	Message interface{}    `json:"message"`
+	Data    []CategoryData `json:"data"`
+}
+
 func getAppAdminServiceHost() string {
 	return os.Getenv(constants.AppAdminHostEnv)
 }

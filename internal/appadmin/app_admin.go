@@ -10,9 +10,7 @@ import (
 )
 
 const (
-	RecommendKey = "RECOMMEND"
-	TopicKey     = "TOPIC"
-	CategoryKey  = "CATEGORY"
+	PageKey = "PAGE"
 )
 
 var (
@@ -20,21 +18,11 @@ var (
 )
 
 func init() {
-	go getRecommendsDetailLoop()
-	go getTopicsDetailLoop()
-	go getCategoriesDetailLoop()
+	go getPagesDetailLoop()
 }
 
-func getRecommendsDetailLoop() {
-	callLoop(getTopicsDetailFromAdmin)
-}
-
-func getTopicsDetailLoop() {
-	callLoop(getRecommendsDetailFromAdmin)
-}
-
-func getCategoriesDetailLoop() {
-	callLoop(getCategoriesDetailFromAdmin)
+func getPagesDetailLoop() {
+	callLoop(getPagesDetailFromAdmin)
 }
 
 func callLoop(f func() error) {
@@ -56,68 +44,22 @@ func callLoop(f func() error) {
 	}
 }
 
-func getRecommendsDetailStrFromAdmin() (string, error) {
-	url := fmt.Sprintf(constants.AppAdminServiceRecommendsDetailURLTempl, getAppAdminServiceHost(), getAppAdminServicePort())
-	bodyStr, err := sendHttpRequest("GET", url, nil)
-	return bodyStr, err
-}
-
-func getRecommendsDetailFromAdmin() error {
-	bodyStr, err := getRecommendsDetailStrFromAdmin()
-	if err != nil {
-		return err
-	}
-
-	cache.Store(RecommendKey, bodyStr)
-	return nil
-}
-
-func getTopicsDetailFromAdmin() error {
-	url := fmt.Sprintf(constants.AppAdminServiceTopicsDetailURLTempl, getAppAdminServiceHost(), getAppAdminServicePort())
+func getPagesDetailFromAdmin() error {
+	url := fmt.Sprintf(constants.AppAdminServicePagesDetailURLTempl, getAppAdminServiceHost(), getAppAdminServicePort())
 	bodyStr, err := sendHttpRequest("GET", url, nil)
 	if err != nil {
 		return err
 	}
 
-	cache.Store(TopicKey, bodyStr)
+	cache.Store(PageKey, bodyStr)
 	return nil
 }
 
-func getCategoriesDetailFromAdmin() error {
-	url := fmt.Sprintf(constants.AppAdminServiceCategoriesURLTempl, getAppAdminServiceHost(), getAppAdminServicePort())
-	bodyStr, err := sendHttpRequest("GET", url, nil)
-	if err != nil {
-		return err
-	}
-
-	cache.Store(CategoryKey, bodyStr)
-	return nil
-}
-
-func GetCategoriesDetail() interface{} {
-	value, _ := cache.Load(CategoryKey)
+func GetPagesDetail() interface{} {
+	value, _ := cache.Load(PageKey)
 	if value == nil {
-		_ = getCategoriesDetailFromAdmin()
-		value, _ = cache.Load(CategoryKey)
+		_ = getPagesDetailFromAdmin()
+		value, _ = cache.Load(PageKey)
 	}
-	return value
-}
-
-func GetRecommendsDetail() interface{} {
-	value, _ := cache.Load(RecommendKey)
-	if value == nil {
-		_ = getRecommendsDetailFromAdmin()
-		value, _ = cache.Load(RecommendKey)
-	}
-	return value
-}
-
-func GetTopicsDetail() interface{} {
-	value, _ := cache.Load(TopicKey)
-	if value == nil {
-		_ = getTopicsDetailFromAdmin()
-		value, _ = cache.Load(TopicKey)
-	}
-
 	return value
 }

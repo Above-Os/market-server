@@ -15,9 +15,7 @@
 package v1
 
 import (
-	"app-store-server/internal/appadmin"
 	"fmt"
-	restfulspec "github.com/emicklei/go-restful-openapi/v2"
 	"net/http"
 
 	"github.com/emicklei/go-restful/v3"
@@ -126,23 +124,10 @@ func AddToContainer(c *restful.Container) error {
 		Reads([]string{}).
 		Returns(http.StatusOK, "success to check app updates", nil))
 
-	ws.Route(ws.GET("recommends/detail").
-		To(handler.recommendsDetail).
+	ws.Route(ws.GET("pages/detail").
+		To(handler.pagesDetail).
 		Doc("get the recommends detail").
-		Metadata(restfulspec.KeyOpenAPITags, MODULE_TAGS).
 		Returns(http.StatusOK, "Success to get the recommends detail", nil))
-
-	ws.Route(ws.GET("topics/detail").
-		To(handler.topicsDetail).
-		Doc("get the topics detail").
-		Metadata(restfulspec.KeyOpenAPITags, MODULE_TAGS).
-		Returns(http.StatusOK, "Success to get the topics detail", &appadmin.TopResponse{}))
-
-	ws.Route(ws.GET("/categories").
-		To(handler.categories).
-		Doc("get categories list").
-		Metadata(restfulspec.KeyOpenAPITags, MODULE_TAGS).
-		Returns(http.StatusOK, "success to get categories list", &appadmin.CategoriesResponse{}))
 
 	c.Add(ws)
 	return nil

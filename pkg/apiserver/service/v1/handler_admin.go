@@ -9,36 +9,8 @@ import (
 	"github.com/golang/glog"
 )
 
-func (h *Handler) recommendsDetail(req *restful.Request, resp *restful.Response) {
-	detail := appadmin.GetRecommendsDetail()
-	//todo deal with error
-	if detail == nil {
-		api.HandleError(resp, req, errors.New("get empty detail"))
-		return
-	}
-
-	_, err := resp.Write([]byte(detail.(string)))
-	if err != nil {
-		glog.Warningf("err:%s", err)
-	}
-}
-
-func (h *Handler) topicsDetail(req *restful.Request, resp *restful.Response) {
-	detail := appadmin.GetTopicsDetail()
-	//todo deal with error
-	if detail == nil {
-		api.HandleError(resp, req, errors.New("get empty detail"))
-		return
-	}
-
-	_, err := resp.Write([]byte(detail.(string)))
-	if err != nil {
-		glog.Warningf("err:%s", err)
-	}
-}
-
-func (h *Handler) categories(req *restful.Request, resp *restful.Response) {
-	detail := appadmin.GetCategoriesDetail()
+func (h *Handler) pagesDetail(req *restful.Request, resp *restful.Response) {
+	detail := appadmin.GetPagesDetail()
 	//todo deal with error
 	if detail == nil {
 		api.HandleError(resp, req, errors.New("get empty detail"))
@@ -63,7 +35,7 @@ func (h *Handler) handleVersionHistory(req *restful.Request, resp *restful.Respo
 		api.HandleError(resp, req, err)
 		return
 	}
-	
+
 	_, err = resp.Write([]byte(respBody))
 	if err != nil {
 		glog.Warningf("err:%s", err)
