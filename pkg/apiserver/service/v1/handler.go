@@ -41,9 +41,6 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	size := req.QueryParameter("size")
 	category := req.QueryParameter("category")
 	ty := req.QueryParameter("type")
-	if ty == "" {
-		ty = "app"
-	}
 
 	glog.Infof("page:%s, size:%s, category:%s", page, size, category)
 
