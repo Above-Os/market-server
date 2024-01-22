@@ -74,8 +74,8 @@ func AddToContainer(c *restful.Container) error {
 		To(handler.handleTop).
 		Doc("Get top application list").
 		Param(ws.QueryParameter("size", "size")).
-		Param(ws.QueryParameter("category", "category")).
 		Param(ws.QueryParameter("type", "type")).
+		Param(ws.QueryParameter("excludedLabels", "excludedLabels")).
 		Returns(http.StatusOK, "success to get the top application list", nil))
 
 	ws.Route(ws.GET("/applications/info/{"+ParamAppName+"}").
@@ -83,6 +83,12 @@ func AddToContainer(c *restful.Container) error {
 		Doc("get the application info").
 		Param(ws.PathParameter(ParamAppName, "the name of the application")).
 		Returns(http.StatusOK, "Success to get the application info", nil))
+
+	ws.Route(ws.GET("/applications/{"+ParamAppName+"}/README.md").
+		To(handler.handleReadme).
+		Doc("get the application readme info").
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Returns(http.StatusOK, "Success to get the application readme info", nil))
 
 	ws.Route(ws.POST("/applications/update").
 		To(handler.handleUpdates).

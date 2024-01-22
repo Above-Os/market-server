@@ -194,7 +194,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["submitter"] = appInfoNew.Submitter
 	update["doc"] = appInfoNew.Doc
 	update["website"] = appInfoNew.Website
-	update["featureImage"] = appInfoNew.FeatureImage
+	update["featuredImage"] = appInfoNew.FeaturedImage
 	update["sourceCode"] = appInfoNew.SourceCode
 	update["license"] = appInfoNew.License
 	update["legal"] = appInfoNew.Legal

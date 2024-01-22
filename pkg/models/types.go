@@ -37,33 +37,32 @@ type ApplicationInfo struct {
 	Categories  []string `yaml:"categories" json:"categories" bson:"categories"` //[]string
 	VersionName string   `yaml:"versionName" json:"versionName" bson:"versionName"`
 
-	FullDescription    string        `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
-	UpgradeDescription string        `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
-	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
-	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
-	SubCategory        string        `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
-	Language           []string      `yaml:"language" json:"language" bson:"language"`
-	Developer          string        `yaml:"developer" json:"developer" bson:"developer"`
-	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
-	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
-	SupportClient      SupportClient `yaml:"supportClient" json:"supportClient" bson:"supportClient"`
-	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty" bson:"requiredGpu"`
-	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
-	Rating             float32       `yaml:"rating" json:"rating" bson:"rating"`
-	Target             string        `yaml:"target" json:"target" bson:"target"`
-	Permission         Permission    `yaml:"permission" json:"permission" bson:"permission" description:"app permission request"`
-	Entrances          []Entrance    `yaml:"entrances" json:"entrances" bson:"entrances"`
-	//Entrance           AppService       `yaml:"entrance" json:"entrance" bson:"entrance"`
-	Middleware *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
-	Options    Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
+	FullDescription    string           `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
+	UpgradeDescription string           `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
+	PromoteImage       []string         `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
+	PromoteVideo       string           `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
+	SubCategory        string           `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
+	Language           []string         `yaml:"language" json:"language" bson:"language"`
+	Developer          string           `yaml:"developer" json:"developer" bson:"developer"`
+	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
+	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
+	SupportClient      SupportClient    `yaml:"supportClient" json:"supportClient" bson:"supportClient"`
+	RequiredGPU        string           `yaml:"requiredGpu" json:"requiredGpu,omitempty" bson:"requiredGpu"`
+	RequiredCPU        string           `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
+	Rating             float32          `yaml:"rating" json:"rating" bson:"rating"`
+	Target             string           `yaml:"target" json:"target" bson:"target"`
+	Permission         Permission       `yaml:"permission" json:"permission" bson:"permission" description:"app permission request"`
+	Entrances          []Entrance       `yaml:"entrances" json:"entrances" bson:"entrances"`
+	Middleware         *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
+	Options            Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
 
-	Submitter    string       `yaml:"submitter" json:"submitter" bson:"submitter"`
-	Doc          string       `yaml:"doc" json:"doc" bson:"doc"`
-	Website      string       `yaml:"website" json:"website" bson:"website"`
-	FeatureImage string       `yaml:"featureImage" json:"featureImage" bson:"featureImage"`
-	SourceCode   string       `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
-	License      []TextAndURL `yaml:"license" json:"license" bson:"license"`
-	Legal        []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
+	Submitter     string       `yaml:"submitter" json:"submitter" bson:"submitter"`
+	Doc           string       `yaml:"doc" json:"doc" bson:"doc"`
+	Website       string       `yaml:"website" json:"website" bson:"website"`
+	FeaturedImage string       `yaml:"featuredImage" json:"featuredImage" bson:"featuredImage"`
+	SourceCode    string       `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
+	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
+	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
@@ -93,13 +92,13 @@ type AppSpec struct {
 	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty"`
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu"`
 
-	Submitter    string       `yaml:"submitter" json:"submitter"`
-	Doc          string       `yaml:"doc" json:"doc"`
-	Website      string       `yaml:"website" json:"website"`
-	FeatureImage string       `yaml:"featureImage" json:"featureImage"`
-	SourceCode   string       `yaml:"sourceCode" json:"sourceCode"`
-	License      []TextAndURL `yaml:"license" json:"license"`
-	Legal        []TextAndURL `yaml:"legal" json:"legal"`
+	Submitter     string       `yaml:"submitter" json:"submitter"`
+	Doc           string       `yaml:"doc" json:"doc"`
+	Website       string       `yaml:"website" json:"website"`
+	FeaturedImage string       `yaml:"featuredImage" json:"featuredImage"`
+	SourceCode    string       `yaml:"sourceCode" json:"sourceCode"`
+	License       []TextAndURL `yaml:"license" json:"license"`
+	Legal         []TextAndURL `yaml:"legal" json:"legal"`
 }
 
 type TextAndURL struct {
@@ -130,11 +129,12 @@ type SysDataCfg struct {
 }
 
 type Policy struct {
-	Description string `yaml:"description" json:"description" bson:"description" description:"the description of the policy"`
-	URIRegex    string `yaml:"uriRegex" json:"uriRegex" description:"uri regular expression"`
-	Level       string `yaml:"level" json:"level"`
-	OneTime     bool   `yaml:"oneTime" json:"oneTime"`
-	Duration    string `yaml:"validDuration" json:"validDuration"`
+	EntranceName string `yaml:"entranceName" json:"entranceName"`
+	Description  string `yaml:"description" json:"description" bson:"description" description:"the description of the policy"`
+	URIRegex     string `yaml:"uriRegex" json:"uriRegex" description:"uri regular expression"`
+	Level        string `yaml:"level" json:"level"`
+	OneTime      bool   `yaml:"oneTime" json:"oneTime"`
+	Duration     string `yaml:"validDuration" json:"validDuration"`
 }
 
 type Analytics struct {

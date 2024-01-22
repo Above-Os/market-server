@@ -22,8 +22,10 @@ import (
 	"app-store-server/pkg/api"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/golang/glog"
@@ -83,6 +85,10 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 
 func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
+	if appName == "" {
+		api.HandleError(resp, req, errors.New("empty app name"))
+		return
+	}
 
 	info, err := getInfoByName(appName)
 	if err != nil {
@@ -91,6 +97,22 @@ func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 	}
 
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, info))
+}
+
+func (h *Handler) handleReadme(req *restful.Request, resp *restful.Response) {
+	appName := req.PathParameter(ParamAppName)
+	if appName == "" {
+		api.HandleError(resp, req, errors.New("empty app name"))
+		return
+	}
+
+	content, err := gitapp.ReadMe(appName)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.Write(content)
 }
 
 func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
@@ -108,12 +130,11 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 	//todo local cache results
 	category := req.QueryParameter("category")
 	ty := req.QueryParameter("type")
-	if ty == "" {
-		ty = "app"
-	}
 	size := req.QueryParameter("size")
+	excludedLabels := req.QueryParameter("excludedLabels")
+	excludedLabelsSlice := strings.Split(excludedLabels, ",")
 	sizeN := utils.VerifyTopSize(size)
-	infos, err := mongo.GetTopApplicationInfos(category, ty, sizeN)
+	infos, err := mongo.GetTopApplicationInfos(category, ty, excludedLabelsSlice, sizeN)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return

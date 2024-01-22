@@ -53,6 +53,7 @@ type Entrance struct {
 	Icon      string `yaml:"icon,omitempty" json:"icon,omitempty" bson:"icon,omitempty"`
 	Title     string `yaml:"title" json:"title" bson:"title"`
 	AuthLevel string `yaml:"authLevel,omitempty" json:"authLevel,omitempty" bson:"authLevel,omitempty"`
+	Invisible bool   `yaml:"invisible,omitempty" json:"invisible,omitempty" bson:"invisible,omitempty"`
 }
 
 func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
@@ -87,7 +88,7 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		Submitter:          ac.Spec.Submitter,
 		Doc:                ac.Spec.Doc,
 		Website:            ac.Spec.Website,
-		FeatureImage:       ac.Spec.FeatureImage,
+		FeaturedImage:      ac.Spec.FeaturedImage,
 		SourceCode:         ac.Spec.SourceCode,
 		License:            ac.Spec.License,
 		Legal:              ac.Spec.Legal,

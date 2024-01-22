@@ -90,7 +90,7 @@ func GetTopApps(count int64) ([]string, error) {
 	return names, nil
 }
 
-func GetTopApplicationInfos(category, ty string, count int) ([]models.ApplicationInfo, error) {
+func GetTopApplicationInfos(category, ty string, excludedLabels []string, count int) ([]models.ApplicationInfo, error) {
 	lastCommitHash, err := GetLastCommitHashFromDB()
 	if err != nil {
 		return nil, err
@@ -120,6 +120,12 @@ func GetTopApplicationInfos(category, ty string, count int) ([]models.Applicatio
 	}
 	if ty != "" {
 		filter["cfgType"] = ty
+	}
+
+	if len(excludedLabels) > 0 {
+		filter["appLabels"] = bson.M{
+			"$nin": excludedLabels,
+		}
 	}
 
 	if category != "" {
