@@ -143,10 +143,10 @@ type Analytics struct {
 
 type Options struct {
 	Policies     []Policy     `yaml:"policies" json:"policies" bson:"policies"`
-	Analytics    Analytics    `yaml:"analytics" json:"analytics" bson:"analytics"`
+	Analytics    *Analytics   `yaml:"analytics" json:"analytics" bson:"analytics"`
 	Dependencies []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
-	AppScope     AppScope     `yaml:"appScope" json:"appScope"`
-	WsConfig     WsConfig     `yaml:"websocket" json:"websocket"`
+	AppScope     *AppScope    `yaml:"appScope" json:"appScope"`
+	WsConfig     *WsConfig    `yaml:"websocket" json:"websocket"`
 }
 
 type Dependency struct {
