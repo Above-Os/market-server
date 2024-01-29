@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	MODULE_TAGS = []string{"app-store-server"}
+// MODULE_TAGS = []string{"app-store-server"}
 )
 
 func newWebService() *restful.WebService {

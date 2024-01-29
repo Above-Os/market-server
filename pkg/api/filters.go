@@ -29,7 +29,7 @@ import (
 func LogStackOnRecover(panicReason interface{}, w http.ResponseWriter) {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf("recover from panic situation: - %v\r\n", panicReason))
-	for i := 2; ; i += 1 {
+	for i := 2; ; i++ {
 		_, file, line, ok := runtime.Caller(i)
 		if !ok {
 			break
