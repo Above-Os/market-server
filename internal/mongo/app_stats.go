@@ -90,7 +90,12 @@ func GetTopApps(count int64) ([]string, error) {
 	return names, nil
 }
 
-func GetTopApplicationInfos(category string, count int64) ([]models.ApplicationInfo, error) {
+func GetTopApplicationInfos(category, ty string, excludedLabels []string, count int) ([]models.ApplicationInfo, error) {
+	lastCommitHash, err := GetLastCommitHashFromDB()
+	if err != nil {
+		return nil, err
+	}
+
 	pipeline := []bson.M{
 		{
 			"$lookup": bson.M{
@@ -109,21 +114,34 @@ func GetTopApplicationInfos(category string, count int64) ([]models.ApplicationI
 			},
 		},
 	}
+	filter := make(bson.M)
+	if lastCommitHash != "" {
+		filter["lastCommitHash"] = lastCommitHash
+	}
+	if ty != "" {
+		filter["cfgType"] = ty
+	}
+
+	if len(excludedLabels) > 0 {
+		filter["appLabels"] = bson.M{
+			"$nin": excludedLabels,
+		}
+	}
 
 	if category != "" {
 		categoriesRegex := bson.M{
 			"$regex": primitive.Regex{Pattern: fmt.Sprintf("^%s$", category), Options: "i"},
 		}
-		filter := make(bson.M)
 		filter["categories"] = bson.M{
 			"$elemMatch": categoriesRegex,
 		}
-		pipeline = append(pipeline,
-			bson.M{
-				"$match": filter,
-			},
-		)
 	}
+
+	pipeline = append(pipeline,
+		bson.M{
+			"$match": filter,
+		},
+	)
 
 	if count <= 0 {
 		count = constants.DefaultTopCount

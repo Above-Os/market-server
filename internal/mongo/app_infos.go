@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAppLists(offset, size int64, category string) (list []*models.ApplicationInfo, count int64, err error) {
+func GetAppLists(offset, size int64, category, ty string) (list []*models.ApplicationInfo, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
 		//filter["categories"] = category
@@ -34,6 +34,9 @@ func GetAppLists(offset, size int64, category string) (list []*models.Applicatio
 		filter["categories"] = bson.M{
 			"$elemMatch": categoriesRegex,
 		}
+	}
+	if ty != "" {
+		filter["cfgType"] = ty
 	}
 
 	var lastCommitHash string
@@ -159,6 +162,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["createTime"] = appInfoNew.CreateTime
 
 	update["chartName"] = appInfoNew.ChartName
+	update["cfgType"] = appInfoNew.CfgType
 	update["icon"] = appInfoNew.Icon
 	update["desc"] = appInfoNew.Description
 	nameMd58 := utils.Md5String(appInfoNew.Name)[:8]
@@ -182,7 +186,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["rating"] = appInfoNew.Rating
 	update["target"] = appInfoNew.Target
 	update["permission"] = appInfoNew.Permission
-	//update["entrance"] = appInfoNew.Entrance
+	update["entrances"] = appInfoNew.Entrances
 	update["middleware"] = appInfoNew.Middleware
 	update["options"] = appInfoNew.Options
 	update["language"] = appInfoNew.Language
@@ -190,6 +194,8 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["submitter"] = appInfoNew.Submitter
 	update["doc"] = appInfoNew.Doc
 	update["website"] = appInfoNew.Website
+	update["featuredImage"] = appInfoNew.FeaturedImage
+	update["sourceCode"] = appInfoNew.SourceCode
 	update["license"] = appInfoNew.License
 	update["legal"] = appInfoNew.Legal
 	//update["status"] = appInfoNew.Status

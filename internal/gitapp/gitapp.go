@@ -5,6 +5,7 @@ import (
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/utils"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -142,6 +143,29 @@ func AppDirExist(name string) bool {
 	}
 
 	return exist
+}
+
+func ReadMe(name string) ([]byte, error) {
+	exist := AppDirExist(name)
+	if !exist {
+		return nil, fmt.Errorf("%s not exist", name)
+	}
+
+	readFileName := path.Join(constants.AppGitLocalDir, name, constants.ReadmeFileName)
+
+	f, err := os.Open(readFileName)
+	if err != nil {
+		glog.Warningf("%s", err.Error())
+		return nil, err
+	}
+
+	content, err := io.ReadAll(f)
+	if err != nil {
+		glog.Warningf("%s", err.Error())
+		return nil, err
+	}
+
+	return content, nil
 }
 
 func updateLastHash(hash string) error {

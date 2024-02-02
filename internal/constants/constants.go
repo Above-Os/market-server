@@ -21,6 +21,7 @@ const (
 	AppGitLocalDir    = "./app_git"
 	AppGitZipLocalDir = "./charts"
 	AppCfgFileName    = "app.cfg"
+	ReadmeFileName    = "README.md"
 
 	TimeFormatStr = "Mon Jan 2 15:04:05 2006 -0700"
 
@@ -28,7 +29,7 @@ const (
 	DefaultPageSize = 100
 	DefaultFrom     = 0
 
-	DefaultTopCount = 20
+	DefaultTopCount = 100
 
 	MongoDBUri         = "MONGODB_URI"
 	MongoDBDropAppInfo = "MONGODB_DROP_APPINFO"
@@ -39,12 +40,15 @@ const (
 )
 
 const (
-	AppAdminServiceTopicsDetailURLTempl     = "https://%s:%s/topics/detail"
-	AppAdminServiceRecommendsDetailURLTempl = "https://%s:%s/recommends/detail"
-	AppAdminServiceCategoriesURLTempl       = "https://%s:%s/categories"
+	AppAdminServicePagesDetailURLTempl = "http://%s:%s/api/pages/detail"
 
-	AppAdminSeviceHostEnv = "APP_ADMIN_HOST"
-	AppAdminSevicePortEnv = "APP_ADMIN_PORT"
+	AppAdminHostEnv = "APP_ADMIN_HOST"
+	AppAdminPortEnv = "APP_ADMIN_PORT"
+
+	AppGitBotAppVersionHistoryURLTempl = "http://%s:%s/appstore-git-bot/v1/app-version-history/%s"
+
+	AppGitBotHostEnv = "APP_GIT_BOT_HOST"
+	AppGitBotPortEnv = "APP_GIT_BOT_PORT"
 )
 
 const (

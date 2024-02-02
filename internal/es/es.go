@@ -68,7 +68,7 @@ func SyncInfoFromMongo() error {
 func syncAppInfosFromMongoToEs() error {
 	pageSize := int64(1000)
 	for offset := int64(0); ; {
-		infos, _, err := mongo.GetAppLists(offset, pageSize, "")
+		infos, _, err := mongo.GetAppLists(offset, pageSize, "", "")
 		if err != nil {
 			glog.Warningf("GetAppLists err:%s", err.Error())
 			break
@@ -162,7 +162,7 @@ func (c *Client) CreateIndexWithMapping(indexName string, prop map[string]types.
 				},
 			},
 		}).
-		Do(nil)
+		Do(context.TODO())
 	if err != nil {
 		glog.Warningf("es8.CreateIndex indexName:%s with map err:%s", indexName, err.Error())
 		return err

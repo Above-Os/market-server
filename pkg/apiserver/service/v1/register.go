@@ -15,9 +15,7 @@
 package v1
 
 import (
-	"app-store-server/internal/appadmin"
 	"fmt"
-	restfulspec "github.com/emicklei/go-restful-openapi/v2"
 	"net/http"
 
 	"github.com/emicklei/go-restful/v3"
@@ -32,7 +30,7 @@ const (
 )
 
 var (
-	MODULE_TAGS = []string{"app-store-server"}
+// MODULE_TAGS = []string{"app-store-server"}
 )
 
 func newWebService() *restful.WebService {
@@ -54,6 +52,7 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.QueryParameter("page", "page")).
 		Param(ws.QueryParameter("size", "size")).
 		Param(ws.QueryParameter("category", "category")).
+		Param(ws.QueryParameter("type", "type")).
 		Returns(http.StatusOK, "success to get application list", nil))
 
 	glog.Infof("registered sub module: %s", ws.RootPath()+"/applications")
@@ -74,7 +73,9 @@ func AddToContainer(c *restful.Container) error {
 	ws.Route(ws.GET("/applications/top").
 		To(handler.handleTop).
 		Doc("Get top application list").
-		Param(ws.QueryParameter("category", "category")).
+		Param(ws.QueryParameter("size", "size")).
+		Param(ws.QueryParameter("type", "type")).
+		Param(ws.QueryParameter("excludedLabels", "excludedLabels")).
 		Returns(http.StatusOK, "success to get the top application list", nil))
 
 	ws.Route(ws.GET("/applications/info/{"+ParamAppName+"}").
@@ -82,6 +83,12 @@ func AddToContainer(c *restful.Container) error {
 		Doc("get the application info").
 		Param(ws.PathParameter(ParamAppName, "the name of the application")).
 		Returns(http.StatusOK, "Success to get the application info", nil))
+
+	ws.Route(ws.GET("/applications/{"+ParamAppName+"}/README.md").
+		To(handler.handleReadme).
+		Doc("get the application readme info").
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Returns(http.StatusOK, "Success to get the application readme info", nil))
 
 	ws.Route(ws.POST("/applications/update").
 		To(handler.handleUpdates).
@@ -97,6 +104,12 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.QueryParameter("size", "size")).
 		Doc("search application list by name").
 		Returns(http.StatusOK, "success to search application list by name", nil))
+
+	ws.Route(ws.GET("/applications/version-history/{"+ParamAppName+"}").
+		To(handler.handleVersionHistory).
+		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Doc("get application version history by name").
+		Returns(http.StatusOK, "success to get application version history by name", nil))
 
 	ws.Route(ws.GET("/applications/exist/{"+ParamAppName+"}").
 		To(handler.handleExist).
@@ -117,23 +130,10 @@ func AddToContainer(c *restful.Container) error {
 		Reads([]string{}).
 		Returns(http.StatusOK, "success to check app updates", nil))
 
-	ws.Route(ws.GET("recommends/detail").
-		To(handler.recommendsDetail).
+	ws.Route(ws.GET("pages/detail").
+		To(handler.pagesDetail).
 		Doc("get the recommends detail").
-		Metadata(restfulspec.KeyOpenAPITags, MODULE_TAGS).
 		Returns(http.StatusOK, "Success to get the recommends detail", nil))
-
-	ws.Route(ws.GET("topics/detail").
-		To(handler.topicsDetail).
-		Doc("get the topics detail").
-		Metadata(restfulspec.KeyOpenAPITags, MODULE_TAGS).
-		Returns(http.StatusOK, "Success to get the topics detail", &appadmin.TopResponse{}))
-
-	ws.Route(ws.GET("/categories").
-		To(handler.categories).
-		Doc("get categories list").
-		Metadata(restfulspec.KeyOpenAPITags, MODULE_TAGS).
-		Returns(http.StatusOK, "success to get categories list", &appadmin.CategoriesResponse{}))
 
 	c.Add(ws)
 	return nil
