@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"github.com/golang/glog"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -20,23 +19,6 @@ func PathExists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
-}
-
-func CheckDir(path string) error {
-	absPath, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
-
-	dir := filepath.Dir(absPath)
-
-	exist, err := PathExists(dir)
-	if exist {
-		return nil
-	}
-
-	err = os.MkdirAll(dir, 0755)
-	return err
 }
 
 func RetryFunction(f func() error, maxAttempts int, delay time.Duration) error {

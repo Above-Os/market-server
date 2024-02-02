@@ -162,7 +162,7 @@ func (c *Client) CreateIndexWithMapping(indexName string, prop map[string]types.
 				},
 			},
 		}).
-		Do(nil)
+		Do(context.TODO())
 	if err != nil {
 		glog.Warningf("es8.CreateIndex indexName:%s with map err:%s", indexName, err.Error())
 		return err
