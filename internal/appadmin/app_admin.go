@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	PageKey = "PAGE"
+	pageKey = "PAGE"
 )
 
 var (
@@ -51,15 +51,15 @@ func getPagesDetailFromAdmin() error {
 		return err
 	}
 
-	cache.Store(PageKey, bodyStr)
+	cache.Store(pageKey, bodyStr)
 	return nil
 }
 
 func GetPagesDetail() interface{} {
-	value, _ := cache.Load(PageKey)
+	value, _ := cache.Load(pageKey)
 	if value == nil {
 		_ = getPagesDetailFromAdmin()
-		value, _ = cache.Load(PageKey)
+		value, _ = cache.Load(pageKey)
 	}
 	return value
 }
