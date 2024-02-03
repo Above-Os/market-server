@@ -18,11 +18,6 @@ import (
 	"app-store-server/pkg/models/tapr"
 )
 
-type TopResultItem struct {
-	Category string             `json:"category"`
-	Apps     []*ApplicationInfo `json:"apps"`
-}
-
 type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"id"`
 
@@ -70,11 +65,6 @@ type ApplicationInfo struct {
 	//Status         string   `yaml:"status" json:"status" bson:"status"`
 	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 	Count     interface{} `yaml:"count" json:"count" bson:"count"`
-}
-
-type AppService struct {
-	Name string `yaml:"name" json:"name" bson:"name"`
-	Port int32  `yaml:"port" json:"port" bson:"port"`
 }
 
 type AppSpec struct {
