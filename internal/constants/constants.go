@@ -16,7 +16,6 @@ package constants
 
 const (
 	APIServerListenAddress = ":8081"
-	CMSServerListenAddress = ":8082"
 
 	AppGitLocalDir    = "./app_git"
 	AppGitZipLocalDir = "./charts"
@@ -62,26 +61,29 @@ const (
 )
 
 var (
-	//`{
-	//   "appTypes":[
-	//	   "AI",
-	//	   "Mining",
-	//	   "Protocol",
-	//	   "Home",
-	//	   "Data",
-	//	   "Developer",
-	//	   "Productivity",
-	//	   "Multimedia",
-	//	   "Utilities",
-	//	   "Security",
-	//	   "Game"
-	//   ]
-	//}`
+//`{
+//   "appTypes":[
+//	   "AI",
+//	   "Mining",
+//	   "Protocol",
+//	   "Home",
+//	   "Data",
+//	   "Developer",
+//	   "Productivity",
+//	   "Multimedia",
+//	   "Utilities",
+//	   "Security",
+//	   "Game"
+//   ]
+//}`
 
-	DefaultAppTypes = []string{"AI", "Mining", "Protocol", "Home",
-		"Data", "Developer", "Productivity", "Multimedia",
-		"Utilities", "Security", "Game"}
-	DefaultAppTypeMaps = map[string]byte{"AI": 1, "Mining": 1, "Protocol": 1, "Home": 1,
-		"Data": 1, "Developer": 1, "Productivity": 1, "Multimedia": 1,
-		"Utilities": 1, "Security": 1, "Game": 1}
+// DefaultAppTypes = []string{"AI", "Mining", "Protocol", "Home",
+//
+//	"Data", "Developer", "Productivity", "Multimedia",
+//	"Utilities", "Security", "Game"}
+//
+// DefaultAppTypeMaps = map[string]byte{"AI": 1, "Mining": 1, "Protocol": 1, "Home": 1,
+//
+//	"Data": 1, "Developer": 1, "Productivity": 1, "Multimedia": 1,
+//	"Utilities": 1, "Security": 1, "Game": 1}
 )

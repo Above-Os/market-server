@@ -99,6 +99,8 @@ func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
 		}
 	}
 
+	//todo delete expired information
+
 	return nil
 }
 
