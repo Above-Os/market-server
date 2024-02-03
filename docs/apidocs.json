@@ -1,0 +1,337 @@
+{
+ "schemes": [
+  "http",
+  "https"
+ ],
+ "swagger": "2.0",
+ "info": {
+  "description": "App Store Server",
+  "title": "App Store Server",
+  "contact": {
+   "name": "bytetrade",
+   "url": "http://bytetrade.io",
+   "email": "dev@bytetrade.io"
+  },
+  "license": {
+   "name": "Apache License 2.0",
+   "url": "http://www.apache.org/licenses/LICENSE-2.0"
+  },
+  "version": "1.0.0"
+ },
+ "paths": {
+  "/app-store-server/v1/application/{name}": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "download the application chart",
+    "operationId": "handleApp",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the (chart)name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Success to get the application chart"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "Get application list",
+    "operationId": "handleList",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "page",
+      "name": "page",
+      "in": "query"
+     },
+     {
+      "type": "string",
+      "description": "size",
+      "name": "size",
+      "in": "query"
+     },
+     {
+      "type": "string",
+      "description": "category",
+      "name": "category",
+      "in": "query"
+     },
+     {
+      "type": "string",
+      "description": "type",
+      "name": "type",
+      "in": "query"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to get application list"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/exist/{name}": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "does the application exist by name",
+    "operationId": "handleExist",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to judge the application exist by name"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/info/{name}": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "get the application info",
+    "operationId": "handleAppInfo",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Success to get the application info"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/infos": {
+   "post": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "check app updates",
+    "operationId": "handleInfos",
+    "parameters": [
+     {
+      "description": "the name list of the application",
+      "name": "names",
+      "in": "body",
+      "required": true
+     },
+     {
+      "name": "body",
+      "in": "body",
+      "required": true,
+      "schema": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to check app updates"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/search/{name}": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "search application list by name",
+    "operationId": "handleSearch",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     },
+     {
+      "type": "string",
+      "description": "page",
+      "name": "page",
+      "in": "query"
+     },
+     {
+      "type": "string",
+      "description": "size",
+      "name": "size",
+      "in": "query"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to search application list by name"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/top": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "Get top application list",
+    "operationId": "handleTop",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "size",
+      "name": "size",
+      "in": "query"
+     },
+     {
+      "type": "string",
+      "description": "type",
+      "name": "type",
+      "in": "query"
+     },
+     {
+      "type": "string",
+      "description": "excludedLabels",
+      "name": "excludedLabels",
+      "in": "query"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to get the top application list"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/update": {
+   "post": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "update applications",
+    "operationId": "handleUpdate",
+    "responses": {
+     "200": {
+      "description": "success to update applications"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/version-history/{name}": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "get application version history by name",
+    "operationId": "handleVersionHistory",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to get application version history by name"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/applications/{name}/README.md": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "get the application readme info",
+    "operationId": "handleReadme",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "Success to get the application readme info"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/counter/{name}": {
+   "post": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "the application counter of install",
+    "operationId": "handleCount",
+    "parameters": [
+     {
+      "type": "string",
+      "description": "the name of the application",
+      "name": "name",
+      "in": "path",
+      "required": true
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "success to inc the application counter of install"
+     }
+    }
+   }
+  },
+  "/app-store-server/v1/pages/detail": {
+   "get": {
+    "produces": [
+     "application/json"
+    ],
+    "summary": "get the recommends detail",
+    "operationId": "pagesDetail",
+    "responses": {
+     "200": {
+      "description": "Success to get the recommends detail"
+     }
+    }
+   }
+  }
+ },
+ "tags": [
+  {
+   "description": "App Store Server",
+   "name": "App Store Server"
+  }
+ ]
+}

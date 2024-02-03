@@ -57,15 +57,15 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appList, count)))
 }
 
-func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
-	types, err := mongo.GetAppTypesFromDb()
-	if err != nil {
-		api.HandleError(resp, req, err)
-		return
-	}
-
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(types)))
-}
+//func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
+//	types, err := mongo.GetAppTypesFromDb()
+//	if err != nil {
+//		api.HandleError(resp, req, err)
+//		return
+//	}
+//
+//	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(types)))
+//}
 
 func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
@@ -115,7 +115,7 @@ func (h *Handler) handleReadme(req *restful.Request, resp *restful.Response) {
 	resp.Write(content)
 }
 
-func (h *Handler) handleUpdates(req *restful.Request, resp *restful.Response) {
+func (h *Handler) handleUpdate(req *restful.Request, resp *restful.Response) {
 	err := app.GitPullAndUpdate()
 
 	if err != nil {
