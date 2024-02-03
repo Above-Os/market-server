@@ -18,6 +18,7 @@ var (
 )
 
 func init() {
+	//todo extract func, not in this init
 	go getPagesDetailLoop()
 }
 
