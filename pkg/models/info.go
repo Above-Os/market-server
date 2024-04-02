@@ -76,6 +76,7 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		RequiredMemory:     ac.Spec.RequiredMemory,
 		RequiredDisk:       ac.Spec.RequiredDisk,
 		SupportClient:      ac.Spec.SupportClient,
+		SupportArch:        ac.Spec.SupportArch,
 		RequiredGPU:        ac.Spec.RequiredGPU,
 		RequiredCPU:        ac.Spec.RequiredCPU,
 		Rating:             ac.Metadata.Rating,

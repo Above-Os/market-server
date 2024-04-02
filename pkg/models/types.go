@@ -42,6 +42,7 @@ type ApplicationInfo struct {
 	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
 	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
 	SupportClient      SupportClient    `yaml:"supportClient" json:"supportClient" bson:"supportClient"`
+	SupportArch        []string         `yaml:"supportArch" json:"supportArch" bson:"supportArch"`
 	RequiredGPU        string           `yaml:"requiredGpu" json:"requiredGpu,omitempty" bson:"requiredGpu"`
 	RequiredCPU        string           `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
 	Rating             float32          `yaml:"rating" json:"rating" bson:"rating"`
@@ -79,6 +80,7 @@ type AppSpec struct {
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk"`
 	SupportClient      SupportClient `yaml:"supportClient" json:"supportClient"`
+	SupportArch        []string      `yaml:"supportArch" json:"supportArch"`
 	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty"`
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu"`
 
