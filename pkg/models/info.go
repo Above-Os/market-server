@@ -8,7 +8,7 @@ import (
 TerminusManifest.yaml
 
 terminusManifest.version: v1
-terminusManifest.type: app/workflow/agent
+terminusManifest.type: app/recommend/model/agent
 metadata:
   name: <chart name>
   description: <desc>
