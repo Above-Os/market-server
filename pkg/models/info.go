@@ -4,15 +4,11 @@ import (
 	"app-store-server/pkg/models/tapr"
 )
 
-const (
-	AppCfgFileName = "app.cfg"
-)
-
 /*
-app.cfg
+TerminusManifest.yaml
 
-app.cfg.version: v1
-app.cfg.type: app/workflow/agent
+terminusManifest.version: v1
+terminusManifest.type: app/workflow/agent
 metadata:
   name: <chart name>
   description: <desc>
@@ -36,8 +32,8 @@ type AppMetaData struct {
 }
 
 type AppConfiguration struct {
-	ConfigVersion string           `yaml:"app.cfg.version" json:"app.cfg.version"`
-	ConfigType    string           `yaml:"app.cfg.type" json:"app.cfg.type"`
+	ConfigVersion string           `yaml:"terminusManifest.version" json:"terminusManifest.version"`
+	ConfigType    string           `yaml:"terminusManifest.type" json:"terminusManifest.type"`
 	Metadata      AppMetaData      `yaml:"metadata" json:"metadata"`
 	Entrances     []Entrance       `yaml:"entrances" json:"entrances"`
 	Spec          AppSpec          `yaml:"spec" json:"spec"`
