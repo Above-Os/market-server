@@ -60,7 +60,7 @@ type ApplicationInfo struct {
 	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
 	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
-	ModelSize string `yaml:"modelSize" json:"modelSize" bson:"modelSize"`
+	ModelSize string `yaml:"modelSize" json:"modelSize,omitempty" bson:"modelSize"`
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
