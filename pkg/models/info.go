@@ -89,5 +89,6 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		SourceCode:         ac.Spec.SourceCode,
 		License:            ac.Spec.License,
 		Legal:              ac.Spec.Legal,
+		ModelSize:          ac.Spec.ModelSize,
 	}
 }

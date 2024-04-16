@@ -60,6 +60,8 @@ type ApplicationInfo struct {
 	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
 	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
+	ModelSize string `yaml:"modelSize" json:"modelSize" bson:"modelSize"`
+
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
@@ -91,6 +93,8 @@ type AppSpec struct {
 	SourceCode    string       `yaml:"sourceCode" json:"sourceCode"`
 	License       []TextAndURL `yaml:"license" json:"license"`
 	Legal         []TextAndURL `yaml:"legal" json:"legal"`
+
+	ModelSize string `yaml:"modelSize" json:"modelSize"`
 }
 
 type TextAndURL struct {
