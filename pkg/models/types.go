@@ -18,11 +18,6 @@ import (
 	"app-store-server/pkg/models/tapr"
 )
 
-type TopResultItem struct {
-	Category string             `json:"category"`
-	Apps     []*ApplicationInfo `json:"apps"`
-}
-
 type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"id"`
 
@@ -47,6 +42,7 @@ type ApplicationInfo struct {
 	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
 	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
 	SupportClient      SupportClient    `yaml:"supportClient" json:"supportClient" bson:"supportClient"`
+	SupportArch        []string         `yaml:"supportArch" json:"supportArch" bson:"supportArch"`
 	RequiredGPU        string           `yaml:"requiredGpu" json:"requiredGpu,omitempty" bson:"requiredGpu"`
 	RequiredCPU        string           `yaml:"requiredCpu" json:"requiredCpu" bson:"requiredCpu"`
 	Rating             float32          `yaml:"rating" json:"rating" bson:"rating"`
@@ -64,17 +60,14 @@ type ApplicationInfo struct {
 	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
 	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
+	ModelSize string `yaml:"modelSize" json:"modelSize" bson:"modelSize"`
+
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
 	//Status         string   `yaml:"status" json:"status" bson:"status"`
 	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 	Count     interface{} `yaml:"count" json:"count" bson:"count"`
-}
-
-type AppService struct {
-	Name string `yaml:"name" json:"name" bson:"name"`
-	Port int32  `yaml:"port" json:"port" bson:"port"`
 }
 
 type AppSpec struct {
@@ -89,6 +82,7 @@ type AppSpec struct {
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk"`
 	SupportClient      SupportClient `yaml:"supportClient" json:"supportClient"`
+	SupportArch        []string      `yaml:"supportArch" json:"supportArch"`
 	RequiredGPU        string        `yaml:"requiredGpu" json:"requiredGpu,omitempty"`
 	RequiredCPU        string        `yaml:"requiredCpu" json:"requiredCpu"`
 
@@ -99,6 +93,8 @@ type AppSpec struct {
 	SourceCode    string       `yaml:"sourceCode" json:"sourceCode"`
 	License       []TextAndURL `yaml:"license" json:"license"`
 	Legal         []TextAndURL `yaml:"legal" json:"legal"`
+
+	ModelSize string `yaml:"modelSize" json:"modelSize"`
 }
 
 type TextAndURL struct {

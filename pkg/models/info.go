@@ -4,15 +4,11 @@ import (
 	"app-store-server/pkg/models/tapr"
 )
 
-const (
-	AppCfgFileName = "app.cfg"
-)
-
 /*
-app.cfg
+TerminusManifest.yaml
 
-app.cfg.version: v1
-app.cfg.type: app/workflow/agent
+terminusManifest.version: v1
+terminusManifest.type: app/recommend/model/agent
 metadata:
   name: <chart name>
   description: <desc>
@@ -36,8 +32,8 @@ type AppMetaData struct {
 }
 
 type AppConfiguration struct {
-	ConfigVersion string           `yaml:"app.cfg.version" json:"app.cfg.version"`
-	ConfigType    string           `yaml:"app.cfg.type" json:"app.cfg.type"`
+	ConfigVersion string           `yaml:"terminusManifest.version" json:"terminusManifest.version"`
+	ConfigType    string           `yaml:"terminusManifest.type" json:"terminusManifest.type"`
 	Metadata      AppMetaData      `yaml:"metadata" json:"metadata"`
 	Entrances     []Entrance       `yaml:"entrances" json:"entrances"`
 	Spec          AppSpec          `yaml:"spec" json:"spec"`
@@ -76,6 +72,7 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		RequiredMemory:     ac.Spec.RequiredMemory,
 		RequiredDisk:       ac.Spec.RequiredDisk,
 		SupportClient:      ac.Spec.SupportClient,
+		SupportArch:        ac.Spec.SupportArch,
 		RequiredGPU:        ac.Spec.RequiredGPU,
 		RequiredCPU:        ac.Spec.RequiredCPU,
 		Rating:             ac.Metadata.Rating,
@@ -92,5 +89,6 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		SourceCode:         ac.Spec.SourceCode,
 		License:            ac.Spec.License,
 		Legal:              ac.Spec.Legal,
+		ModelSize:          ac.Spec.ModelSize,
 	}
 }

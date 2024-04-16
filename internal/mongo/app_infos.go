@@ -181,6 +181,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["requiredMemory"] = appInfoNew.RequiredMemory
 	update["requiredDisk"] = appInfoNew.RequiredDisk
 	update["supportClient"] = appInfoNew.SupportClient
+	update["supportArch"] = appInfoNew.SupportArch
 	update["requiredGpu"] = appInfoNew.RequiredGPU
 	update["requiredCpu"] = appInfoNew.RequiredCPU
 	update["rating"] = appInfoNew.Rating
@@ -200,6 +201,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["legal"] = appInfoNew.Legal
 	//update["status"] = appInfoNew.Status
 	update["appLabels"] = appInfoNew.AppLabels
+	update["modelSize"] = appInfoNew.ModelSize
 
 	return &update
 }
