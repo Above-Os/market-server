@@ -113,8 +113,10 @@ type SupportClient struct {
 }
 
 type Permission struct {
-	AppData bool         `yaml:"appData" json:"appData" bson:"appData"  description:"app data permission for writing"`
-	SysData []SysDataCfg `yaml:"sysData" json:"sysData" bson:"sysData"  description:"system shared data permission for accessing"`
+	AppData  bool         `yaml:"appData" json:"appData" bson:"appData" description:"app data permission for writing"`
+	AppCache bool         `yaml:"appCache" json:"appCache" bson:"appCache"`
+	UserData []string     `yaml:"userData" json:"userData" bson:"userData"`
+	SysData  []SysDataCfg `yaml:"sysData" json:"sysData" bson:"sysData"  description:"system shared data permission for accessing"`
 }
 
 type SysDataCfg struct {
