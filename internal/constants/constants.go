@@ -39,7 +39,7 @@ const (
 )
 
 const (
-	AppAdminServicePagesDetailURLTempl = "http://%s:%s/api/pages/detail"
+	AppAdminServicePagesDetailURLTempl = "https://%s:%s/api/pages/detail"
 
 	AppAdminHostEnv = "APP_ADMIN_HOST"
 	AppAdminPortEnv = "APP_ADMIN_PORT"
