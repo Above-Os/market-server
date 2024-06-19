@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -36,7 +37,12 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 		}
 	}
 	if ty != "" {
-		filter["cfgType"] = ty
+		tys := strings.Split(ty, ",")
+		if len(tys) > 1 {
+			filter["cfgType"] = bson.M{"$in": tys}
+		} else {
+			filter["cfgType"] = ty
+		}
 	}
 
 	var lastCommitHash string
@@ -202,6 +208,8 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	//update["status"] = appInfoNew.Status
 	update["appLabels"] = appInfoNew.AppLabels
 	update["modelSize"] = appInfoNew.ModelSize
+	update["namespace"] = appInfoNew.Namespace
+	update["onlyAdmin"] = appInfoNew.OnlyAdmin
 
 	return &update
 }

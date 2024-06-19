@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/golang/glog"
@@ -119,7 +120,12 @@ func GetTopApplicationInfos(category, ty string, excludedLabels []string, count 
 		filter["lastCommitHash"] = lastCommitHash
 	}
 	if ty != "" {
-		filter["cfgType"] = ty
+		tys := strings.Split(ty, ",")
+		if len(tys) > 1 {
+			filter["cfgType"] = bson.M{"$in": tys}
+		} else {
+			filter["cfgType"] = ty
+		}
 	}
 
 	if len(excludedLabels) > 0 {

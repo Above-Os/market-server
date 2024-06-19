@@ -60,7 +60,10 @@ type ApplicationInfo struct {
 	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
 	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
 
-	ModelSize string `yaml:"modelSize" json:"modelSize" bson:"modelSize"`
+	ModelSize string `yaml:"modelSize" json:"modelSize,omitempty" bson:"modelSize"`
+
+	Namespace string `yaml:"namespace" json:"namespace" bson:"namespace"`
+	OnlyAdmin bool   `yaml:"onlyAdmin" json:"onlyAdmin" bson:"onlyAdmin"`
 
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
@@ -95,6 +98,9 @@ type AppSpec struct {
 	Legal         []TextAndURL `yaml:"legal" json:"legal"`
 
 	ModelSize string `yaml:"modelSize" json:"modelSize"`
+
+	Namespace string `yaml:"namespace" json:"namespace"`
+	OnlyAdmin bool   `yaml:"onlyAdmin" json:"onlyAdmin"`
 }
 
 type TextAndURL struct {
@@ -113,8 +119,10 @@ type SupportClient struct {
 }
 
 type Permission struct {
-	AppData bool         `yaml:"appData" json:"appData" bson:"appData"  description:"app data permission for writing"`
-	SysData []SysDataCfg `yaml:"sysData" json:"sysData" bson:"sysData"  description:"system shared data permission for accessing"`
+	AppData  bool         `yaml:"appData" json:"appData" bson:"appData" description:"app data permission for writing"`
+	AppCache bool         `yaml:"appCache" json:"appCache" bson:"appCache"`
+	UserData []string     `yaml:"userData" json:"userData" bson:"userData"`
+	SysData  []SysDataCfg `yaml:"sysData" json:"sysData" bson:"sysData"  description:"system shared data permission for accessing"`
 }
 
 type SysDataCfg struct {
@@ -138,11 +146,12 @@ type Analytics struct {
 }
 
 type Options struct {
-	Policies     []Policy     `yaml:"policies" json:"policies" bson:"policies"`
-	Analytics    *Analytics   `yaml:"analytics" json:"analytics" bson:"analytics"`
-	Dependencies []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
-	AppScope     *AppScope    `yaml:"appScope" json:"appScope"`
-	WsConfig     *WsConfig    `yaml:"websocket" json:"websocket"`
+	Policies        []Policy     `yaml:"policies" json:"policies" bson:"policies"`
+	Analytics       *Analytics   `yaml:"analytics" json:"analytics" bson:"analytics"`
+	Dependencies    []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
+	AppScope        *AppScope    `yaml:"appScope" json:"appScope"`
+	WsConfig        *WsConfig    `yaml:"websocket" json:"websocket"`
+	MobileSupported bool         `yaml:"mobileSupported" json:"mobileSupported"`
 }
 
 type Dependency struct {
