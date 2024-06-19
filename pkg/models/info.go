@@ -90,5 +90,7 @@ func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
 		License:            ac.Spec.License,
 		Legal:              ac.Spec.Legal,
 		ModelSize:          ac.Spec.ModelSize,
+		Namespace:          ac.Spec.Namespace,
+		OnlyAdmin:          ac.Spec.OnlyAdmin,
 	}
 }

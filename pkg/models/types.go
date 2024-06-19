@@ -62,6 +62,9 @@ type ApplicationInfo struct {
 
 	ModelSize string `yaml:"modelSize" json:"modelSize,omitempty" bson:"modelSize"`
 
+	Namespace string `yaml:"namespace" json:"namespace" bson:"namespace"`
+	OnlyAdmin bool   `yaml:"onlyAdmin" json:"onlyAdmin" bson:"onlyAdmin"`
+
 	LastCommitHash string `yaml:"-" json:"lastCommitHash" bson:"lastCommitHash"`
 	CreateTime     int64  `yaml:"-" json:"createTime" bson:"createTime"`
 	UpdateTime     int64  `yaml:"-" json:"updateTime" bson:"updateTime"`
@@ -95,6 +98,9 @@ type AppSpec struct {
 	Legal         []TextAndURL `yaml:"legal" json:"legal"`
 
 	ModelSize string `yaml:"modelSize" json:"modelSize"`
+
+	Namespace string `yaml:"namespace" json:"namespace"`
+	OnlyAdmin bool   `yaml:"onlyAdmin" json:"onlyAdmin"`
 }
 
 type TextAndURL struct {
@@ -140,11 +146,12 @@ type Analytics struct {
 }
 
 type Options struct {
-	Policies     []Policy     `yaml:"policies" json:"policies" bson:"policies"`
-	Analytics    *Analytics   `yaml:"analytics" json:"analytics" bson:"analytics"`
-	Dependencies []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
-	AppScope     *AppScope    `yaml:"appScope" json:"appScope"`
-	WsConfig     *WsConfig    `yaml:"websocket" json:"websocket"`
+	Policies        []Policy     `yaml:"policies" json:"policies" bson:"policies"`
+	Analytics       *Analytics   `yaml:"analytics" json:"analytics" bson:"analytics"`
+	Dependencies    []Dependency `yaml:"dependencies" json:"dependencies" bson:"dependencies"`
+	AppScope        *AppScope    `yaml:"appScope" json:"appScope"`
+	WsConfig        *WsConfig    `yaml:"websocket" json:"websocket"`
+	MobileSupported bool         `yaml:"mobileSupported" json:"mobileSupported"`
 }
 
 type Dependency struct {

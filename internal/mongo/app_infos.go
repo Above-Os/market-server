@@ -208,6 +208,8 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	//update["status"] = appInfoNew.Status
 	update["appLabels"] = appInfoNew.AppLabels
 	update["modelSize"] = appInfoNew.ModelSize
+	update["namespace"] = appInfoNew.Namespace
+	update["onlyAdmin"] = appInfoNew.OnlyAdmin
 
 	return &update
 }
