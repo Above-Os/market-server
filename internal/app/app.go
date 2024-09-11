@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -40,12 +41,20 @@ func UpdateAppInfosToDB() error {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
+	var m models.ApplicationInfo
+	for _, info := range infos {
+		if info.Name == "firefox" {
+			m = *info
+		}
+	}
+	glog.Warningf("firefox: %v", m)
 
 	err = UpdateAppInfosToMongo(infos)
 	if err != nil {
 		glog.Warningf("%s", err.Error())
 		return err
 	}
+	glog.Infof("save to mongo success")
 
 	//sync info from mongodb to es
 	go es.SyncInfoFromMongo()
@@ -127,7 +136,26 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
 
+	// set i18n info
 	appDir := path.Join(constants.AppGitLocalDir, dirName)
+
+	i18nMap := make(map[string]models.I18n)
+	for _, lang := range appInfo.Language {
+		data, err := ioutil.ReadFile(path.Join(appDir, "i18n", lang, constants.AppCfgFileName))
+		if err != nil {
+			glog.Warningf("failed to get file %s,err=%v", path.Join("i18n", lang, constants.AppCfgFileName), err)
+			continue
+		}
+		var i18n models.I18n
+		err = yaml.Unmarshal(data, &i18n)
+		if err != nil {
+			glog.Warningf("unmarshal to I18n failed err=%v", err)
+			continue
+		}
+		i18nMap[lang] = i18n
+	}
+	appInfo.I18n = i18nMap
+
 	checkAppContainSpecialFile(appInfo, appDir)
 
 	return appInfo, nil

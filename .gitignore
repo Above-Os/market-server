@@ -16,6 +16,7 @@
 
 .git
 .vscode/
+.idea/
 output
 charts
 app_git

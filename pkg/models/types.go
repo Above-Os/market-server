@@ -18,6 +18,19 @@ import (
 	"app-store-server/pkg/models/tapr"
 )
 
+type I18nEntrance struct {
+	Name  string `yaml:"name" json:"name" bson:"name"`
+	Title string `yaml:"title" json:"title" bson:"title"`
+}
+
+type I18n struct {
+	Title              string         `yaml:"title" json:"title" bson:"title"`
+	Entrances          []I18nEntrance `yaml:"entrances" json:"entrances" bson:"entrances"`
+	Description        string         `yaml:"description" json:"description" bson:"description"`
+	FullDescription    string         `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
+	UpgradeDescription string         `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
+}
+
 type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"id"`
 
@@ -52,13 +65,14 @@ type ApplicationInfo struct {
 	Middleware         *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
 	Options            Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
 
-	Submitter     string       `yaml:"submitter" json:"submitter" bson:"submitter"`
-	Doc           string       `yaml:"doc" json:"doc" bson:"doc"`
-	Website       string       `yaml:"website" json:"website" bson:"website"`
-	FeaturedImage string       `yaml:"featuredImage" json:"featuredImage" bson:"featuredImage"`
-	SourceCode    string       `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
-	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
-	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
+	Submitter     string          `yaml:"submitter" json:"submitter" bson:"submitter"`
+	Doc           string          `yaml:"doc" json:"doc" bson:"doc"`
+	Website       string          `yaml:"website" json:"website" bson:"website"`
+	FeaturedImage string          `yaml:"featuredImage" json:"featuredImage" bson:"featuredImage"`
+	SourceCode    string          `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
+	License       []TextAndURL    `yaml:"license" json:"license" bson:"license"`
+	Legal         []TextAndURL    `yaml:"legal" json:"legal" bson:"legal"`
+	I18n          map[string]I18n `yaml:"i18n" json:"i18n" bson:"i18n"`
 
 	ModelSize string `yaml:"modelSize" json:"modelSize,omitempty" bson:"modelSize"`
 
