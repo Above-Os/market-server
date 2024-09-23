@@ -139,22 +139,34 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	// set i18n info
 	appDir := path.Join(constants.AppGitLocalDir, dirName)
 
+	glog.Infof("---->start parse i18n<----")
 	i18nMap := make(map[string]models.I18n)
 	for _, lang := range appInfo.Locale {
+		glog.Infof("path:")
+		glog.Infof(appDir)
+		glog.Infof(lang)
+		glog.Infof(constants.AppCfgFileName)
+
 		data, err := ioutil.ReadFile(path.Join(appDir, "i18n", lang, constants.AppCfgFileName))
 		if err != nil {
 			glog.Warningf("failed to get file %s,err=%v", path.Join("i18n", lang, constants.AppCfgFileName), err)
 			continue
 		}
+		glog.Infof("data:")
+		glog.Infof(string(data))
+
 		var i18n models.I18n
 		err = yaml.Unmarshal(data, &i18n)
 		if err != nil {
 			glog.Warningf("unmarshal to I18n failed err=%v", err)
 			continue
 		}
+		fmt.Println(i18n)
 		i18nMap[lang] = i18n
+
 	}
 	appInfo.I18n = i18nMap
+	glog.Infof("---->end parse i18n<----")
 
 	checkAppContainSpecialFile(appInfo, appDir)
 
