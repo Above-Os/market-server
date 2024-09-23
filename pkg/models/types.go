@@ -50,7 +50,7 @@ type ApplicationInfo struct {
 	PromoteImage       []string         `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
 	PromoteVideo       string           `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
 	SubCategory        string           `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
-	Language           []string         `yaml:"language" json:"language" bson:"language"`
+	Locale             []string         `yaml:"locale" json:"locale" bson:"locale"`
 	Developer          string           `yaml:"developer" json:"developer" bson:"developer"`
 	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
 	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
@@ -94,7 +94,7 @@ type AppSpec struct {
 	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage"`
 	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo"`
 	SubCategory        string        `yaml:"subCategory" json:"subCategory"`
-	Language           []string      `yaml:"language" json:"language"`
+	Locale             []string      `yaml:"locale" json:"locale"`
 	Developer          string        `yaml:"developer" json:"developer"`
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk"`

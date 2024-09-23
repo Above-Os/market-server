@@ -140,7 +140,7 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	appDir := path.Join(constants.AppGitLocalDir, dirName)
 
 	i18nMap := make(map[string]models.I18n)
-	for _, lang := range appInfo.Language {
+	for _, lang := range appInfo.Locale {
 		data, err := ioutil.ReadFile(path.Join(appDir, "i18n", lang, constants.AppCfgFileName))
 		if err != nil {
 			glog.Warningf("failed to get file %s,err=%v", path.Join("i18n", lang, constants.AppCfgFileName), err)

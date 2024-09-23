@@ -196,7 +196,7 @@ func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
 	update["entrances"] = appInfoNew.Entrances
 	update["middleware"] = appInfoNew.Middleware
 	update["options"] = appInfoNew.Options
-	update["language"] = appInfoNew.Language
+	update["locale"] = appInfoNew.Locale
 	update["i18n"] = appInfoNew.I18n
 
 	update["submitter"] = appInfoNew.Submitter
