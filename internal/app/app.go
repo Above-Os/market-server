@@ -153,7 +153,7 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	for _, categorie := range appInfo.Categories {
 		if strings.Contains(disableCategories, categorie) {
 			glog.Warningf("%s is disable", categorie)
-			return nil, err
+			return nil, errors.New("disabled")
 		}
 	}
 
