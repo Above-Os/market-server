@@ -23,6 +23,19 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
+const (
+	DisableCategoriesEnv = "DISABLE_CATEGORIES"
+)
+
+func getDisableCategories() string {
+	disableCategories := os.Getenv(DisableCategoriesEnv)
+	if disableCategories != "" {
+		return disableCategories
+	}
+
+	return ""
+}
+
 func Init() error {
 	err := UpdateAppInfosToDB()
 	if err != nil {
@@ -135,6 +148,14 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	}
 
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
+
+	disableCategories := getDisableCategories()
+	for _, categorie := range appInfo.Categories {
+		if strings.Contains(disableCategories, categorie) {
+			glog.Warningf("%s is disable", categorie)
+			return nil, err
+		}
+	}
 
 	// set i18n info
 	appDir := path.Join(constants.AppGitLocalDir, dirName)
