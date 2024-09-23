@@ -23,12 +23,20 @@ type I18nEntrance struct {
 	Title string `yaml:"title" json:"title" bson:"title"`
 }
 
+type I18nMetadata struct {
+	Title       string `yaml:"title" json:"title" bson:"title"`
+	Description string `yaml:"description" json:"description" bson:"description"`
+}
+
+type I18nSpec struct {
+	FullDescription    string `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
+	UpgradeDescription string `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
+}
+
 type I18n struct {
-	Title              string         `yaml:"title" json:"title" bson:"title"`
-	Entrances          []I18nEntrance `yaml:"entrances" json:"entrances" bson:"entrances"`
-	Description        string         `yaml:"description" json:"description" bson:"description"`
-	FullDescription    string         `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
-	UpgradeDescription string         `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
+	Metadata  I18nMetadata   `yaml:"metadata" json:"metadata" bson:"metadata"`
+	Entrances []I18nEntrance `yaml:"entrances" json:"entrances" bson:"entrances"`
+	Spec      I18nSpec       `yaml:"spec" json:"spec" bson:"spec"`
 }
 
 type ApplicationInfo struct {
