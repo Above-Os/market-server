@@ -109,7 +109,21 @@ func GitPullAndUpdate() error {
 }
 
 func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
+outerLoop:
 	for _, info := range infos {
+
+		for _, label := range info.AppLabels {
+			if label == constants.DisableLabel {
+
+				err := mongo.DisableAppInfoToDb(info)
+				if err != nil {
+					glog.Warningf("mongo.DisableAppInfoToDb info:%#v, err:%s", info, err.Error())
+				}
+
+				continue outerLoop
+			}
+		}
+
 		err := mongo.UpsertAppInfoToDb(info)
 		if err != nil {
 			glog.Warningf("mongo.UpsertAppInfoToDb info:%#v, err:%s", info, err.Error())
@@ -152,8 +166,9 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	disableCategories := getDisableCategories()
 	for _, categorie := range appInfo.Categories {
 		if strings.Contains(disableCategories, categorie) {
-			glog.Warningf("%s is disable", categorie)
-			return nil, errors.New("disabled")
+			glog.Warningf("%s %s is disable", categorie, appInfo.AppID)
+			// return nil, errors.New("disabled")
+			appInfo.AppLabels = append(appInfo.AppLabels, constants.DisableLabel)
 		}
 	}
 

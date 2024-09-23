@@ -143,6 +143,14 @@ func GetAppInfoByName(name string) (*models.ApplicationInfo, error) {
 	return info, nil
 }
 
+func DisableAppInfoToDb(appInfo *models.ApplicationInfo) error {
+	filter := bson.M{"name": appInfo.Name}
+
+	_, err := mgoClient.deleteOne(AppStoreDb, AppInfosCollection, filter)
+
+	return err
+}
+
 func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
 	filter := bson.M{"name": appInfo.Name}
 	updatedDocument := &models.ApplicationInfo{}
