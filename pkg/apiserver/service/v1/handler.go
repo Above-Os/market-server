@@ -57,15 +57,33 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appList, count)))
 }
 
-//func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
-//	types, err := mongo.GetAppTypesFromDb()
-//	if err != nil {
-//		api.HandleError(resp, req, err)
-//		return
-//	}
-//
-//	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(types)))
-//}
+func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
+
+	appList, _, err := mongo.GetAppLists(0, 10000, "", "")
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	var categorieList []string
+	for _, app := range appList {
+		categorieList = append(categorieList, app.Categories...)
+	}
+
+	categorieList = utils.RemoveDuplicates(categorieList)
+
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(categorieList, int64(len(categorieList)))))
+}
+
+// func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
+// 	types, err := mongo.GetAppTypesFromDb()
+// 	if err != nil {
+// 		api.HandleError(resp, req, err)
+// 		return
+// 	}
+
+// 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(types)))
+// }
 
 func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
