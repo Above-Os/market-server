@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -21,6 +22,19 @@ import (
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
+
+const (
+	DisableCategoriesEnv = "DISABLE_CATEGORIES"
+)
+
+func getDisableCategories() string {
+	disableCategories := os.Getenv(DisableCategoriesEnv)
+	if disableCategories != "" {
+		return disableCategories
+	}
+
+	return ""
+}
 
 func Init() error {
 	err := UpdateAppInfosToDB()
@@ -40,12 +54,20 @@ func UpdateAppInfosToDB() error {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
+	var m models.ApplicationInfo
+	for _, info := range infos {
+		if info.Name == "firefox" {
+			m = *info
+		}
+	}
+	glog.Warningf("firefox: %v", m)
 
 	err = UpdateAppInfosToMongo(infos)
 	if err != nil {
 		glog.Warningf("%s", err.Error())
 		return err
 	}
+	glog.Infof("save to mongo success")
 
 	//sync info from mongodb to es
 	go es.SyncInfoFromMongo()
@@ -87,7 +109,21 @@ func GitPullAndUpdate() error {
 }
 
 func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
+outerLoop:
 	for _, info := range infos {
+
+		for _, label := range info.AppLabels {
+			if label == constants.DisableLabel {
+
+				err := mongo.DisableAppInfoToDb(info)
+				if err != nil {
+					glog.Warningf("mongo.DisableAppInfoToDb info:%#v, err:%s", info, err.Error())
+				}
+
+				continue outerLoop
+			}
+		}
+
 		err := mongo.UpsertAppInfoToDb(info)
 		if err != nil {
 			glog.Warningf("mongo.UpsertAppInfoToDb info:%#v, err:%s", info, err.Error())
@@ -127,7 +163,47 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
 
+	disableCategories := getDisableCategories()
+	for _, categorie := range appInfo.Categories {
+		if strings.Contains(disableCategories, categorie) {
+			glog.Warningf("%s %s is disable", categorie, appInfo.AppID)
+			// return nil, errors.New("disabled")
+			appInfo.AppLabels = append(appInfo.AppLabels, constants.DisableLabel)
+		}
+	}
+
+	// set i18n info
 	appDir := path.Join(constants.AppGitLocalDir, dirName)
+
+	glog.Infof("---->start parse i18n<----")
+	i18nMap := make(map[string]models.I18n)
+	for _, lang := range appInfo.Locale {
+		glog.Infof("path:")
+		glog.Infof(appDir)
+		glog.Infof(lang)
+		glog.Infof(constants.AppCfgFileName)
+
+		data, err := ioutil.ReadFile(path.Join(appDir, "i18n", lang, constants.AppCfgFileName))
+		if err != nil {
+			glog.Warningf("failed to get file %s,err=%v", path.Join("i18n", lang, constants.AppCfgFileName), err)
+			continue
+		}
+		glog.Infof("data:")
+		glog.Infof(string(data))
+
+		var i18n models.I18n
+		err = yaml.Unmarshal(data, &i18n)
+		if err != nil {
+			glog.Warningf("unmarshal to I18n failed err=%v", err)
+			continue
+		}
+		fmt.Println(i18n)
+		i18nMap[lang] = i18n
+
+	}
+	appInfo.I18n = i18nMap
+	glog.Infof("---->end parse i18n<----")
+
 	checkAppContainSpecialFile(appInfo, appDir)
 
 	return appInfo, nil

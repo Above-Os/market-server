@@ -58,6 +58,7 @@ const (
 	RemoveLabel  = "remove"
 	SuspendLabel = "suspend"
 	NsfwLabel    = "nsfw"
+	DisableLabel = "disabled"
 )
 
 var (

@@ -18,6 +18,27 @@ import (
 	"app-store-server/pkg/models/tapr"
 )
 
+type I18nEntrance struct {
+	Name  string `yaml:"name" json:"name" bson:"name"`
+	Title string `yaml:"title" json:"title" bson:"title"`
+}
+
+type I18nMetadata struct {
+	Title       string `yaml:"title" json:"title" bson:"title"`
+	Description string `yaml:"description" json:"description" bson:"description"`
+}
+
+type I18nSpec struct {
+	FullDescription    string `yaml:"fullDescription" json:"fullDescription" bson:"fullDescription"`
+	UpgradeDescription string `yaml:"upgradeDescription" json:"upgradeDescription" bson:"upgradeDescription"`
+}
+
+type I18n struct {
+	Metadata  I18nMetadata   `yaml:"metadata" json:"metadata" bson:"metadata"`
+	Entrances []I18nEntrance `yaml:"entrances" json:"entrances" bson:"entrances"`
+	Spec      I18nSpec       `yaml:"spec" json:"spec" bson:"spec"`
+}
+
 type ApplicationInfo struct {
 	Id string `yaml:"id" json:"id" bson:"id"`
 
@@ -37,7 +58,7 @@ type ApplicationInfo struct {
 	PromoteImage       []string         `yaml:"promoteImage" json:"promoteImage" bson:"promoteImage"`
 	PromoteVideo       string           `yaml:"promoteVideo" json:"promoteVideo" bson:"promoteVideo"`
 	SubCategory        string           `yaml:"subCategory" json:"subCategory" bson:"subCategory"`
-	Language           []string         `yaml:"language" json:"language" bson:"language"`
+	Locale             []string         `yaml:"locale" json:"locale" bson:"locale"`
 	Developer          string           `yaml:"developer" json:"developer" bson:"developer"`
 	RequiredMemory     string           `yaml:"requiredMemory" json:"requiredMemory" bson:"requiredMemory"`
 	RequiredDisk       string           `yaml:"requiredDisk" json:"requiredDisk" bson:"requiredDisk"`
@@ -52,13 +73,14 @@ type ApplicationInfo struct {
 	Middleware         *tapr.Middleware `yaml:"middleware" json:"middleware" bson:"middleware" description:"app middleware request"`
 	Options            Options          `yaml:"options" json:"options" bson:"options" description:"app options"`
 
-	Submitter     string       `yaml:"submitter" json:"submitter" bson:"submitter"`
-	Doc           string       `yaml:"doc" json:"doc" bson:"doc"`
-	Website       string       `yaml:"website" json:"website" bson:"website"`
-	FeaturedImage string       `yaml:"featuredImage" json:"featuredImage" bson:"featuredImage"`
-	SourceCode    string       `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
-	License       []TextAndURL `yaml:"license" json:"license" bson:"license"`
-	Legal         []TextAndURL `yaml:"legal" json:"legal" bson:"legal"`
+	Submitter     string          `yaml:"submitter" json:"submitter" bson:"submitter"`
+	Doc           string          `yaml:"doc" json:"doc" bson:"doc"`
+	Website       string          `yaml:"website" json:"website" bson:"website"`
+	FeaturedImage string          `yaml:"featuredImage" json:"featuredImage" bson:"featuredImage"`
+	SourceCode    string          `yaml:"sourceCode" json:"sourceCode" bson:"sourceCode"`
+	License       []TextAndURL    `yaml:"license" json:"license" bson:"license"`
+	Legal         []TextAndURL    `yaml:"legal" json:"legal" bson:"legal"`
+	I18n          map[string]I18n `yaml:"i18n" json:"i18n" bson:"i18n"`
 
 	ModelSize string `yaml:"modelSize" json:"modelSize,omitempty" bson:"modelSize"`
 
@@ -80,7 +102,7 @@ type AppSpec struct {
 	PromoteImage       []string      `yaml:"promoteImage" json:"promoteImage"`
 	PromoteVideo       string        `yaml:"promoteVideo" json:"promoteVideo"`
 	SubCategory        string        `yaml:"subCategory" json:"subCategory"`
-	Language           []string      `yaml:"language" json:"language"`
+	Locale             []string      `yaml:"locale" json:"locale"`
 	Developer          string        `yaml:"developer" json:"developer"`
 	RequiredMemory     string        `yaml:"requiredMemory" json:"requiredMemory"`
 	RequiredDisk       string        `yaml:"requiredDisk" json:"requiredDisk"`

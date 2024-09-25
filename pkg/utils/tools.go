@@ -66,3 +66,18 @@ func VerifyTopSize(size string) int {
 
 	return sizeN
 }
+
+func RemoveDuplicates(input []string) []string {
+
+	uniqueMap := make(map[string]struct{})
+	for _, str := range input {
+		uniqueMap[str] = struct{}{}
+	}
+
+	uniqueSlice := make([]string, 0, len(uniqueMap))
+	for key := range uniqueMap {
+		uniqueSlice = append(uniqueSlice, key)
+	}
+
+	return uniqueSlice
+}

@@ -64,6 +64,11 @@ func AddToContainer(c *restful.Container) error {
 
 	//glog.Infof("registered sub module: %s", ws.RootPath()+"/application_types")
 
+	ws.Route(ws.GET("/applications/types").
+		To(handler.handleTypes).
+		Doc("Get application types").
+		Returns(http.StatusOK, "success to get application types", nil))
+
 	ws.Route(ws.GET("/application/{"+ParamAppName+"}").
 		To(handler.handleApp).
 		Doc("download the application chart").
