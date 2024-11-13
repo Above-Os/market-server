@@ -19,7 +19,7 @@ const (
 
 	AppGitLocalDir    = "./app_git"
 	AppGitZipLocalDir = "./charts"
-	AppCfgFileName    = "TerminusManifest.yaml"
+	AppCfgFileName    = "OlaresManifest.yaml"
 	ReadmeFileName    = "README.md"
 
 	TimeFormatStr = "Mon Jan 2 15:04:05 2006 -0700"
