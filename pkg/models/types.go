@@ -39,7 +39,7 @@ type I18n struct {
 	Spec      I18nSpec       `yaml:"spec" json:"spec" bson:"spec"`
 }
 
-type ApplicationInfo struct {
+type ApplicationInfoEntry struct {
 	Id string `yaml:"id" json:"id" bson:"id"`
 
 	Name        string   `yaml:"name" json:"name" bson:"name"`
@@ -93,6 +93,14 @@ type ApplicationInfo struct {
 	//Status         string   `yaml:"status" json:"status" bson:"status"`
 	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 	Count     interface{} `yaml:"count" json:"count" bson:"count"`
+}
+
+type ApplicationInfoFullData struct {
+	Id string `yaml:"id" json:"id" bson:"id"`
+
+	Name      string                          `yaml:"name" json:"name" bson:"name"`
+	History   map[string]ApplicationInfoEntry `yaml:"history" json:"history" bson:"history"`
+	AppLabels []string                        `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 }
 
 type AppSpec struct {

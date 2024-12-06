@@ -52,8 +52,8 @@ type Entrance struct {
 	Invisible bool   `yaml:"invisible,omitempty" json:"invisible,omitempty" bson:"invisible,omitempty"`
 }
 
-func (ac *AppConfiguration) ToAppInfo() *ApplicationInfo {
-	return &ApplicationInfo{
+func (ac *AppConfiguration) ToAppInfo() *ApplicationInfoEntry {
+	return &ApplicationInfoEntry{
 		AppID:              ac.Metadata.AppID,
 		CfgType:            ac.ConfigType,
 		Name:               ac.Metadata.Name,

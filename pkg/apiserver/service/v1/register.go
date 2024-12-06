@@ -53,6 +53,7 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.QueryParameter("size", "size")).
 		Param(ws.QueryParameter("category", "category")).
 		Param(ws.QueryParameter("type", "type")).
+		Param(ws.QueryParameter("version", "version")).
 		Returns(http.StatusOK, "success to get application list", nil))
 
 	glog.Infof("registered sub module: %s", ws.RootPath()+"/applications")
@@ -67,12 +68,14 @@ func AddToContainer(c *restful.Container) error {
 	ws.Route(ws.GET("/applications/types").
 		To(handler.handleTypes).
 		Doc("Get application types").
+		Param(ws.QueryParameter("version", "version")).
 		Returns(http.StatusOK, "success to get application types", nil))
 
 	ws.Route(ws.GET("/application/{"+ParamAppName+"}").
 		To(handler.handleApp).
 		Doc("download the application chart").
 		Param(ws.PathParameter(ParamAppName, "the (chart)name of the application")).
+		Param(ws.QueryParameter("version", "version")).
 		Returns(http.StatusOK, "Success to get the application chart", nil))
 
 	ws.Route(ws.GET("/applications/top").
@@ -81,12 +84,14 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.QueryParameter("size", "size")).
 		Param(ws.QueryParameter("type", "type")).
 		Param(ws.QueryParameter("excludedLabels", "excludedLabels")).
+		Param(ws.QueryParameter("version", "version")).
 		Returns(http.StatusOK, "success to get the top application list", nil))
 
 	ws.Route(ws.GET("/applications/info/{"+ParamAppName+"}").
 		To(handler.handleAppInfo).
 		Doc("get the application info").
 		Param(ws.PathParameter(ParamAppName, "the name of the application")).
+		Param(ws.QueryParameter("version", "version")).
 		Returns(http.StatusOK, "Success to get the application info", nil))
 
 	ws.Route(ws.GET("/applications/{"+ParamAppName+"}/README.md").
@@ -107,6 +112,7 @@ func AddToContainer(c *restful.Container) error {
 		Param(ws.PathParameter(ParamAppName, "the name of the application")).
 		Param(ws.QueryParameter("page", "page")).
 		Param(ws.QueryParameter("size", "size")).
+		Param(ws.QueryParameter("version", "version")).
 		Doc("search application list by name").
 		Returns(http.StatusOK, "success to search application list by name", nil))
 
@@ -130,6 +136,14 @@ func AddToContainer(c *restful.Container) error {
 
 	ws.Route(ws.POST("/applications/infos").
 		To(handler.handleInfos).
+		Param(ws.BodyParameter(ParamAppNames, "the name list of the application")).
+		Doc("check app updates").
+		Reads([]string{}).
+		Returns(http.StatusOK, "success to check app updates", nil))
+
+	ws.Route(ws.POST("/applications/infos/{version}").
+		To(handler.handleInfos).
+		Param(ws.PathParameter("version", "version")).
 		Param(ws.BodyParameter(ParamAppNames, "the name list of the application")).
 		Doc("check app updates").
 		Reads([]string{}).

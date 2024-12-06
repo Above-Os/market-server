@@ -21,7 +21,7 @@ const (
 	AppStoreDb                      = "AppStoreServer"
 	AppStoreAdminDb                 = "AppStoreAdmin"
 	AppTypesCollection              = "AppTypes"
-	AppInfosCollection              = "AppInfos"
+	AppInfosCollection              = "AppInfosV2"
 	AppGitCollection                = "AppGit"
 	AppStatsCollection              = "AppStats"
 	AppTopicsCollection             = "AppTopics"

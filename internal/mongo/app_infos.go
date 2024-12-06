@@ -16,7 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetAppLists(offset, size int64, category, ty string) (list []*models.ApplicationInfo, count int64, err error) {
+func GetAppLists(offset, size int64, category, ty string) (list []*models.ApplicationInfoFullData, count int64, err error) {
 	filter := make(bson.M)
 	if category != "" {
 		//filter["categories"] = category
@@ -74,7 +74,7 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 
 	for cur.Next(ctx) {
 		// To decode into a struct, use cursor.Decode()
-		result := &models.ApplicationInfo{}
+		result := &models.ApplicationInfoFullData{}
 		err := cur.Decode(result)
 		if err != nil {
 			glog.Warningf("err:%s", err.Error())
@@ -92,7 +92,7 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 	return
 }
 
-func GetAppInfos(names []string) (mapInfo map[string]*models.ApplicationInfo, err error) {
+func GetAppInfos(names []string) (mapInfo map[string]*models.ApplicationInfoFullData, err error) {
 	filter := make(bson.M)
 	if len(names) > 0 {
 		filter["name"] = bson.M{"$in": names}
@@ -116,10 +116,10 @@ func GetAppInfos(names []string) (mapInfo map[string]*models.ApplicationInfo, er
 	defer cancel()
 	defer cur.Close(ctx)
 
-	mapInfo = make(map[string]*models.ApplicationInfo)
+	mapInfo = make(map[string]*models.ApplicationInfoFullData)
 	for cur.Next(ctx) {
 		// To decode into a struct, use cursor.Decode()
-		result := &models.ApplicationInfo{}
+		result := &models.ApplicationInfoFullData{}
 		err := cur.Decode(result)
 		if err != nil {
 			glog.Warningf("err:%s", err.Error())
@@ -131,9 +131,9 @@ func GetAppInfos(names []string) (mapInfo map[string]*models.ApplicationInfo, er
 	return
 }
 
-func GetAppInfoByName(name string) (*models.ApplicationInfo, error) {
+func GetAppInfoByName(name string) (*models.ApplicationInfoFullData, error) {
 	filter := bson.M{"name": name}
-	info := &models.ApplicationInfo{}
+	info := &models.ApplicationInfoFullData{}
 	err := mgoClient.queryOne(AppStoreDb, AppInfosCollection, filter).Decode(&info)
 	if err != nil {
 		glog.Warningf("err:%s", err.Error())
@@ -143,7 +143,7 @@ func GetAppInfoByName(name string) (*models.ApplicationInfo, error) {
 	return info, nil
 }
 
-func DisableAppInfoToDb(appInfo *models.ApplicationInfo) error {
+func DisableAppInfoToDb(appInfo *models.ApplicationInfoFullData) error {
 	filter := bson.M{"name": appInfo.Name}
 
 	_, err := mgoClient.deleteOne(AppStoreDb, AppInfosCollection, filter)
@@ -151,9 +151,9 @@ func DisableAppInfoToDb(appInfo *models.ApplicationInfo) error {
 	return err
 }
 
-func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
+func UpsertAppInfoToDb(appInfo *models.ApplicationInfoFullData) error {
 	filter := bson.M{"name": appInfo.Name}
-	updatedDocument := &models.ApplicationInfo{}
+	updatedDocument := &models.ApplicationInfoFullData{}
 	update := getUpdates(appInfo)
 	u := bson.M{"$set": update}
 	opts := options.FindOneAndUpdate().SetUpsert(true)
@@ -169,56 +169,117 @@ func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
 	return err
 }
 
-func getUpdates(appInfoNew *models.ApplicationInfo) *bson.M {
+func getUpdates(appInfoNew *models.ApplicationInfoFullData) *bson.M {
+
 	update := bson.M{}
-	update["lastCommitHash"] = appInfoNew.LastCommitHash
-	update["updateTime"] = appInfoNew.UpdateTime
-	update["createTime"] = appInfoNew.CreateTime
+	latest := bson.M{}
+	version := bson.M{}
 
-	update["chartName"] = appInfoNew.ChartName
-	update["cfgType"] = appInfoNew.CfgType
-	update["icon"] = appInfoNew.Icon
-	update["desc"] = appInfoNew.Description
+	latest["lastCommitHash"] = appInfoNew.History["latest"].LastCommitHash
+	latest["updateTime"] = appInfoNew.History["latest"].UpdateTime
+	latest["createTime"] = appInfoNew.History["latest"].CreateTime
+
+	latest["chartName"] = appInfoNew.History["latest"].ChartName
+	latest["cfgType"] = appInfoNew.History["latest"].CfgType
+	latest["icon"] = appInfoNew.History["latest"].Icon
+	latest["desc"] = appInfoNew.History["latest"].Description
 	nameMd58 := utils.Md5String(appInfoNew.Name)[:8]
-	update["appid"] = nameMd58
-	update["id"] = nameMd58
-	update["title"] = appInfoNew.Title
-	update["version"] = appInfoNew.Version
-	update["categories"] = appInfoNew.Categories
-	update["versionName"] = appInfoNew.VersionName
-	update["fullDescription"] = appInfoNew.FullDescription
-	update["upgradeDescription"] = appInfoNew.UpgradeDescription
-	update["promoteImage"] = appInfoNew.PromoteImage
-	update["promoteVideo"] = appInfoNew.PromoteVideo
-	update["subCategory"] = appInfoNew.SubCategory
-	update["developer"] = appInfoNew.Developer
-	update["requiredMemory"] = appInfoNew.RequiredMemory
-	update["requiredDisk"] = appInfoNew.RequiredDisk
-	update["supportClient"] = appInfoNew.SupportClient
-	update["supportArch"] = appInfoNew.SupportArch
-	update["requiredGpu"] = appInfoNew.RequiredGPU
-	update["requiredCpu"] = appInfoNew.RequiredCPU
-	update["rating"] = appInfoNew.Rating
-	update["target"] = appInfoNew.Target
-	update["permission"] = appInfoNew.Permission
-	update["entrances"] = appInfoNew.Entrances
-	update["middleware"] = appInfoNew.Middleware
-	update["options"] = appInfoNew.Options
-	update["locale"] = appInfoNew.Locale
-	update["i18n"] = appInfoNew.I18n
+	latest["appid"] = nameMd58
+	latest["id"] = nameMd58
+	latest["title"] = appInfoNew.History["latest"].Title
+	latest["version"] = appInfoNew.History["latest"].Version
+	latest["categories"] = appInfoNew.History["latest"].Categories
+	latest["versionName"] = appInfoNew.History["latest"].VersionName
+	latest["fullDescription"] = appInfoNew.History["latest"].FullDescription
+	latest["upgradeDescription"] = appInfoNew.History["latest"].UpgradeDescription
+	latest["promoteImage"] = appInfoNew.History["latest"].PromoteImage
+	latest["promoteVideo"] = appInfoNew.History["latest"].PromoteVideo
+	latest["subCategory"] = appInfoNew.History["latest"].SubCategory
+	latest["developer"] = appInfoNew.History["latest"].Developer
+	latest["requiredMemory"] = appInfoNew.History["latest"].RequiredMemory
+	latest["requiredDisk"] = appInfoNew.History["latest"].RequiredDisk
+	latest["supportClient"] = appInfoNew.History["latest"].SupportClient
+	latest["supportArch"] = appInfoNew.History["latest"].SupportArch
+	latest["requiredGpu"] = appInfoNew.History["latest"].RequiredGPU
+	latest["requiredCpu"] = appInfoNew.History["latest"].RequiredCPU
+	latest["rating"] = appInfoNew.History["latest"].Rating
+	latest["target"] = appInfoNew.History["latest"].Target
+	latest["permission"] = appInfoNew.History["latest"].Permission
+	latest["entrances"] = appInfoNew.History["latest"].Entrances
+	latest["middleware"] = appInfoNew.History["latest"].Middleware
+	latest["options"] = appInfoNew.History["latest"].Options
+	latest["locale"] = appInfoNew.History["latest"].Locale
+	latest["i18n"] = appInfoNew.History["latest"].I18n
 
-	update["submitter"] = appInfoNew.Submitter
-	update["doc"] = appInfoNew.Doc
-	update["website"] = appInfoNew.Website
-	update["featuredImage"] = appInfoNew.FeaturedImage
-	update["sourceCode"] = appInfoNew.SourceCode
-	update["license"] = appInfoNew.License
-	update["legal"] = appInfoNew.Legal
+	latest["submitter"] = appInfoNew.History["latest"].Submitter
+	latest["doc"] = appInfoNew.History["latest"].Doc
+	latest["website"] = appInfoNew.History["latest"].Website
+	latest["featuredImage"] = appInfoNew.History["latest"].FeaturedImage
+	latest["sourceCode"] = appInfoNew.History["latest"].SourceCode
+	latest["license"] = appInfoNew.History["latest"].License
+	latest["legal"] = appInfoNew.History["latest"].Legal
 	//update["status"] = appInfoNew.Status
-	update["appLabels"] = appInfoNew.AppLabels
-	update["modelSize"] = appInfoNew.ModelSize
-	update["namespace"] = appInfoNew.Namespace
-	update["onlyAdmin"] = appInfoNew.OnlyAdmin
+	latest["appLabels"] = appInfoNew.History["latest"].AppLabels
+	latest["modelSize"] = appInfoNew.History["latest"].ModelSize
+	latest["namespace"] = appInfoNew.History["latest"].Namespace
+	latest["onlyAdmin"] = appInfoNew.History["latest"].OnlyAdmin
+
+	// version
+	version["lastCommitHash"] = appInfoNew.History["latest"].LastCommitHash
+	version["updateTime"] = appInfoNew.History["latest"].UpdateTime
+	version["createTime"] = appInfoNew.History["latest"].CreateTime
+
+	version["chartName"] = appInfoNew.History["latest"].ChartName
+	version["cfgType"] = appInfoNew.History["latest"].CfgType
+	version["icon"] = appInfoNew.History["latest"].Icon
+	version["desc"] = appInfoNew.History["latest"].Description
+	version["appid"] = nameMd58
+	version["id"] = nameMd58
+	version["title"] = appInfoNew.History["latest"].Title
+	version["version"] = appInfoNew.History["latest"].Version
+	version["categories"] = appInfoNew.History["latest"].Categories
+	version["versionName"] = appInfoNew.History["latest"].VersionName
+	version["fullDescription"] = appInfoNew.History["latest"].FullDescription
+	version["upgradeDescription"] = appInfoNew.History["latest"].UpgradeDescription
+	version["promoteImage"] = appInfoNew.History["latest"].PromoteImage
+	version["promoteVideo"] = appInfoNew.History["latest"].PromoteVideo
+	version["subCategory"] = appInfoNew.History["latest"].SubCategory
+	version["developer"] = appInfoNew.History["latest"].Developer
+	version["requiredMemory"] = appInfoNew.History["latest"].RequiredMemory
+	version["requiredDisk"] = appInfoNew.History["latest"].RequiredDisk
+	version["supportClient"] = appInfoNew.History["latest"].SupportClient
+	version["supportArch"] = appInfoNew.History["latest"].SupportArch
+	version["requiredGpu"] = appInfoNew.History["latest"].RequiredGPU
+	version["requiredCpu"] = appInfoNew.History["latest"].RequiredCPU
+	version["rating"] = appInfoNew.History["latest"].Rating
+	version["target"] = appInfoNew.History["latest"].Target
+	version["permission"] = appInfoNew.History["latest"].Permission
+	version["entrances"] = appInfoNew.History["latest"].Entrances
+	version["middleware"] = appInfoNew.History["latest"].Middleware
+	version["options"] = appInfoNew.History["latest"].Options
+	version["locale"] = appInfoNew.History["latest"].Locale
+	version["i18n"] = appInfoNew.History["latest"].I18n
+
+	version["submitter"] = appInfoNew.History["latest"].Submitter
+	version["doc"] = appInfoNew.History["latest"].Doc
+	version["website"] = appInfoNew.History["latest"].Website
+	version["featuredImage"] = appInfoNew.History["latest"].FeaturedImage
+	version["sourceCode"] = appInfoNew.History["latest"].SourceCode
+	version["license"] = appInfoNew.History["latest"].License
+	version["legal"] = appInfoNew.History["latest"].Legal
+	//update["status"] = appInfoNew.Status
+	version["appLabels"] = appInfoNew.History["latest"].AppLabels
+	version["modelSize"] = appInfoNew.History["latest"].ModelSize
+	version["namespace"] = appInfoNew.History["latest"].Namespace
+	version["onlyAdmin"] = appInfoNew.History["latest"].OnlyAdmin
+
+	update["history"] = bson.M{
+		"latest":                             latest,
+		appInfoNew.History["latest"].Version: version,
+	}
+
+	update["id"] = nameMd58
+	update["appLabels"] = appInfoNew.History["latest"].AppLabels
 
 	return &update
 }

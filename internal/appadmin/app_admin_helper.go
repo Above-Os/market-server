@@ -14,18 +14,18 @@ import (
 )
 
 type Topic struct {
-	ID           int                      `json:"id"`
-	Name         string                   `json:"name"`
-	Introduction string                   `json:"introduction"`
-	Desc         string                   `json:"des"`
-	IconImg      string                   `json:"iconimg"`
-	DetailImg    string                   `json:"detailimg"`
-	RichText     string                   `json:"richtext"`
-	CreateAt     time.Time                `json:"createat"`
-	UpdateAt     time.Time                `json:"updateat"`
-	Apps         string                   `json:"apps"`
-	IsDelete     bool                     `json:"isdelete"`
-	AppList      []models.ApplicationInfo `json:"appList"`
+	ID           int                           `json:"id"`
+	Name         string                        `json:"name"`
+	Introduction string                        `json:"introduction"`
+	Desc         string                        `json:"des"`
+	IconImg      string                        `json:"iconimg"`
+	DetailImg    string                        `json:"detailimg"`
+	RichText     string                        `json:"richtext"`
+	CreateAt     time.Time                     `json:"createat"`
+	UpdateAt     time.Time                     `json:"updateat"`
+	Apps         string                        `json:"apps"`
+	IsDelete     bool                          `json:"isdelete"`
+	AppList      []models.ApplicationInfoEntry `json:"appList"`
 }
 
 type TopResponse struct {
@@ -43,13 +43,13 @@ type CategoriesResponse struct {
 }
 
 type ContentItem struct {
-	Name         string                   `json:"name"`
-	Introduction string                   `json:"introduction"`
-	Des          string                   `json:"des"`
-	Iconimg      string                   `json:"iconimg"`
-	Detailimg    string                   `json:"detailimg"`
-	Richtext     string                   `json:"richtext"`
-	Apps         []models.ApplicationInfo `json:"apps"`
+	Name         string                        `json:"name"`
+	Introduction string                        `json:"introduction"`
+	Des          string                        `json:"des"`
+	Iconimg      string                        `json:"iconimg"`
+	Detailimg    string                        `json:"detailimg"`
+	Richtext     string                        `json:"richtext"`
+	Apps         []models.ApplicationInfoEntry `json:"apps"`
 }
 
 type DataItem struct {

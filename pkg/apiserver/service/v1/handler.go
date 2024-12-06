@@ -43,6 +43,10 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	size := req.QueryParameter("size")
 	category := req.QueryParameter("category")
 	ty := req.QueryParameter("type")
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
 
 	glog.Infof("page:%s, size:%s, category:%s", page, size, category)
 
@@ -54,10 +58,21 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appList, count)))
+	appEntryList, err := filterVersionForApps(appList, version)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appEntryList, count)))
 }
 
 func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
+
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
 
 	appList, _, err := mongo.GetAppLists(0, 10000, "", "")
 	if err != nil {
@@ -65,8 +80,14 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
+	appEntryList, err := filterVersionForApps(appList, version)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
 	var categorieList []string
-	for _, app := range appList {
+	for _, app := range appEntryList {
 		categorieList = append(categorieList, app.Categories...)
 	}
 
@@ -75,19 +96,15 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(categorieList, int64(len(categorieList)))))
 }
 
-// func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
-// 	types, err := mongo.GetAppTypesFromDb()
-// 	if err != nil {
-// 		api.HandleError(resp, req, err)
-// 		return
-// 	}
-
-// 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(types)))
-// }
-
 func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
-	fileName := getChartPath(appName)
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
+
+	fileName := getChartPath(appName, version)
+
 	if fileName == "" {
 		api.HandleError(resp, req, fmt.Errorf("failed to get chart"))
 		return
@@ -103,6 +120,11 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 
 func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
+
 	if appName == "" {
 		api.HandleError(resp, req, errors.New("empty app name"))
 		return
@@ -114,7 +136,13 @@ func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, info))
+	appEntry, err := filterVersionForApp(info, version)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, appEntry))
 }
 
 func (h *Handler) handleReadme(req *restful.Request, resp *restful.Response) {
@@ -150,6 +178,11 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 	ty := req.QueryParameter("type")
 	size := req.QueryParameter("size")
 	excludedLabels := req.QueryParameter("excludedLabels")
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
+
 	excludedLabelsSlice := strings.Split(excludedLabels, ",")
 	sizeN := utils.VerifyTopSize(size)
 	infos, err := mongo.GetTopApplicationInfos(category, ty, excludedLabelsSlice, sizeN)
@@ -157,13 +190,30 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 		api.HandleError(resp, req, err)
 		return
 	}
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(infos)))
+
+	var appPointers []*models.ApplicationInfoFullData
+	for i := range infos {
+		appPointers = append(appPointers, &infos[i])
+	}
+
+	appEntryList, err := filterVersionForApps(appPointers, version)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResult(appEntryList)))
 }
 
 func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
 	page := req.QueryParameter("page")
 	size := req.QueryParameter("size")
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
+
 	from, sizeN := utils.VerifyFromAndSize(page, size)
 	appList, count, err := es.SearchByNameWildcard(from, sizeN, appName)
 	if err != nil {
@@ -171,7 +221,13 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appList, count)))
+	appEntryList, err := pickVersionForApps(appList, version)
+	if err != nil {
+		api.HandleError(resp, req, err)
+		return
+	}
+
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appEntryList, count)))
 }
 
 func (h *Handler) handleExist(req *restful.Request, resp *restful.Response) {
@@ -196,6 +252,11 @@ func (h *Handler) handleCount(req *restful.Request, resp *restful.Response) {
 }
 
 func (h *Handler) handleInfos(req *restful.Request, resp *restful.Response) {
+	version := req.PathParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
+
 	var names []string
 	err := req.ReadEntity(&names)
 	if err != nil {
@@ -208,6 +269,7 @@ func (h *Handler) handleInfos(req *restful.Request, resp *restful.Response) {
 		api.HandleError(resp, req, err)
 		return
 	}
+	appEntryList, err := pickVersionForAppsWithMap(mapInfo, version)
 
-	resp.WriteEntity(models.NewResponse(api.OK, api.Success, mapInfo))
+	resp.WriteEntity(models.NewResponse(api.OK, api.Success, appEntryList))
 }

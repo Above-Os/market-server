@@ -91,7 +91,7 @@ func GetTopApps(count int64) ([]string, error) {
 	return names, nil
 }
 
-func GetTopApplicationInfos(category, ty string, excludedLabels []string, count int) ([]models.ApplicationInfo, error) {
+func GetTopApplicationInfos(category, ty string, excludedLabels []string, count int) ([]models.ApplicationInfoFullData, error) {
 	lastCommitHash, err := GetLastCommitHashFromDB()
 	if err != nil {
 		return nil, err
@@ -117,14 +117,14 @@ func GetTopApplicationInfos(category, ty string, excludedLabels []string, count 
 	}
 	filter := make(bson.M)
 	if lastCommitHash != "" {
-		filter["lastCommitHash"] = lastCommitHash
+		filter["history.latest.lastCommitHash"] = lastCommitHash
 	}
 	if ty != "" {
 		tys := strings.Split(ty, ",")
 		if len(tys) > 1 {
-			filter["cfgType"] = bson.M{"$in": tys}
+			filter["history.latest.cfgType"] = bson.M{"$in": tys}
 		} else {
-			filter["cfgType"] = ty
+			filter["history.latest.cfgType"] = ty
 		}
 	}
 
@@ -138,7 +138,7 @@ func GetTopApplicationInfos(category, ty string, excludedLabels []string, count 
 		categoriesRegex := bson.M{
 			"$regex": primitive.Regex{Pattern: fmt.Sprintf("^%s$", category), Options: "i"},
 		}
-		filter["categories"] = bson.M{
+		filter["history.latest.categories"] = bson.M{
 			"$elemMatch": categoriesRegex,
 		}
 	}
@@ -155,8 +155,8 @@ func GetTopApplicationInfos(category, ty string, excludedLabels []string, count 
 	pipeline = append(pipeline,
 		bson.M{
 			"$sort": bson.D{
-				bson.E{Key: "counter.count", Value: -1},
-				bson.E{Key: "updateTime", Value: -1},
+				bson.E{Key: "history.latest.counter.count", Value: -1},
+				bson.E{Key: "history.latest.updateTime", Value: -1},
 				bson.E{Key: "name", Value: 1},
 			},
 		},
@@ -173,7 +173,7 @@ func GetTopApplicationInfos(category, ty string, excludedLabels []string, count 
 	}
 	defer cursor.Close(ctx)
 
-	var applicationInfos []models.ApplicationInfo
+	var applicationInfos []models.ApplicationInfoFullData
 	if err := cursor.All(ctx, &applicationInfos); err != nil {
 		return nil, err
 	}

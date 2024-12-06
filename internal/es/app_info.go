@@ -40,61 +40,69 @@ func delIndex() {
 
 func createIndex() error {
 	props := map[string]types.Property{
-		"name": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{},
-			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
-		},
-		"title": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{},
-			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
-		},
-		"desc": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{},
-			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
-		},
-		"fullDescription": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{},
-			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
-		},
-		"upgradeDescription": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{},
-			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
-		},
-		"submitter": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{},
-			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
-		},
-		"developer": types.TextProperty{
-			Fields: map[string]types.Property{
-				"keyword": types.KeywordProperty{
-					//Normalizer: some.String(""),
+		"history": types.ObjectProperty{
+			Properties: map[string]types.Property{
+				"latest": types.ObjectProperty{
+					Properties: map[string]types.Property{
+						"name": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"title": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"desc": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"fullDescription": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"upgradeDescription": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"submitter": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"developer": types.TextProperty{
+							Fields: map[string]types.Property{
+								"keyword": types.KeywordProperty{
+									//Normalizer: some.String(""),
+								},
+							},
+							Analyzer:       some.String("caseSensitive"),
+							SearchAnalyzer: some.String("caseSensitiveSearch"),
+						},
+						"categories":     types.TextProperty{},
+						"lastCommitHash": types.KeywordProperty{},
+						"createTime":     types.DateProperty{},
+						"updateTime":     types.DateProperty{},
+					},
 				},
 			},
-			Analyzer:       some.String("caseSensitive"),
-			SearchAnalyzer: some.String("caseSensitiveSearch"),
 		},
-		"categories":     types.TextProperty{},
-		"lastCommitHash": types.KeywordProperty{},
-		"createTime":     types.DateProperty{},
-		"updateTime":     types.DateProperty{},
 	}
 	err := esClient.CreateIndexWithMapping(indexName, props)
 	if err != nil {
@@ -104,7 +112,7 @@ func createIndex() error {
 	return err
 }
 
-func UpsertAppInfoToDb(appInfo *models.ApplicationInfo) error {
+func UpsertAppInfoToDb(appInfo *models.ApplicationInfoFullData) error {
 	resp, err := esClient.typedClient.Index(indexName).Id(appInfo.Id).Request(appInfo).Do(context.TODO())
 	if err != nil {
 		glog.Warningf("resp:%+v, err:%s", resp, err.Error())
@@ -136,13 +144,13 @@ func GetCategories() (categories []string) {
 						Filter: []types.Query{
 							{
 								Term: map[string]types.TermQuery{
-									"lastCommitHash": {Value: lastCommitHash}},
+									"history.latest.lastCommitHash": {Value: lastCommitHash}},
 							},
 						},
 					},
 				},
 				Aggregations: map[string]types.Aggregations{
-					"categories": {
+					"history.latest.categories": {
 						Terms: &types.TermsAggregation{
 							Field: some.String("categories"),
 						},
@@ -168,7 +176,7 @@ func GetCategories() (categories []string) {
 	return
 }
 
-func SearchByCategory(from, size int, category string) (infos []*models.ApplicationInfo, err error) {
+func SearchByCategory(from, size int, category string) (infos []*models.ApplicationInfoFullData, err error) {
 	var resp *search.Response
 	var lastCommitHash string
 	lastCommitHash, err = gitapp.GetLastHash()
@@ -188,11 +196,11 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 						Filter: []types.Query{
 							{
 								Term: map[string]types.TermQuery{
-									"lastCommitHash": {Value: lastCommitHash}},
+									"history.latest.lastCommitHash": {Value: lastCommitHash}},
 							},
 							{
 								Term: map[string]types.TermQuery{
-									"categories": {Value: category},
+									"history.latest.categories": {Value: category},
 								},
 							},
 						},
@@ -200,8 +208,8 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 				},
 				Sort: []types.SortCombinations{
 					types.SortOptions{SortOptions: map[string]types.FieldSort{
-						"updateTime":   {Order: &sortorder.Desc},
-						"name.keyword": {Order: &sortorder.Asc},
+						"history.latest.updateTime":   {Order: &sortorder.Desc},
+						"history.latest.name.keyword": {Order: &sortorder.Asc},
 					}},
 				},
 			}).
@@ -212,12 +220,12 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 	}
 
 	for _, hit := range resp.Hits.Hits {
-		info := &models.ApplicationInfo{}
+		info := &models.ApplicationInfoFullData{}
 		err = json.Unmarshal(hit.Source_, info)
 		if err != nil {
 			continue
 		}
-		glog.Infof("name:%s, update:%d\n", info.Name, info.UpdateTime)
+		glog.Infof("name:%s, update:%d\n", info.Name, info.History["latest"].UpdateTime)
 
 		infos = append(infos, info)
 	}
@@ -225,7 +233,7 @@ func SearchByCategory(from, size int, category string) (infos []*models.Applicat
 	return
 }
 
-func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
+func SearchByNameAccurate(name string) (*models.ApplicationInfoFullData, error) {
 	var resp *search.Response
 	lastCommitHash, err := gitapp.GetLastHash()
 	if err != nil {
@@ -242,11 +250,11 @@ func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
 						Filter: []types.Query{
 							{
 								Term: map[string]types.TermQuery{
-									"lastCommitHash": {Value: lastCommitHash}},
+									"history.latest.lastCommitHash": {Value: lastCommitHash}},
 							},
 							{
 								Term: map[string]types.TermQuery{
-									"name": {Value: name},
+									"history.latest.name": {Value: name},
 								},
 							},
 						},
@@ -254,8 +262,8 @@ func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
 				},
 				Sort: []types.SortCombinations{
 					types.SortOptions{SortOptions: map[string]types.FieldSort{
-						"updateTime":   {Order: &sortorder.Desc},
-						"name.keyword": {Order: &sortorder.Asc},
+						"history.latest.updateTime":   {Order: &sortorder.Desc},
+						"history.latest.name.keyword": {Order: &sortorder.Asc},
 					}},
 				},
 			}).
@@ -266,12 +274,12 @@ func SearchByNameAccurate(name string) (*models.ApplicationInfo, error) {
 	}
 
 	for _, hit := range resp.Hits.Hits {
-		info := &models.ApplicationInfo{}
+		info := &models.ApplicationInfoFullData{}
 		err = json.Unmarshal(hit.Source_, info)
 		if err != nil {
 			return nil, err
 		}
-		glog.Infof("name:%s, update:%d\n", info.Name, info.UpdateTime)
+		glog.Infof("name:%s, update:%d\n", info.Name, info.History["latest"].UpdateTime)
 
 		return info, nil
 	}
@@ -295,7 +303,7 @@ func getWildcardName(word string) string {
 	return strings.ToLower(word)
 }
 
-func SearchByNameWildcard(from, size int, name string) (infos []*models.ApplicationInfo, count int64, err error) {
+func SearchByNameWildcard(from, size int, name string) (infos []*models.ApplicationInfoFullData, count int64, err error) {
 	var resp *search.Response
 	var lastCommitHash string
 	lastCommitHash, err = gitapp.GetLastHash()
@@ -316,14 +324,14 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 						Filter: []types.Query{
 							{
 								Term: map[string]types.TermQuery{
-									"lastCommitHash": {Value: lastCommitHash}},
+									"history.latest.lastCommitHash": {Value: lastCommitHash}},
 							},
 							{
 								Bool: &types.BoolQuery{
 									Should: []types.Query{
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"name": {
+												"history.latest.name": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -331,7 +339,7 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 										},
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"title": {
+												"history.latest.title": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -339,7 +347,7 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 										},
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"desc": {
+												"history.latest.desc": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -347,7 +355,7 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 										},
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"fullDescription": {
+												"history.latest.fullDescription": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -355,7 +363,7 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 										},
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"upgradeDescription": {
+												"history.latest.upgradeDescription": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -363,7 +371,7 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 										},
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"submitter": {
+												"history.latest.submitter": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -371,7 +379,7 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 										},
 										{
 											Wildcard: map[string]types.WildcardQuery{
-												"developer": {
+												"history.latest.developer": {
 													Value:           &wildcardName,
 													CaseInsensitive: some.Bool(true),
 												},
@@ -385,8 +393,8 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 				},
 				Sort: []types.SortCombinations{
 					types.SortOptions{SortOptions: map[string]types.FieldSort{
-						"updateTime":   {Order: &sortorder.Desc},
-						"name.keyword": {Order: &sortorder.Asc},
+						"history.latest.updateTime":   {Order: &sortorder.Desc},
+						"history.latest.name.keyword": {Order: &sortorder.Asc},
 					}},
 				},
 			}).
@@ -399,12 +407,12 @@ func SearchByNameWildcard(from, size int, name string) (infos []*models.Applicat
 	count = resp.Hits.Total.Value
 
 	for _, hit := range resp.Hits.Hits {
-		info := &models.ApplicationInfo{}
+		info := &models.ApplicationInfoFullData{}
 		err = json.Unmarshal(hit.Source_, info)
 		if err != nil {
 			continue
 		}
-		glog.Infof("name:%s, update:%d\n", info.Name, info.UpdateTime)
+		glog.Infof("name:%s, update:%d\n", info.Name, info.History["latest"].UpdateTime)
 
 		infos = append(infos, info)
 	}
