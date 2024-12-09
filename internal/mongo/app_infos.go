@@ -32,16 +32,16 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 			"$regex": primitive.Regex{Pattern: fmt.Sprintf("^%s$", category), Options: "i"},
 		}
 
-		filter["categories"] = bson.M{
+		filter["history.latest.categories"] = bson.M{
 			"$elemMatch": categoriesRegex,
 		}
 	}
 	if ty != "" {
 		tys := strings.Split(ty, ",")
 		if len(tys) > 1 {
-			filter["cfgType"] = bson.M{"$in": tys}
+			filter["history.latest.cfgType"] = bson.M{"$in": tys}
 		} else {
-			filter["cfgType"] = ty
+			filter["history.latest.cfgType"] = ty
 		}
 	}
 
@@ -51,7 +51,7 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 		return
 	}
 	if lastCommitHash != "" {
-		filter["lastCommitHash"] = lastCommitHash
+		filter["history.latest.lastCommitHash"] = lastCommitHash
 	}
 
 	sort := bson.D{
@@ -104,7 +104,7 @@ func GetAppInfos(names []string) (mapInfo map[string]*models.ApplicationInfoFull
 		return
 	}
 	if lastCommitHash != "" {
-		filter["lastCommitHash"] = lastCommitHash
+		filter["history.latest.lastCommitHash"] = lastCommitHash
 	}
 
 	cur, err := mgoClient.queryMany(AppStoreDb, AppInfosCollection, filter)
