@@ -59,7 +59,7 @@ func pickVersionForAppsWithMap(apps map[string]*models.ApplicationInfoFullData, 
 	mapInfo := make(map[string]*models.ApplicationInfoEntry)
 
 	// Parse the passed version string
-	constraint, err := semver.NewConstraint(version)
+	v, err := semver.NewVersion(version)
 	if err != nil {
 		return nil, err
 	}
@@ -74,15 +74,20 @@ func pickVersionForAppsWithMap(apps map[string]*models.ApplicationInfoFullData, 
 			for _, dep := range entry.Options.Dependencies {
 				if dep.Name == "olares" && dep.Type == "system" {
 					// Parsing version strings
-					v, err := semver.NewVersion(dep.Version)
+					constraint, err := semver.NewConstraint(dep.Version)
 					if err != nil {
 						return nil, err
 					}
 
 					// Check if the version meets the constraints
 					if constraint.Check(v) {
+						appv, err := semver.NewVersion(entry.Version)
+						if err != nil {
+							return nil, err
+						}
+
 						// If the conditions are met, check whether it is the largest version
-						if maxEntry == nil || v.GreaterThan(semver.MustParse(maxEntry.Version)) {
+						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
 							maxEntry = &entry
 						}
 					}
@@ -105,7 +110,7 @@ func pickVersionForApps(apps []*models.ApplicationInfoFullData, version string) 
 	var result []models.ApplicationInfoEntry
 
 	// Parse the passed version string
-	constraint, err := semver.NewConstraint(version)
+	v, err := semver.NewVersion(version)
 	if err != nil {
 		return nil, err
 	}
@@ -120,15 +125,20 @@ func pickVersionForApps(apps []*models.ApplicationInfoFullData, version string) 
 			for _, dep := range entry.Options.Dependencies {
 				if dep.Name == "olares" && dep.Type == "system" {
 					// Parsing version strings
-					v, err := semver.NewVersion(dep.Version)
+					constraint, err := semver.NewConstraint(dep.Version)
 					if err != nil {
 						return nil, err
 					}
 
 					// Check if the version meets the constraints
 					if constraint.Check(v) {
+						appv, err := semver.NewVersion(entry.Version)
+						if err != nil {
+							return result, err
+						}
+
 						// If the conditions are met, check whether it is the largest version
-						if maxEntry == nil || v.GreaterThan(semver.MustParse(maxEntry.Version)) {
+						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
 							maxEntry = &entry
 						}
 					}
@@ -151,7 +161,7 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 	var result []models.ApplicationInfoEntry
 
 	// Parse the passed version string
-	constraint, err := semver.NewConstraint(version)
+	v, err := semver.NewVersion(version)
 	if err != nil {
 		glog.Infof("error version:%s", version)
 		return nil, err
@@ -166,7 +176,7 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 			for _, dep := range entry.Options.Dependencies {
 				if dep.Name == "olares" && dep.Type == "system" {
 					// Parsing version strings
-					v, err := semver.NewVersion(dep.Version)
+					constraint, err := semver.NewConstraint(dep.Version)
 					if err != nil {
 						glog.Infof("error version:%s", dep.Version)
 						return nil, err
@@ -174,8 +184,14 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 
 					// Check if the version meets the constraints
 					if constraint.Check(v) {
+
+						appv, err := semver.NewVersion(entry.Version)
+						if err != nil {
+							return result, err
+						}
+
 						// If the conditions are met, check whether it is the largest version
-						if maxEntry == nil || v.GreaterThan(semver.MustParse(maxEntry.Version)) {
+						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
 							maxEntry = &entry
 						}
 					}
@@ -197,7 +213,7 @@ func filterVersionForApp(app *models.ApplicationInfoFullData, version string) (m
 	var maxEntry *models.ApplicationInfoEntry
 
 	// Parse the passed version string
-	constraint, err := semver.NewConstraint(version)
+	v, err := semver.NewVersion(version)
 	if err != nil {
 		return result, err
 	}
@@ -208,15 +224,21 @@ func filterVersionForApp(app *models.ApplicationInfoFullData, version string) (m
 		for _, dep := range entry.Options.Dependencies {
 			if dep.Name == "olares" && dep.Type == "system" {
 				// Parsing version strings
-				v, err := semver.NewVersion(dep.Version)
+				constraint, err := semver.NewConstraint(dep.Version)
 				if err != nil {
 					return result, err
 				}
 
 				// Check if the version meets the constraints
 				if constraint.Check(v) {
+					// Parse the passed version string
+					appv, err := semver.NewVersion(entry.Version)
+					if err != nil {
+						return result, err
+					}
+
 					// If the condition is met, check whether it is the largest version
-					if maxEntry == nil || v.GreaterThan(semver.MustParse(maxEntry.Version)) {
+					if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
 						maxEntry = &entry
 					}
 				}
