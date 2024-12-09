@@ -48,7 +48,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		version = "1.10.1"
 	}
 
-	glog.Infof("page:%s, size:%s, category:%s", page, size, category)
+	glog.Infof("page:%s, size:%s, category:%s, version:%s", page, size, category, version)
 
 	from, sizeN := utils.VerifyFromAndSize(page, size)
 
@@ -58,11 +58,15 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
+	glog.Infof("appList size:%d", len(appList))
+
 	appEntryList, err := filterVersionForApps(appList, version)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
 	}
+
+	glog.Infof("appEntryList size:%d", len(appEntryList))
 
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appEntryList, count)))
 }
