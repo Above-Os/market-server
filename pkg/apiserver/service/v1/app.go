@@ -11,6 +11,7 @@ import (
 	"path"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/golang/glog"
 )
 
 func getChartPath(appName string, version string) string {
@@ -152,6 +153,7 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 	// Parse the passed version string
 	constraint, err := semver.NewConstraint(version)
 	if err != nil {
+		glog.Infof("error version:%s", version)
 		return nil, err
 	}
 
@@ -166,6 +168,7 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 					// Parsing version strings
 					v, err := semver.NewVersion(dep.Version)
 					if err != nil {
+						glog.Infof("error version:%s", dep.Version)
 						return nil, err
 					}
 
