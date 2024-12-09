@@ -120,19 +120,16 @@ func pullAndUpdateLoop() {
 
 func GitPullAndUpdate(force bool) error {
 	err := gitapp.Pull()
-	if errors.Is(err, git.NoErrAlreadyUpToDate) {
-		glog.Infof("info:%s", err.Error())
-
-		if force && err.Error() == "already up-to-date" {
+	if err != nil {
+		if errors.Is(err, git.NoErrAlreadyUpToDate) && force {
+			glog.Infof("info:%s", err.Error())
 			glog.Infof("force update")
 		} else {
-			return nil
+			glog.Warningf("git pull err:%s", err.Error())
+			return err
 		}
 	}
-	if err != nil {
-		glog.Warningf("git pull err:%s", err.Error())
-		return err
-	}
+
 	glog.Infof("git repo update")
 
 	err = gitapp.GetLastCommitHashAndUpdate()
