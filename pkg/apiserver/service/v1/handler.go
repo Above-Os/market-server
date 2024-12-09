@@ -166,7 +166,7 @@ func (h *Handler) handleReadme(req *restful.Request, resp *restful.Response) {
 }
 
 func (h *Handler) handleUpdate(req *restful.Request, resp *restful.Response) {
-	err := app.GitPullAndUpdate()
+	err := app.GitPullAndUpdate(true)
 
 	if err != nil {
 		api.HandleError(resp, req, err)

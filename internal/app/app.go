@@ -111,18 +111,23 @@ func UpdateAppInfosToDB() error {
 func pullAndUpdateLoop() {
 	for {
 		time.Sleep(time.Duration(1) * time.Minute)
-		err := GitPullAndUpdate()
+		err := GitPullAndUpdate(false)
 		if err != nil {
 			glog.Warningf("%s", err.Error())
 		}
 	}
 }
 
-func GitPullAndUpdate() error {
+func GitPullAndUpdate(force bool) error {
 	err := gitapp.Pull()
 	if errors.Is(err, git.NoErrAlreadyUpToDate) {
 		glog.Infof("info:%s", err.Error())
-		return nil
+
+		if force && err.Error() == "already up-to-date" {
+			glog.Infof("force update")
+		} else {
+			return nil
+		}
 	}
 	if err != nil {
 		glog.Warningf("git pull err:%s", err.Error())
