@@ -187,6 +187,7 @@ func GetLastCommitHashAndUpdate() error {
 		glog.Warningf("getGitLastCommitHash err:%s", err.Error())
 		return err
 	}
+	glog.Warningf("git hash:%s", hash)
 
 	err = updateLastHash(hash)
 	if err != nil {

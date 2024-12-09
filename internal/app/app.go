@@ -81,7 +81,11 @@ func UpdateAppInfosToDB() error {
 		return err
 	}
 
+	glog.Infof("app infos size:%d", len(infos))
+
 	apps := packApps(infos)
+
+	glog.Infof("apps size:%d", len(apps))
 	// just print one cell
 	// var m models.ApplicationInfo
 	// for _, info := range infos {
@@ -124,6 +128,7 @@ func GitPullAndUpdate() error {
 		glog.Warningf("git pull err:%s", err.Error())
 		return err
 	}
+	glog.Infof("git repo update")
 
 	err = gitapp.GetLastCommitHashAndUpdate()
 	if err != nil {
