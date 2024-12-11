@@ -46,7 +46,9 @@ func callLoop(f func() error) {
 }
 
 func getPagesDetailFromAdmin() error {
-	url := fmt.Sprintf(constants.AppAdminServicePagesDetailURLTempl, getAppAdminServiceHost(), getAppAdminServicePort())
+	// url := fmt.Sprintf(constants.AppAdminServicePagesDetailURLTempl, getAppAdminServiceHost(), getAppAdminServicePort())
+	url := fmt.Sprintf(constants.AppAdminServicePagesDetailURLTemplV2, getAppAdminServiceHost())
+
 	bodyStr, err := sendHttpRequest("GET", url, nil)
 	if err != nil {
 		return err
