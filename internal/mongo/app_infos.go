@@ -175,6 +175,7 @@ func getUpdates(appInfoNew *models.ApplicationInfoFullData) *bson.M {
 	latest := bson.M{}
 	version := bson.M{}
 
+	latest["name"] = appInfoNew.History["latest"].Name
 	latest["lastCommitHash"] = appInfoNew.History["latest"].LastCommitHash
 	latest["updateTime"] = appInfoNew.History["latest"].UpdateTime
 	latest["createTime"] = appInfoNew.History["latest"].CreateTime
@@ -225,6 +226,7 @@ func getUpdates(appInfoNew *models.ApplicationInfoFullData) *bson.M {
 	latest["onlyAdmin"] = appInfoNew.History["latest"].OnlyAdmin
 
 	// version
+	version["name"] = appInfoNew.History["latest"].Name
 	version["lastCommitHash"] = appInfoNew.History["latest"].LastCommitHash
 	version["updateTime"] = appInfoNew.History["latest"].UpdateTime
 	version["createTime"] = appInfoNew.History["latest"].CreateTime
