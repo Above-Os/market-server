@@ -40,7 +40,7 @@ const (
 
 const (
 	AppAdminServicePagesDetailURLTempl   = "http://%s:%s/api/pages/detail"
-	AppAdminServicePagesDetailURLTemplV2 = "%s"
+	AppAdminServicePagesDetailURLTemplV2 = "%s%s"
 
 	AppAdminHostEnv = "APP_ADMIN_HOST"
 	AppAdminPortEnv = "APP_ADMIN_PORT"

@@ -4,13 +4,23 @@ import (
 	"app-store-server/internal/appadmin"
 	"app-store-server/pkg/api"
 	"errors"
+	"os"
 
 	"github.com/emicklei/go-restful/v3"
 	"github.com/golang/glog"
 )
 
 func (h *Handler) pagesDetail(req *restful.Request, resp *restful.Response) {
-	detail := appadmin.GetPagesDetail()
+	version := req.QueryParameter("version")
+	if version == "" {
+		version = "1.10.1"
+	}
+
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
+	}
+
+	detail := appadmin.GetPagesDetail(version)
 	//todo deal with error
 	if detail == nil {
 		api.HandleError(resp, req, errors.New("get empty detail"))
