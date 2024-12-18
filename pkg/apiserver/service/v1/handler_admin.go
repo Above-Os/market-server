@@ -20,14 +20,17 @@ func (h *Handler) pagesDetail(req *restful.Request, resp *restful.Response) {
 		version = os.Getenv("LATEST_VERSION")
 	}
 
-	detail := appadmin.GetPagesDetail(version)
+	detail, err := appadmin.GetPagesDetailFromAdmin(version)
+	if err != nil {
+		glog.Warningf("err:%s", err)
+	}
 	//todo deal with error
 	if detail == nil {
 		api.HandleError(resp, req, errors.New("get empty detail"))
 		return
 	}
 
-	_, err := resp.Write([]byte(detail.(string)))
+	_, err = resp.Write([]byte(detail.(string)))
 	if err != nil {
 		glog.Warningf("err:%s", err)
 	}
