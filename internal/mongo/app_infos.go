@@ -55,8 +55,8 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 	}
 
 	sort := bson.D{
-		bson.E{Key: "updateTime", Value: -1},
-		bson.E{Key: "name", Value: 1},
+		bson.E{Key: "history.latest.updateTime", Value: -1},
+		bson.E{Key: "history.latest.name", Value: 1},
 	}
 
 	findOpts := options.Find()

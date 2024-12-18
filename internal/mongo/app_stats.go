@@ -200,7 +200,7 @@ func GetAppsInstallCounts(names []string) (list []*Counter, err error) {
 	}
 
 	sort := bson.D{
-		bson.E{Key: "count", Value: -1},
+		bson.E{Key: "history.latest.count", Value: -1},
 	}
 
 	findOpts := options.Find().SetSort(sort)

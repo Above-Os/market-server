@@ -48,6 +48,10 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		version = "1.10.1"
 	}
 
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
+	}
+
 	glog.Infof("page:%s, size:%s, category:%s, version:%s", page, size, category, version)
 
 	from, sizeN := utils.VerifyFromAndSize(page, size)
@@ -76,6 +80,10 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 	version := req.QueryParameter("version")
 	if version == "" {
 		version = "1.10.1"
+	}
+
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
 	}
 
 	appList, _, err := mongo.GetAppLists(0, 10000, "", "")
@@ -107,6 +115,10 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 		version = "1.10.1"
 	}
 
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
+	}
+
 	fileName := getChartPath(appName, version)
 
 	if fileName == "" {
@@ -127,6 +139,10 @@ func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 	version := req.QueryParameter("version")
 	if version == "" {
 		version = "1.10.1"
+	}
+
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
 	}
 
 	if appName == "" {
@@ -187,6 +203,10 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 		version = "1.10.1"
 	}
 
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
+	}
+
 	excludedLabelsSlice := strings.Split(excludedLabels, ",")
 	sizeN := utils.VerifyTopSize(size)
 	infos, err := mongo.GetTopApplicationInfos(category, ty, excludedLabelsSlice, sizeN)
@@ -216,6 +236,10 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	version := req.QueryParameter("version")
 	if version == "" {
 		version = "1.10.1"
+	}
+
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
 	}
 
 	from, sizeN := utils.VerifyFromAndSize(page, size)
@@ -259,6 +283,10 @@ func (h *Handler) handleInfos(req *restful.Request, resp *restful.Response) {
 	version := req.PathParameter("version")
 	if version == "" {
 		version = "1.10.1"
+	}
+
+	if version == "latest" {
+		version = os.Getenv("LATEST_VERSION")
 	}
 
 	var names []string
