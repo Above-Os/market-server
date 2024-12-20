@@ -194,9 +194,12 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
 							maxEntry = &entry
 						} else {
-							glog.Infof("app:%s, maxEntry:%s, this:%s", entry.Name, maxEntry.Version, entry.Version)
-							glog.Info(appv)
-							glog.Info(semver.MustParse(maxEntry.Version))
+							if entry.Name == "ollama" {
+								glog.Infof("app:%s, maxEntry:%s, this:%s", entry.Name, maxEntry.Version, entry.Version)
+								glog.Info(appv)
+								glog.Info(semver.MustParse(maxEntry.Version))
+							}
+
 						}
 					}
 				}
