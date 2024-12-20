@@ -190,25 +190,18 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 							return result, err
 						}
 
+						if entry.Name == "ollama" {
+							glog.Infof("update app:%s, this:%s", entry.Name, entry.Version)
+							if maxEntry != nil {
+								glog.Infof("update app:%s, max now:%s", entry.Name, maxEntry.Version)
+							}
+							glog.Infof("update app:%s, dep.Version:%s, v:%s", entry.Name, dep.Version, v)
+						}
+
 						// If the conditions are met, check whether it is the largest version
 						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
-
-							if entry.Name == "ollama" && maxEntry != nil {
-								glog.Infof("update app:%s, maxEntry:%s, this:%s", entry.Name, maxEntry.Version, entry.Version)
-								glog.Infof("update app:%s, dep.Version:%s, v:%s", entry.Name, dep.Version, v)
-								// glog.Info(appv)
-								// glog.Info(semver.MustParse(maxEntry.Version))
-							}
-
 							maxEntry = &entry
-						} else {
-							if entry.Name == "ollama" {
-								glog.Infof("app:%s, maxEntry:%s, this:%s", entry.Name, maxEntry.Version, entry.Version)
-								glog.Infof("app:%s, dep.Version:%s, v:%s", entry.Name, dep.Version, v)
-								// glog.Info(appv)
-								// glog.Info(semver.MustParse(maxEntry.Version))
-							}
-
+							glog.Infof("update app:%s, new:%s", entry.Name, maxEntry.Version)
 						}
 					}
 				}
