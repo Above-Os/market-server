@@ -88,7 +88,9 @@ func pickVersionForAppsWithMap(apps map[string]*models.ApplicationInfoFullData, 
 
 						// If the conditions are met, check whether it is the largest version
 						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
-							maxEntry = &entry
+							entryCopy := entry
+							maxEntry = &entryCopy
+
 						}
 					}
 				}
@@ -139,7 +141,9 @@ func pickVersionForApps(apps []*models.ApplicationInfoFullData, version string) 
 
 						// If the conditions are met, check whether it is the largest version
 						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
-							maxEntry = &entry
+							entryCopy := entry
+							maxEntry = &entryCopy
+
 						}
 					}
 				}
@@ -200,7 +204,8 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 
 						// If the conditions are met, check whether it is the largest version
 						if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
-							maxEntry = &entry
+							entryCopy := entry
+							maxEntry = &entryCopy
 							glog.Infof("update app:%s, new:%s", entry.Name, maxEntry.Version)
 						}
 					}
@@ -248,7 +253,9 @@ func filterVersionForApp(app *models.ApplicationInfoFullData, version string) (m
 
 					// If the condition is met, check whether it is the largest version
 					if maxEntry == nil || appv.GreaterThan(semver.MustParse(maxEntry.Version)) {
-						maxEntry = &entry
+						entryCopy := entry
+						maxEntry = &entryCopy
+
 					}
 				}
 			}
