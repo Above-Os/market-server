@@ -48,6 +48,10 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		version = "1.10.9-0"
 	}
 
+	if version == "undefined" {
+		version = "1.10.9-0"
+	}
+
 	if version == "latest" {
 		version = os.Getenv("LATEST_VERSION")
 	}
@@ -79,6 +83,10 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 
 	version := req.QueryParameter("version")
 	if version == "" {
+		version = "1.10.9-0"
+	}
+
+	if version == "undefined" {
 		version = "1.10.9-0"
 	}
 
@@ -115,6 +123,10 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 		version = "1.10.9-0"
 	}
 
+	if version == "undefined" {
+		version = "1.10.9-0"
+	}
+
 	if version == "latest" {
 		version = os.Getenv("LATEST_VERSION")
 	}
@@ -138,6 +150,10 @@ func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
 	version := req.QueryParameter("version")
 	if version == "" {
+		version = "1.10.9-0"
+	}
+
+	if version == "undefined" {
 		version = "1.10.9-0"
 	}
 
@@ -203,6 +219,10 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 		version = "1.10.9-0"
 	}
 
+	if version == "undefined" {
+		version = "1.10.9-0"
+	}
+
 	if version == "latest" {
 		version = os.Getenv("LATEST_VERSION")
 	}
@@ -235,6 +255,10 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	size := req.QueryParameter("size")
 	version := req.QueryParameter("version")
 	if version == "" {
+		version = "1.10.9-0"
+	}
+
+	if version == "undefined" {
 		version = "1.10.9-0"
 	}
 
@@ -282,6 +306,10 @@ func (h *Handler) handleCount(req *restful.Request, resp *restful.Response) {
 func (h *Handler) handleInfos(req *restful.Request, resp *restful.Response) {
 	version := req.PathParameter("version")
 	if version == "" {
+		version = "1.10.9-0"
+	}
+
+	if version == "undefined" {
 		version = "1.10.9-0"
 	}
 

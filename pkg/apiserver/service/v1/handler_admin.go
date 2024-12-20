@@ -16,6 +16,10 @@ func (h *Handler) pagesDetail(req *restful.Request, resp *restful.Response) {
 		version = "1.10.9-0"
 	}
 
+	if version == "undefined" {
+		version = "1.10.9-0"
+	}
+
 	if version == "latest" {
 		version = os.Getenv("LATEST_VERSION")
 	}
