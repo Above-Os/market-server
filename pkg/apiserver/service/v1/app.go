@@ -196,8 +196,9 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 						} else {
 							if entry.Name == "ollama" {
 								glog.Infof("app:%s, maxEntry:%s, this:%s", entry.Name, maxEntry.Version, entry.Version)
-								glog.Info(appv)
-								glog.Info(semver.MustParse(maxEntry.Version))
+								glog.Infof("app:%s, dep.Version:%s, v:%s", entry.Name, dep.Version, v)
+								// glog.Info(appv)
+								// glog.Info(semver.MustParse(maxEntry.Version))
 							}
 
 						}
