@@ -45,7 +45,7 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 	ty := req.QueryParameter("type")
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
@@ -79,7 +79,7 @@ func (h *Handler) handleTypes(req *restful.Request, resp *restful.Response) {
 
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
@@ -112,7 +112,7 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
@@ -138,7 +138,7 @@ func (h *Handler) handleAppInfo(req *restful.Request, resp *restful.Response) {
 	appName := req.PathParameter(ParamAppName)
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
@@ -200,7 +200,7 @@ func (h *Handler) handleTop(req *restful.Request, resp *restful.Response) {
 	excludedLabels := req.QueryParameter("excludedLabels")
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
@@ -235,7 +235,7 @@ func (h *Handler) handleSearch(req *restful.Request, resp *restful.Response) {
 	size := req.QueryParameter("size")
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
@@ -282,7 +282,7 @@ func (h *Handler) handleCount(req *restful.Request, resp *restful.Response) {
 func (h *Handler) handleInfos(req *restful.Request, resp *restful.Response) {
 	version := req.PathParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {

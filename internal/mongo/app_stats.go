@@ -155,7 +155,7 @@ func GetTopApplicationInfos(category, ty string, excludedLabels []string, count 
 	pipeline = append(pipeline,
 		bson.M{
 			"$sort": bson.D{
-				bson.E{Key: "history.latest.counter.count", Value: -1},
+				bson.E{Key: "counter.count", Value: -1},
 				bson.E{Key: "history.latest.updateTime", Value: -1},
 				bson.E{Key: "name", Value: 1},
 			},

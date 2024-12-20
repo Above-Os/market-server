@@ -13,7 +13,7 @@ import (
 func (h *Handler) pagesDetail(req *restful.Request, resp *restful.Response) {
 	version := req.QueryParameter("version")
 	if version == "" {
-		version = "1.10.1"
+		version = "1.10.0-0"
 	}
 
 	if version == "latest" {
