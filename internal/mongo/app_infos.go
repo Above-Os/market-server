@@ -161,20 +161,14 @@ func UpsertAppInfoToDb(appInfo *models.ApplicationInfoFullData) error {
 	nameMd58 := utils.Md5String(appInfo.Name)[:8]
 
 	// u := bson.M{"$set": update}
+	versionKey := strings.Replace(appInfo.History["latest"].Version, ".", "_", -1)
 	u := bson.M{
 		"$set": bson.M{
-			"id":             nameMd58,
-			"appLabels":      appInfo.History["latest"].AppLabels,
-			"history.latest": updateLatest,
-			fmt.Sprintf("history.%s", appInfo.History["latest"].Version): updateVersion,
+			"id":                                  nameMd58,
+			"appLabels":                           appInfo.History["latest"].AppLabels,
+			"history.latest":                      updateLatest,
+			fmt.Sprintf("history.%s", versionKey): updateVersion,
 		},
-		// "$push": bson.M{
-		// 	"history."
-		// 	"history": bson.M{
-		// 		"$each":     []interface{}{updateVersion},
-		// 		"$position": 0,
-		// 	},
-		// },
 	}
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 
