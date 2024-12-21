@@ -131,7 +131,10 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 		version = os.Getenv("LATEST_VERSION")
 	}
 
+	glog.Infof("handleApp,%s,%s", appName, version)
 	fileName := getChartPath(appName, version)
+
+	glog.Infof("fileName,%s", fileName)
 
 	if fileName == "" {
 		api.HandleError(resp, req, fmt.Errorf("failed to get chart"))
