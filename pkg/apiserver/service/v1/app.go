@@ -83,7 +83,8 @@ func pickVersionForAppsWithMap(apps map[string]*models.ApplicationInfoFullData, 
 					if constraint.Check(v) {
 						appv, err := semver.NewVersion(entry.Version)
 						if err != nil {
-							return nil, err
+							// return nil, err
+							continue
 						}
 
 						// If the conditions are met, check whether it is the largest version
@@ -136,7 +137,8 @@ func pickVersionForApps(apps []*models.ApplicationInfoFullData, version string) 
 					if constraint.Check(v) {
 						appv, err := semver.NewVersion(entry.Version)
 						if err != nil {
-							return result, err
+							// return result, err
+							continue
 						}
 
 						// If the conditions are met, check whether it is the largest version
@@ -192,7 +194,8 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 						appv, err := semver.NewVersion(entry.Version)
 						if err != nil {
 							glog.Infof("error version:%s, error app:%s", entry.Version, entry.Name)
-							return result, err
+							// return result, err
+							continue
 						}
 
 						if entry.Name == "ollama" {
@@ -249,7 +252,8 @@ func filterVersionForApp(app *models.ApplicationInfoFullData, version string) (m
 					// Parse the passed version string
 					appv, err := semver.NewVersion(entry.Version)
 					if err != nil {
-						return result, err
+						// return result, err
+						continue
 					}
 
 					// If the condition is met, check whether it is the largest version
