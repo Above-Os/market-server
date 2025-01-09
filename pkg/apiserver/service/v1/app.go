@@ -191,6 +191,7 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 
 						appv, err := semver.NewVersion(entry.Version)
 						if err != nil {
+							glog.Infof("error version:%s, error app:%s", entry.Version, entry.Name)
 							return result, err
 						}
 
