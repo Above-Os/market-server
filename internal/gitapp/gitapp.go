@@ -56,11 +56,11 @@ func cloneCode() error {
 	}
 
 	//clear local charts dir
-	err = os.RemoveAll(constants.AppGitZipLocalDir)
-	if err != nil {
-		glog.Warningf("os.RemoveAll %s %s", constants.AppGitLocalDir, err.Error())
-		return err
-	}
+	// err = os.RemoveAll(constants.AppGitZipLocalDir)
+	// if err != nil {
+	// 	glog.Warningf("os.RemoveAll %s %s", constants.AppGitZipLocalDir, err.Error())
+	// 	return err
+	// }
 
 	return gitClone(getGitAddr(), getGitBranch(), constants.AppGitLocalDir)
 }
@@ -187,6 +187,7 @@ func GetLastCommitHashAndUpdate() error {
 		glog.Warningf("getGitLastCommitHash err:%s", err.Error())
 		return err
 	}
+	glog.Warningf("git hash:%s", hash)
 
 	err = updateLastHash(hash)
 	if err != nil {

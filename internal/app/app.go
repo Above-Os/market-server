@@ -48,21 +48,54 @@ func Init() error {
 	return nil
 }
 
+func packApp(app *models.ApplicationInfoEntry) *models.ApplicationInfoFullData {
+
+	fullData := &models.ApplicationInfoFullData{
+		Id:        app.Id,
+		Name:      app.Name,
+		History:   make(map[string]models.ApplicationInfoEntry),
+		AppLabels: app.AppLabels,
+	}
+
+	fullData.History["latest"] = *app
+	fullData.History[app.Version] = *app
+
+	return fullData
+}
+
+func packApps(apps []*models.ApplicationInfoEntry) []*models.ApplicationInfoFullData {
+	var fullDataList []*models.ApplicationInfoFullData
+
+	for _, app := range apps {
+		fullData := packApp(app)
+		fullDataList = append(fullDataList, fullData)
+	}
+
+	return fullDataList
+}
+
 func UpdateAppInfosToDB() error {
 	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
 	if err != nil {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
-	var m models.ApplicationInfo
-	for _, info := range infos {
-		if info.Name == "firefox" {
-			m = *info
-		}
-	}
-	glog.Warningf("firefox: %v", m)
 
-	err = UpdateAppInfosToMongo(infos)
+	glog.Infof("app infos size:%d", len(infos))
+
+	apps := packApps(infos)
+
+	glog.Infof("apps size:%d", len(apps))
+	// just print one cell
+	// var m models.ApplicationInfo
+	// for _, info := range infos {
+	// 	if info.Name == "firefox" {
+	// 		m = *info
+	// 	}
+	// }
+	// glog.Warningf("firefox: %v", m)
+
+	err = UpdateAppInfosToMongo(apps)
 	if err != nil {
 		glog.Warningf("%s", err.Error())
 		return err
@@ -78,23 +111,26 @@ func UpdateAppInfosToDB() error {
 func pullAndUpdateLoop() {
 	for {
 		time.Sleep(time.Duration(1) * time.Minute)
-		err := GitPullAndUpdate()
+		err := GitPullAndUpdate(false)
 		if err != nil {
 			glog.Warningf("%s", err.Error())
 		}
 	}
 }
 
-func GitPullAndUpdate() error {
+func GitPullAndUpdate(force bool) error {
 	err := gitapp.Pull()
-	if errors.Is(err, git.NoErrAlreadyUpToDate) {
-		glog.Infof("info:%s", err.Error())
-		return nil
-	}
 	if err != nil {
-		glog.Warningf("git pull err:%s", err.Error())
-		return err
+		if errors.Is(err, git.NoErrAlreadyUpToDate) && force {
+			glog.Infof("info:%s", err.Error())
+			glog.Infof("force update")
+		} else {
+			glog.Warningf("git pull err:%s", err.Error())
+			return err
+		}
 	}
+
+	glog.Infof("git repo update")
 
 	err = gitapp.GetLastCommitHashAndUpdate()
 	if err != nil {
@@ -108,7 +144,7 @@ func GitPullAndUpdate() error {
 	//or del by lastCommitHash old
 }
 
-func UpdateAppInfosToMongo(infos []*models.ApplicationInfo) error {
+func UpdateAppInfosToMongo(infos []*models.ApplicationInfoFullData) error {
 outerLoop:
 	for _, info := range infos {
 
@@ -140,7 +176,7 @@ outerLoop:
 	return nil
 }
 
-func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
+func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 	cfgFileName := path.Join(constants.AppGitLocalDir, dirName, constants.AppCfgFileName)
 
 	f, err := os.Open(cfgFileName)
@@ -209,7 +245,7 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfo, error) {
 	return appInfo, nil
 }
 
-func checkAppContainSpecialFile(info *models.ApplicationInfo, appDir string) {
+func checkAppContainSpecialFile(info *models.ApplicationInfoEntry, appDir string) {
 	if isContainRemove(appDir) {
 		info.AppLabels = append(info.AppLabels, constants.RemoveLabel)
 	}
@@ -235,7 +271,7 @@ func isContainNsfw(appDir string) bool {
 	return utils.IsDirContainFile(appDir, constants.NsfwFile)
 }
 
-func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo {
+func appInfoParseQuantity(info *models.ApplicationInfoEntry) *models.ApplicationInfoEntry {
 	if info == nil {
 		return info
 	}
@@ -274,7 +310,7 @@ func appInfoParseQuantity(info *models.ApplicationInfo) *models.ApplicationInfo 
 	return info
 }
 
-func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err error) {
+func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, err error) {
 	charts, err := os.ReadDir(dir)
 	if err != nil {
 		glog.Warningf("read dir %s error: %s", dir, err.Error())
@@ -310,7 +346,7 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfo, err err
 	return infos, nil
 }
 
-func getGitInfosByName(appInfo *models.ApplicationInfo, name string) {
+func getGitInfosByName(appInfo *models.ApplicationInfoEntry, name string) {
 	var err error
 	appInfo.LastCommitHash, err = gitapp.GetLastHash()
 	if err != nil {

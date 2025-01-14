@@ -1,14 +1,14 @@
 package models
 
 type CmsTopic struct {
-	Id           string            `json:"id"`
-	Name         string            `json:"name"`
-	Introduction string            `json:"introduction"`
-	Des          string            `json:"des"`
-	IconImg      string            `json:"iconimg"`
-	DetailImg    string            `json:"detailimg"`
-	RichText     string            `json:"richtext"`
-	AppList      []ApplicationInfo `json:"appList"`
+	Id           string                 `json:"id"`
+	Name         string                 `json:"name"`
+	Introduction string                 `json:"introduction"`
+	Des          string                 `json:"des"`
+	IconImg      string                 `json:"iconimg"`
+	DetailImg    string                 `json:"detailimg"`
+	RichText     string                 `json:"richtext"`
+	AppList      []ApplicationInfoEntry `json:"appList"`
 }
 
 type CmsTopicListResponse struct {
