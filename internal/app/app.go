@@ -110,7 +110,7 @@ func UpdateAppInfosToDB() error {
 
 func pullAndUpdateLoop() {
 	for {
-		time.Sleep(time.Duration(1) * time.Minute)
+		time.Sleep(time.Duration(5) * time.Minute)
 		err := GitPullAndUpdate(false)
 		if err != nil {
 			glog.Warningf("%s", err.Error())
