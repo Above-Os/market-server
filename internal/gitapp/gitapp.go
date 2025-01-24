@@ -209,17 +209,12 @@ func gitPullV3(directory string) error {
 		return fmt.Errorf("failed to get worktree: %w", err)
 	}
 
-	// Configure pull options with timeout
+	// Configure pull options
 	opts := &git.PullOptions{
 		RemoteName: "origin",
 		Progress:   os.Stdout,
 		Force:      true,
 	}
-
-	// Set timeout context
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-	opts.Context = ctx
 
 	// Perform pull
 	err = w.Pull(opts)
