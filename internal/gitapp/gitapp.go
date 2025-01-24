@@ -4,7 +4,7 @@ import (
 	"app-store-server/internal/constants"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/utils"
-	"context"
+
 	"fmt"
 	"io"
 	"os"
@@ -167,7 +167,7 @@ func gitPullV2(directory string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get current working directory: %w", err)
 	}
-	
+
 	// Ensure we restore the original working directory when function returns
 	defer func() {
 		if err := os.Chdir(curDir); err != nil {
