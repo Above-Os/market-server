@@ -8,12 +8,15 @@ import (
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -21,6 +24,7 @@ import (
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"text/template"
 )
 
 const (
@@ -191,26 +195,142 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 		return nil, err
 	}
 
+	// First, attempt to parse the original configuration file
 	var appCfg models.AppConfiguration
 	if err = yaml.Unmarshal(cfgContent, &appCfg); err != nil {
-		glog.Warningf("%s", err.Error())
+		// Check if the file contains template syntax
+		if strings.Contains(string(cfgContent), "{{") {
+			// Need to render templates to generate two different configurations for administrators and regular users
+			adminAppInfo, err := renderAppConfigWithTemplate(string(cfgContent), true)
+			if err != nil {
+				glog.Warningf("Failed to render admin application configuration: %s", err.Error())
+				return nil, err
+			}
+			
+			userAppInfo, err := renderAppConfigWithTemplate(string(cfgContent), false)
+			if err != nil {
+				glog.Warningf("Failed to render user application configuration: %s", err.Error())
+				return nil, err
+			}
+			
+			// Merge the two configurations to create an application information that contains both views
+			mergedAppInfo := mergeAppInfos(adminAppInfo, userAppInfo)
+			
+			// Continue processing the merged application information
+			disableCategories := getDisableCategories()
+			for _, categorie := range mergedAppInfo.Categories {
+				if strings.Contains(disableCategories, categorie) {
+					glog.Warningf("%s %s is disable", categorie, mergedAppInfo.AppID)
+					mergedAppInfo.AppLabels = append(mergedAppInfo.AppLabels, constants.DisableLabel)
+				}
+			}
+			
+			// Set i18n information
+			setI18nInfo(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
+			
+			// Check for special files
+			checkAppContainSpecialFile(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
+			
+			return mergedAppInfo, nil
+		}
+		
+		glog.Warningf("Failed to parse application configuration: %s", err.Error())
 		return nil, err
 	}
 
+	// Normal non-template processing flow
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
 
 	disableCategories := getDisableCategories()
 	for _, categorie := range appInfo.Categories {
 		if strings.Contains(disableCategories, categorie) {
 			glog.Warningf("%s %s is disable", categorie, appInfo.AppID)
-			// return nil, errors.New("disabled")
 			appInfo.AppLabels = append(appInfo.AppLabels, constants.DisableLabel)
 		}
 	}
 
-	// set i18n info
-	appDir := path.Join(constants.AppGitLocalDir, dirName)
+	// Set i18n information
+	setI18nInfo(appInfo, path.Join(constants.AppGitLocalDir, dirName))
 
+	checkAppContainSpecialFile(appInfo, path.Join(constants.AppGitLocalDir, dirName))
+
+	return appInfo, nil
+}
+
+// Render application configuration with templates
+func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.ApplicationInfoEntry, error) {
+	// Create the values for template rendering
+	values := map[string]interface{}{
+		"Values": map[string]interface{}{
+			"admin": "admin", // 默认管理员用户名
+			"bfl": map[string]interface{}{
+				"username": isAdmin ? "admin" : "user", // Set different usernames based on role
+			},
+		},
+	}
+	
+	// Create and render the template
+	tmpl, err := template.New("appconfig").Parse(templateContent)
+	if err != nil {
+		return nil, err
+	}
+	
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, values); err != nil {
+		return nil, err
+	}
+	
+	// Parse the rendered YAML
+	var appCfg models.AppConfiguration
+	if err := yaml.Unmarshal(rendered.Bytes(), &appCfg); err != nil {
+		return nil, err
+	}
+	
+	// Convert to application information entry
+	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
+	
+	return appInfo, nil
+}
+
+// Merge two application information, connecting different parts with special markers
+func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.ApplicationInfoEntry {
+	// Create a new application information based on the admin information
+	mergedInfo := &models.ApplicationInfoEntry{}
+	*mergedInfo = *adminInfo
+	
+	// Use special markers to concatenate different resource requirements
+	if adminInfo.RequiredMemory != userInfo.RequiredMemory {
+		mergedInfo.RequiredMemory = adminInfo.RequiredMemory + "||" + userInfo.RequiredMemory
+	}
+	
+	if adminInfo.RequiredDisk != userInfo.RequiredDisk {
+		mergedInfo.RequiredDisk = adminInfo.RequiredDisk + "||" + userInfo.RequiredDisk
+	}
+	
+	if adminInfo.RequiredCPU != userInfo.RequiredCPU {
+		mergedInfo.RequiredCPU = adminInfo.RequiredCPU + "||" + userInfo.RequiredCPU
+	}
+	
+	// Handle other potentially different fields
+	// For example, middleware, dependencies, etc.
+	if !reflect.DeepEqual(adminInfo.Middleware, userInfo.Middleware) {
+		// Custom logic is needed to merge the Middleware structure
+		// Consider using JSON serialization and then connecting with a special marker
+		adminMiddleware, _ := json.Marshal(adminInfo.Middleware)
+		userMiddleware, _ := json.Marshal(userInfo.Middleware)
+		if len(adminMiddleware) > 0 && len(userMiddleware) > 0 {
+			mergedInfo.MiddlewareJSON = string(adminMiddleware) + "||" + string(userMiddleware)
+		}
+	}
+	
+	// Handle appScope and other options
+	// Additional merging logic for more fields should be added based on actual requirements
+	
+	return mergedInfo
+}
+
+// Helper function to set i18n information
+func setI18nInfo(appInfo *models.ApplicationInfoEntry, appDir string) {
 	glog.Infof("---->start parse i18n<----")
 	i18nMap := make(map[string]models.I18n)
 	for _, lang := range appInfo.Locale {
@@ -235,14 +355,9 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 		}
 		fmt.Println(i18n)
 		i18nMap[lang] = i18n
-
 	}
 	appInfo.I18n = i18nMap
 	glog.Infof("---->end parse i18n<----")
-
-	checkAppContainSpecialFile(appInfo, appDir)
-
-	return appInfo, nil
 }
 
 func checkAppContainSpecialFile(info *models.ApplicationInfoEntry, appDir string) {

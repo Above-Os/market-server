@@ -197,6 +197,7 @@ type Dependency struct {
 	// dependency type: system, application.
 	Type      string `yaml:"type" json:"type" bson:"type"`
 	Mandatory bool   `yaml:"mandatory" json:"mandatory" bson:"mandatory"`
+	SelfRely  bool   `yaml:"selfRely json:"selfRely"`
 }
 
 type AppScope struct {
