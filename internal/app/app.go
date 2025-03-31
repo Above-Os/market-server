@@ -324,7 +324,10 @@ func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.App
 		adminMiddleware, _ := json.Marshal(adminInfo.Middleware)
 		userMiddleware, _ := json.Marshal(userInfo.Middleware)
 		if len(adminMiddleware) > 0 && len(userMiddleware) > 0 {
-			mergedInfo.MiddlewareJSON = string(adminMiddleware) + "||" + string(userMiddleware)
+			middlewareStr := string(adminMiddleware) + "||" + string(userMiddleware)
+			mergedMiddleware := make(map[string]interface{})
+			mergedMiddleware["_merged_data"] = middlewareStr
+			mergedInfo.Middleware = mergedMiddleware
 		}
 	}
 	
