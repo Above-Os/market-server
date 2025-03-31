@@ -262,9 +262,14 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 	// Create the values for template rendering
 	values := map[string]interface{}{
 		"Values": map[string]interface{}{
-			"admin": "admin", // 默认管理员用户名
+			"admin": "admin", // Default admin username
 			"bfl": map[string]interface{}{
-				"username": isAdmin ? "admin" : "user", // Set different usernames based on role
+				"username": func() string {
+					if isAdmin {
+						return "admin"
+					}
+					return "user"
+				}(), // Set different usernames based on role
 			},
 		},
 	}
