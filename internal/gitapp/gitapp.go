@@ -4,6 +4,7 @@ import (
 	"app-store-server/internal/constants"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/utils"
+
 	"fmt"
 	"io"
 	"os"
@@ -102,7 +103,22 @@ func Pull() error {
 	return gitPull(constants.AppGitLocalDir)
 }
 
+// gitPull attempts to pull using V3 first, falls back to V2 and then V1 if previous attempts fail
 func gitPull(directory string) error {
+	err := gitPullV3(directory)
+	if err != nil {
+		glog.Warningf("gitPullV3 failed, fallback to V2: %v", err)
+		err = gitPullV2(directory)
+		if err != nil {
+			glog.Warningf("gitPullV2 failed, fallback to V1: %v", err)
+			return gitPullV1(directory)
+		}
+	}
+	return nil
+}
+
+// gitPullV1 is the original implementation
+func gitPullV1(directory string) error {
 	curDir, err := os.Getwd()
 	if err != nil {
 		return err
@@ -120,7 +136,6 @@ func gitPull(directory string) error {
 	}
 
 	cmd := exec.Command("git", "pull")
-
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		glog.Infof("combined out:%s\n", string(out))
@@ -131,6 +146,81 @@ func gitPull(directory string) error {
 		return git.NoErrAlreadyUpToDate
 	}
 	glog.Infof("out:%s\n", string(out))
+
+	return nil
+}
+
+// gitPullV2 is the implementation with enhanced error handling
+func gitPullV2(directory string) error {
+	// Get absolute path
+	dir, err := filepath.Abs(directory)
+	if err != nil {
+		return fmt.Errorf("failed to get absolute path: %w", err)
+	}
+
+	// Check if directory exists and is accessible
+	if _, err := os.Stat(dir); err != nil {
+		return fmt.Errorf("directory is not accessible: %w", err)
+	}
+
+	curDir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+
+	// Ensure we restore the original working directory when function returns
+	defer func() {
+		if err := os.Chdir(curDir); err != nil {
+			glog.Warningf("failed to restore working directory: %v", err)
+		}
+	}()
+
+	// Change to target directory
+	if err := os.Chdir(dir); err != nil {
+		return fmt.Errorf("failed to change working directory: %w", err)
+	}
+
+	cmd := exec.Command("git", "pull")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		glog.Infof("git pull output: %s\n", string(out))
+		return fmt.Errorf("git pull failed: %w", err)
+	}
+
+	if strings.Contains(string(out), "Already up to date") {
+		return git.NoErrAlreadyUpToDate
+	}
+	glog.Infof("git pull output: %s\n", string(out))
+
+	return nil
+}
+
+// gitPullV3 implements pull using go-git library
+func gitPullV3(directory string) error {
+	// Open existing repository
+	r, err := git.PlainOpen(directory)
+	if err != nil {
+		return fmt.Errorf("failed to open repository: %w", err)
+	}
+
+	// Get the working directory
+	w, err := r.Worktree()
+	if err != nil {
+		return fmt.Errorf("failed to get worktree: %w", err)
+	}
+
+	// Configure pull options
+	opts := &git.PullOptions{
+		RemoteName: "origin",
+		Progress:   os.Stdout,
+		Force:      true,
+	}
+
+	// Perform pull
+	err = w.Pull(opts)
+	if err != nil && err != git.NoErrAlreadyUpToDate {
+		return fmt.Errorf("pull failed: %w", err)
+	}
 
 	return nil
 }
