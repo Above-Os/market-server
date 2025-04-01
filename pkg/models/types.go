@@ -93,6 +93,8 @@ type ApplicationInfoEntry struct {
 	//Status         string   `yaml:"status" json:"status" bson:"status"`
 	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 	Count     interface{} `yaml:"count" json:"count" bson:"count"`
+
+	Variants map[string]ApplicationInfoEntry `yaml:"variants" json:"variants,omitempty" bson:"variants"`
 }
 
 type ApplicationInfoFullData struct {

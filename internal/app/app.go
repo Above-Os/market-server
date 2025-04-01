@@ -299,106 +299,21 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 
 // Merge two application information, connecting different parts with special markers
 func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.ApplicationInfoEntry {
-	// Create a new application information based on the admin information
+	// 使用管理员信息作为主要应用信息
 	mergedInfo := &models.ApplicationInfoEntry{}
 	*mergedInfo = *adminInfo
 	
-	// Use special markers to concatenate different resource requirements
-	if adminInfo.RequiredMemory != userInfo.RequiredMemory {
-		mergedInfo.RequiredMemory = adminInfo.RequiredMemory + "||" + userInfo.RequiredMemory
+	// 初始化 Variants 映射（如果尚未初始化）
+	if mergedInfo.Variants == nil {
+		mergedInfo.Variants = make(map[string]models.ApplicationInfoEntry)
 	}
 	
-	if adminInfo.RequiredDisk != userInfo.RequiredDisk {
-		mergedInfo.RequiredDisk = adminInfo.RequiredDisk + "||" + userInfo.RequiredDisk
-	}
+	// 将用户（非管理员）的应用信息存储在 Variants 中
+	mergedInfo.Variants["user"] = *userInfo
 	
-	if adminInfo.RequiredCPU != userInfo.RequiredCPU {
-		mergedInfo.RequiredCPU = adminInfo.RequiredCPU + "||" + userInfo.RequiredCPU
-	}
-	
-	if adminInfo.RequiredGPU != userInfo.RequiredGPU {
-		mergedInfo.RequiredGPU = adminInfo.RequiredGPU + "||" + userInfo.RequiredGPU
-	}
-
-	// Handle other potentially different fields
-	// For example, middleware, dependencies, etc.
-	if !reflect.DeepEqual(adminInfo.Middleware, userInfo.Middleware) {
-		// Custom logic is needed to merge the Middleware structure
-		// Consider using JSON serialization and then connecting with special markers
-		adminMiddleware, _ := json.Marshal(adminInfo.Middleware)
-		userMiddleware, _ := json.Marshal(userInfo.Middleware)
-		if len(adminMiddleware) > 0 && len(userMiddleware) > 0 {
-			// Since we cannot directly create a new tapr.Middleware type, we will keep the middleware from adminInfo for now.
-			// Record this difference for later processing.
-			glog.Infof("The middleware configuration in the admin view and user view of the application %s is different", adminInfo.Name)
-			// Save the differences in a separate comment
-			// Cannot directly modify Middleware here due to type incompatibility
-			
-			// Optional: Add a custom field in the subsequent process to store these differences
-			// For example: add a MiddlewareJSON field in the model and then set it:
-			// mergedInfo.MiddlewareJSON = string(adminMiddleware) + "||" + string(userMiddleware)
-		}
-	}
-	
-	// Handle appScope and other options
-	// Additional merging logic for more fields should be added based on actual requirements
-	
-	// Handle differences in the Options field
-	// Check Dependencies in Options
-	if !reflect.DeepEqual(adminInfo.Options.Dependencies, userInfo.Options.Dependencies) {
-		glog.Infof("The dependency configuration in the admin view and user view of the application %s is different", adminInfo.Name)
-		// Here you can consider merging the dependency lists or selecting a more comprehensive one.
-		if len(adminInfo.Options.Dependencies) < len(userInfo.Options.Dependencies) {
-			mergedInfo.Options.Dependencies = userInfo.Options.Dependencies
-		}
-	}
-	
-	// Check for differences in AppScope
-	if !reflect.DeepEqual(adminInfo.Options.AppScope, userInfo.Options.AppScope) {
-		glog.Infof("The AppScope configuration in the admin view and user view of the application %s is different", adminInfo.Name)
-		// Typically choose the configuration with higher permissions.
-		if adminInfo.Options.AppScope != nil && adminInfo.Options.AppScope.ClusterScoped {
-			mergedInfo.Options.AppScope = adminInfo.Options.AppScope
-		} else if userInfo.Options.AppScope != nil && userInfo.Options.AppScope.ClusterScoped {
-			mergedInfo.Options.AppScope = userInfo.Options.AppScope
-		}
-	}
-	
-	// Check for differences in Policies
-	if !reflect.DeepEqual(adminInfo.Options.Policies, userInfo.Options.Policies) {
-		glog.Infof("The policy configuration in the admin view and user view of the application %s is different", adminInfo.Name)
-		// Merge policies, keeping all unique policies from both sides
-		policyMap := make(map[string]models.Policy)
-		for _, policy := range adminInfo.Options.Policies {
-			policyMap[policy.EntranceName] = policy
-		}
-		for _, policy := range userInfo.Options.Policies {
-			if _, exists := policyMap[policy.EntranceName]; !exists {
-				mergedInfo.Options.Policies = append(mergedInfo.Options.Policies, policy)
-			}
-		}
-	}
-	
-	// Check for differences in Permissions
-	if !reflect.DeepEqual(adminInfo.Permission, userInfo.Permission) {
-		glog.Infof("The permission configuration in the admin view and user view of the application %s is different", adminInfo.Name)
-		// Typically, choose the configuration with higher permissions.
-		// Here we simply take adminInfo as the standard, but in practice, more complex merging logic may be needed.
-	}
-	
-	// Check for differences in Entrances
-	if !reflect.DeepEqual(adminInfo.Entrances, userInfo.Entrances) {
-		glog.Infof("The entrance configuration in the admin view and user view of the application %s is different", adminInfo.Name)
-		// Merge entrances, keeping all unique entrances from both sides
-		entranceMap := make(map[string]bool)
-		for _, entrance := range adminInfo.Entrances {
-			entranceMap[entrance.Name] = true
-		}
-		for _, entrance := range userInfo.Entrances {
-			if !entranceMap[entrance.Name] {
-				mergedInfo.Entrances = append(mergedInfo.Entrances, entrance)
-			}
-		}
+	// 记录两种视图之间的差异
+	if !reflect.DeepEqual(adminInfo, userInfo) {
+		glog.Infof("管理员视图和用户视图的应用 %s 配置存在差异", adminInfo.Name)
 	}
 	
 	return mergedInfo

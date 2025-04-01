@@ -247,6 +247,7 @@ func getUpdatesLatest(appInfoNew *models.ApplicationInfoFullData) *bson.M {
 	latest["modelSize"] = appInfoNew.History["latest"].ModelSize
 	latest["namespace"] = appInfoNew.History["latest"].Namespace
 	latest["onlyAdmin"] = appInfoNew.History["latest"].OnlyAdmin
+	latest["variants"] = appInfoNew.History["latest"].Variants
 
 	return &latest
 }
@@ -306,6 +307,7 @@ func getUpdatesVersion(appInfoNew *models.ApplicationInfoFullData) *bson.M {
 	version["modelSize"] = appInfoNew.History["latest"].ModelSize
 	version["namespace"] = appInfoNew.History["latest"].Namespace
 	version["onlyAdmin"] = appInfoNew.History["latest"].OnlyAdmin
+	version["variants"] = appInfoNew.History["latest"].Variants
 
 	return &version
 }
