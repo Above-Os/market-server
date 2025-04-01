@@ -9,7 +9,6 @@ import (
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -299,21 +298,21 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 
 // Merge two application information, connecting different parts with special markers
 func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.ApplicationInfoEntry {
-	// 使用管理员信息作为主要应用信息
+	// Use admin info as the primary application information
 	mergedInfo := &models.ApplicationInfoEntry{}
 	*mergedInfo = *adminInfo
 	
-	// 初始化 Variants 映射（如果尚未初始化）
+	// Initialize the Variants map (if not already initialized)
 	if mergedInfo.Variants == nil {
 		mergedInfo.Variants = make(map[string]models.ApplicationInfoEntry)
 	}
 	
-	// 将用户（非管理员）的应用信息存储在 Variants 中
+	// Store the user (non-admin) application information in Variants
 	mergedInfo.Variants["user"] = *userInfo
 	
-	// 记录两种视图之间的差异
+	// Record differences between the two views
 	if !reflect.DeepEqual(adminInfo, userInfo) {
-		glog.Infof("管理员视图和用户视图的应用 %s 配置存在差异", adminInfo.Name)
+		glog.Infof("The admin view and user view of the application %s have configuration differences", adminInfo.Name)
 	}
 	
 	return mergedInfo
