@@ -60,7 +60,14 @@ func GetAppLists(offset, size int64, category, ty string) (list []*models.Applic
 	}
 
 	findOpts := options.Find()
-	findOpts.SetSort(sort).SetSkip(offset).SetLimit(size)
+	findOpts.SetSort(sort).SetSkip(offset)
+	
+	// 如果 size 为 0，则设置限制为 10000
+	if size > 0 {
+		findOpts.SetLimit(size)
+	} else {
+		findOpts.SetLimit(10000) // 当 size 为 0 时，查询 10000 条记录
+	}
 
 	var cur *mongo.Cursor
 	cur, err = mgoClient.queryMany(AppStoreDb, AppInfosCollection, filter, findOpts)
