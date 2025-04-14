@@ -25,7 +25,7 @@ const (
 	TimeFormatStr = "Mon Jan 2 15:04:05 2006 -0700"
 
 	DefaultPage     = 1
-	DefaultPageSize = 100
+	DefaultPageSize = 10000
 	DefaultFrom     = 0
 
 	DefaultTopCount = 100
