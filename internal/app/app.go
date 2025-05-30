@@ -8,12 +8,14 @@ import (
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"strings"
 	"time"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"text/template"
 )
 
 const (
@@ -191,26 +194,132 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 		return nil, err
 	}
 
+	// First, attempt to parse the original configuration file
 	var appCfg models.AppConfiguration
 	if err = yaml.Unmarshal(cfgContent, &appCfg); err != nil {
-		glog.Warningf("%s", err.Error())
+		// Check if the file contains template syntax
+		if strings.Contains(string(cfgContent), "{{") {
+			// Need to render templates to generate two different configurations for administrators and regular users
+			adminAppInfo, err := renderAppConfigWithTemplate(string(cfgContent), true)
+			if err != nil {
+				glog.Warningf("Failed to render admin application configuration: %s", err.Error())
+				return nil, err
+			}
+			
+			userAppInfo, err := renderAppConfigWithTemplate(string(cfgContent), false)
+			if err != nil {
+				glog.Warningf("Failed to render user application configuration: %s", err.Error())
+				return nil, err
+			}
+			
+			// Merge the two configurations to create an application information that contains both views
+			mergedAppInfo := mergeAppInfos(adminAppInfo, userAppInfo)
+			
+			// Continue processing the merged application information
+			disableCategories := getDisableCategories()
+			for _, categorie := range mergedAppInfo.Categories {
+				if strings.Contains(disableCategories, categorie) {
+					glog.Warningf("%s %s is disable", categorie, mergedAppInfo.AppID)
+					mergedAppInfo.AppLabels = append(mergedAppInfo.AppLabels, constants.DisableLabel)
+				}
+			}
+			
+			// Set i18n information
+			setI18nInfo(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
+			
+			// Check for special files
+			checkAppContainSpecialFile(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
+			
+			return mergedAppInfo, nil
+		}
+		
+		glog.Warningf("Failed to parse application configuration: %s", err.Error())
 		return nil, err
 	}
 
+	// Normal non-template processing flow
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
 
 	disableCategories := getDisableCategories()
 	for _, categorie := range appInfo.Categories {
 		if strings.Contains(disableCategories, categorie) {
 			glog.Warningf("%s %s is disable", categorie, appInfo.AppID)
-			// return nil, errors.New("disabled")
 			appInfo.AppLabels = append(appInfo.AppLabels, constants.DisableLabel)
 		}
 	}
 
-	// set i18n info
-	appDir := path.Join(constants.AppGitLocalDir, dirName)
+	// Set i18n information
+	setI18nInfo(appInfo, path.Join(constants.AppGitLocalDir, dirName))
 
+	checkAppContainSpecialFile(appInfo, path.Join(constants.AppGitLocalDir, dirName))
+
+	return appInfo, nil
+}
+
+// Render application configuration with templates
+func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.ApplicationInfoEntry, error) {
+	// Create the values for template rendering
+	values := map[string]interface{}{
+		"Values": map[string]interface{}{
+			"admin": "admin", // Default admin username
+			"bfl": map[string]interface{}{
+				"username": func() string {
+					if isAdmin {
+						return "admin"
+					}
+					return "user"
+				}(), // Set different usernames based on role
+			},
+		},
+	}
+	
+	// Create and render the template
+	tmpl, err := template.New("appconfig").Parse(templateContent)
+	if err != nil {
+		return nil, err
+	}
+	
+	var rendered bytes.Buffer
+	if err := tmpl.Execute(&rendered, values); err != nil {
+		return nil, err
+	}
+	
+	// Parse the rendered YAML
+	var appCfg models.AppConfiguration
+	if err := yaml.Unmarshal(rendered.Bytes(), &appCfg); err != nil {
+		return nil, err
+	}
+	
+	// Convert to application information entry
+	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
+	
+	return appInfo, nil
+}
+
+// Merge two application information, connecting different parts with special markers
+func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.ApplicationInfoEntry {
+	// Use admin info as the primary application information
+	mergedInfo := &models.ApplicationInfoEntry{}
+	*mergedInfo = *adminInfo
+	
+	// Initialize the Variants map (if not already initialized)
+	if mergedInfo.Variants == nil {
+		mergedInfo.Variants = make(map[string]models.ApplicationInfoEntry)
+	}
+	
+	// Store the user (non-admin) application information in Variants
+	mergedInfo.Variants["user"] = *userInfo
+	
+	// Record differences between the two views
+	if !reflect.DeepEqual(adminInfo, userInfo) {
+		glog.Infof("The admin view and user view of the application %s have configuration differences", adminInfo.Name)
+	}
+	
+	return mergedInfo
+}
+
+// Helper function to set i18n information
+func setI18nInfo(appInfo *models.ApplicationInfoEntry, appDir string) {
 	glog.Infof("---->start parse i18n<----")
 	i18nMap := make(map[string]models.I18n)
 	for _, lang := range appInfo.Locale {
@@ -235,14 +344,9 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 		}
 		fmt.Println(i18n)
 		i18nMap[lang] = i18n
-
 	}
 	appInfo.I18n = i18nMap
 	glog.Infof("---->end parse i18n<----")
-
-	checkAppContainSpecialFile(appInfo, appDir)
-
-	return appInfo, nil
 }
 
 func checkAppContainSpecialFile(info *models.ApplicationInfoEntry, appDir string) {

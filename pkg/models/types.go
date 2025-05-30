@@ -93,6 +93,8 @@ type ApplicationInfoEntry struct {
 	//Status         string   `yaml:"status" json:"status" bson:"status"`
 	AppLabels []string    `yaml:"appLabels" json:"appLabels,omitempty" bson:"appLabels"`
 	Count     interface{} `yaml:"count" json:"count" bson:"count"`
+
+	Variants map[string]ApplicationInfoEntry `yaml:"variants" json:"variants,omitempty" bson:"variants"`
 }
 
 type ApplicationInfoFullData struct {
@@ -175,6 +177,12 @@ type Analytics struct {
 	Enabled bool `yaml:"enabled" json:"enabled"`
 }
 
+type Conflict struct {
+	Name string `yaml:"name" json:"name"`
+	// conflict type: application
+	Type string `yaml:"type" json:"type"`
+}
+
 type Options struct {
 	Policies        []Policy     `yaml:"policies" json:"policies" bson:"policies"`
 	Analytics       *Analytics   `yaml:"analytics" json:"analytics" bson:"analytics"`
@@ -182,6 +190,7 @@ type Options struct {
 	AppScope        *AppScope    `yaml:"appScope" json:"appScope"`
 	WsConfig        *WsConfig    `yaml:"websocket" json:"websocket"`
 	MobileSupported bool         `yaml:"mobileSupported" json:"mobileSupported"`
+	Conflicts       []Conflict   `yaml:"conflicts" json:"conflicts"`
 }
 
 type Dependency struct {
@@ -190,6 +199,7 @@ type Dependency struct {
 	// dependency type: system, application.
 	Type      string `yaml:"type" json:"type" bson:"type"`
 	Mandatory bool   `yaml:"mandatory" json:"mandatory" bson:"mandatory"`
+	SelfRely  bool   `yaml:"selfRely json:"selfRely"`
 }
 
 type AppScope struct {
