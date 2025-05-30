@@ -34,6 +34,11 @@ func getChartPath(appName string, version string) string {
 	return ""
 }
 
+// getChartPath gets the chart file path by fileName only
+func getChartPathNoVersion(fileName string) string {
+	return path.Join(constants.AppGitZipLocalDir, fileName)
+}
+
 func getInfoByName(appName string) (*models.ApplicationInfoFullData, error) {
 	info, err := es.SearchByNameAccurate(appName)
 	if err == nil && info != nil {
