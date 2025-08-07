@@ -244,11 +244,40 @@ func downloadManifestByDigestWithRetry(imageName, digest string) ([]byte, error)
 }
 
 // downloadManifest downloads manifest using docker manifest inspect
+// getDockerRegistryMirror returns the docker registry mirror from environment variable
+func getDockerRegistryMirror() string {
+	return os.Getenv("IMAGES_SOURCE")
+}
+
+// modifyImageNameWithMirror modifies image name to use mirror if configured
+func modifyImageNameWithMirror(imageName string) string {
+	mirror := getDockerRegistryMirror()
+	if mirror == "" {
+		return imageName
+	}
+
+	// Extract registry and repository
+	registry, repository := extractRegistryAndRepository(imageName)
+
+	// If it's already using the mirror, return as is
+	if registry == strings.TrimSuffix(mirror, "/") {
+		return imageName
+	}
+
+	// Replace registry with mirror
+	return fmt.Sprintf("%s/%s", strings.TrimSuffix(mirror, "/"), repository)
+}
+
 func downloadManifest(imageName string) ([]byte, error) {
-	cmd := exec.Command("docker", "manifest", "inspect", imageName)
+	// Modify image name to use mirror if configured
+	modifiedImageName := modifyImageNameWithMirror(imageName)
+
+	log.Printf("Downloading manifest for %s (original: %s)", modifiedImageName, imageName)
+
+	cmd := exec.Command("docker", "manifest", "inspect", modifiedImageName)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("docker manifest inspect failed: %w", err)
+		return nil, fmt.Errorf("docker manifest inspect failed for %s: %w", modifiedImageName, err)
 	}
 	return output, nil
 }
@@ -258,16 +287,19 @@ func downloadManifestByDigest(imageName, digest string) ([]byte, error) {
 	// Extract the base image name without tag
 	baseImageName := extractBaseImageName(imageName)
 
+	// Modify base image name to use mirror if configured
+	modifiedBaseImageName := modifyImageNameWithMirror(baseImageName)
+
 	// Use docker manifest inspect with the base image name and digest
 	// Format: docker manifest inspect <base-image>@<digest>
-	fullImageName := fmt.Sprintf("%s@%s", baseImageName, digest)
+	fullImageName := fmt.Sprintf("%s@%s", modifiedBaseImageName, digest)
 
-	log.Printf("Downloading manifest for %s", fullImageName)
+	log.Printf("Downloading manifest for %s (original: %s@%s)", fullImageName, baseImageName, digest)
 
 	cmd := exec.Command("docker", "manifest", "inspect", fullImageName)
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("failed to download manifest by digest: %w", err)
+		return nil, fmt.Errorf("failed to download manifest by digest for %s: %w", fullImageName, err)
 	}
 
 	return output, nil

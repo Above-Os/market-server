@@ -444,25 +444,7 @@ func configureDockerImageSource() error {
 	}
 
 	glog.Infof("Docker daemon is accessible, version: %s", strings.TrimSpace(string(testOutput)))
-
-	// Set environment variables for docker registry mirror
-	// These will be inherited by child processes that use docker commands
-	os.Setenv("DOCKER_REGISTRY_MIRROR", imagesSource)
-	os.Setenv("DOCKER_REGISTRY", imagesSource)
-
-	// For Docker BuildKit, also set these environment variables
-	os.Setenv("DOCKER_BUILDKIT", "1")
-
-	glog.Infof("Docker registry environment variables set to: %s", imagesSource)
-
-	// Log current docker configuration for debugging
-	infoCmd := exec.Command("docker", "info", "--format", "{{.RegistryConfig.IndexConfigs}}")
-	infoOutput, infoErr := infoCmd.CombinedOutput()
-	if infoErr != nil {
-		glog.Warningf("Failed to get docker info: %v, output: %s", infoErr, string(infoOutput))
-	} else {
-		glog.Infof("Current docker registry configuration: %s", string(infoOutput))
-	}
+	glog.Infof("Docker image source configured: %s", imagesSource)
 
 	return nil
 }
