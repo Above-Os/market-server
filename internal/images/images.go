@@ -259,13 +259,34 @@ func modifyImageNameWithMirror(imageName string) string {
 	// Extract registry and repository
 	registry, repository := extractRegistryAndRepository(imageName)
 
+	// Skip mirror replacement for specific registries
+	skipMirrorRegistries := []string{
+		"ghcr.io", "gcr.io", "quay.io", "registry.k8s.io",
+		"mcr.microsoft.com", "registry.aliyuncs.com", "registry.cn-hangzhou.aliyuncs.com",
+	}
+
+	for _, skipRegistry := range skipMirrorRegistries {
+		if registry == skipRegistry {
+			log.Printf("Skipping mirror for registry: %s", registry)
+			return imageName
+		}
+	}
+
+	// Clean up mirror URL - remove protocol and trailing slash
+	cleanMirror := strings.TrimSuffix(mirror, "/")
+	if strings.HasPrefix(cleanMirror, "https://") {
+		cleanMirror = strings.TrimPrefix(cleanMirror, "https://")
+	} else if strings.HasPrefix(cleanMirror, "http://") {
+		cleanMirror = strings.TrimPrefix(cleanMirror, "http://")
+	}
+
 	// If it's already using the mirror, return as is
-	if registry == strings.TrimSuffix(mirror, "/") {
+	if registry == cleanMirror {
 		return imageName
 	}
 
 	// Replace registry with mirror
-	return fmt.Sprintf("%s/%s", strings.TrimSuffix(mirror, "/"), repository)
+	return fmt.Sprintf("%s/%s", cleanMirror, repository)
 }
 
 func downloadManifest(imageName string) ([]byte, error) {
