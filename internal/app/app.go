@@ -5,6 +5,7 @@ import (
 	"app-store-server/internal/es"
 	"app-store-server/internal/gitapp"
 	"app-store-server/internal/helm"
+	"app-store-server/internal/images"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
@@ -19,11 +20,12 @@ import (
 	"strings"
 	"time"
 
+	"text/template"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"text/template"
 )
 
 const (
@@ -205,16 +207,16 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 				glog.Warningf("Failed to render admin application configuration: %s", err.Error())
 				return nil, err
 			}
-			
+
 			userAppInfo, err := renderAppConfigWithTemplate(string(cfgContent), false)
 			if err != nil {
 				glog.Warningf("Failed to render user application configuration: %s", err.Error())
 				return nil, err
 			}
-			
+
 			// Merge the two configurations to create an application information that contains both views
 			mergedAppInfo := mergeAppInfos(adminAppInfo, userAppInfo)
-			
+
 			// Continue processing the merged application information
 			disableCategories := getDisableCategories()
 			for _, categorie := range mergedAppInfo.Categories {
@@ -223,16 +225,16 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 					mergedAppInfo.AppLabels = append(mergedAppInfo.AppLabels, constants.DisableLabel)
 				}
 			}
-			
+
 			// Set i18n information
 			setI18nInfo(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
-			
+
 			// Check for special files
 			checkAppContainSpecialFile(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
-			
+
 			return mergedAppInfo, nil
 		}
-		
+
 		glog.Warningf("Failed to parse application configuration: %s", err.Error())
 		return nil, err
 	}
@@ -272,27 +274,27 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 			},
 		},
 	}
-	
+
 	// Create and render the template
 	tmpl, err := template.New("appconfig").Parse(templateContent)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, values); err != nil {
 		return nil, err
 	}
-	
+
 	// Parse the rendered YAML
 	var appCfg models.AppConfiguration
 	if err := yaml.Unmarshal(rendered.Bytes(), &appCfg); err != nil {
 		return nil, err
 	}
-	
+
 	// Convert to application information entry
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
-	
+
 	return appInfo, nil
 }
 
@@ -301,20 +303,20 @@ func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.App
 	// Use admin info as the primary application information
 	mergedInfo := &models.ApplicationInfoEntry{}
 	*mergedInfo = *adminInfo
-	
+
 	// Initialize the Variants map (if not already initialized)
 	if mergedInfo.Variants == nil {
 		mergedInfo.Variants = make(map[string]models.ApplicationInfoEntry)
 	}
-	
+
 	// Store the user (non-admin) application information in Variants
 	mergedInfo.Variants["user"] = *userInfo
-	
+
 	// Record differences between the two views
 	if !reflect.DeepEqual(adminInfo, userInfo) {
 		glog.Infof("The admin view and user view of the application %s have configuration differences", adminInfo.Name)
 	}
-	
+
 	return mergedInfo
 }
 
@@ -430,6 +432,13 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, er
 		appInfo, err := ReadAppInfo(c.Name())
 		if err != nil {
 			glog.Warningf("app chart %s reading error: %s", c.Name(), err.Error())
+			continue
+		}
+
+		// DownloadImagesInfo
+		err = images.DownloadImagesInfo(path.Join(constants.AppGitLocalDir, c.Name()))
+		if err != nil {
+			glog.Warningf("DownloadImagesInfo failed: %v", err)
 			continue
 		}
 
