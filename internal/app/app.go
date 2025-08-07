@@ -15,6 +15,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"reflect"
 	"strings"
@@ -30,6 +31,7 @@ import (
 
 const (
 	DisableCategoriesEnv = "DISABLE_CATEGORIES"
+	ImagesSourceEnv      = "IMAGES_SOURCE"
 )
 
 func getDisableCategories() string {
@@ -416,6 +418,32 @@ func appInfoParseQuantity(info *models.ApplicationInfoEntry) *models.Application
 	return info
 }
 
+// configureDockerImageSource configures docker image source using environment variable
+func configureDockerImageSource() error {
+	imagesSource := os.Getenv(ImagesSourceEnv)
+	if imagesSource == "" {
+		glog.Infof("IMAGES_SOURCE environment variable not set, using default docker registry")
+		return nil
+	}
+
+	glog.Infof("Configuring docker image source: %s", imagesSource)
+
+	// Configure docker daemon to use the specified image source
+	// This can be done by setting DOCKER_REGISTRY_MIRROR environment variable
+	// or by configuring docker daemon configuration
+	cmd := exec.Command("docker", "info")
+	cmd.Env = append(os.Environ(), fmt.Sprintf("DOCKER_REGISTRY_MIRROR=%s", imagesSource))
+
+	output, err := cmd.Output()
+	if err != nil {
+		glog.Warningf("Failed to configure docker image source: %v", err)
+		return fmt.Errorf("failed to configure docker image source: %w", err)
+	}
+
+	glog.Infof("Docker image source configured successfully: %s", string(output))
+	return nil
+}
+
 func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, err error) {
 	charts, err := os.ReadDir(dir)
 	if err != nil {
@@ -433,6 +461,13 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, er
 		if err != nil {
 			glog.Warningf("app chart %s reading error: %s", c.Name(), err.Error())
 			continue
+		}
+
+		// Configure docker image source before downloading images
+		err = configureDockerImageSource()
+		if err != nil {
+			glog.Warningf("Failed to configure docker image source: %v", err)
+			// Continue processing even if image source configuration fails
 		}
 
 		// DownloadImagesInfo
