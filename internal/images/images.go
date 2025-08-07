@@ -400,19 +400,19 @@ func extractImagesFromContent(content string) []string {
 	// Add debug logging to help diagnose image extraction issues
 	log.Printf("Debug: Extracting images from content (length: %d)", len(content))
 
-	// Show a preview of content for debugging
-	// preview := content
-	// if len(preview) > 500 {
-	// 	preview = preview[:500] + "..."
-	// }
-	// log.Printf("Debug: Content preview: %s", preview)
+	imageSet := make(map[string]bool)
 
-	imageRegex := regexp.MustCompile(`(?i)image:\s*["\']?([a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9](?::[a-zA-Z0-9._-]+)?(?:@sha256:[a-fA-F0-9]{64})?)["\']?`)
+	// More specific regex to match Docker image fields in YAML
+	// This matches patterns like:
+	// - image: nginx:latest
+	// - image: "nginx:latest"
+	// - image: 'nginx:latest'
+	// - image: gcr.io/google-containers/pause:latest
+	imageRegex := regexp.MustCompile(`(?m)^\s*image:\s*["\']?([a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9](?::[a-zA-Z0-9._-]+)?(?:@sha256:[a-fA-F0-9]{64})?)["\']?\s*$`)
 
 	matches := imageRegex.FindAllStringSubmatch(content, -1)
 	log.Printf("Debug: Found %d regex matches", len(matches))
 
-	imageSet := make(map[string]bool)
 	for i, match := range matches {
 		log.Printf("Debug: Match %d: %v", i, match)
 		if len(match) > 1 {
