@@ -37,7 +37,7 @@ FROM alpine:latest
 
 RUN apk update && \
     apk upgrade &&  \
-    apk add --no-cache bash git openssh
+    apk add --no-cache bash git openssh docker-cli curl
 
 WORKDIR /opt/app
 COPY --from=builder /workspace/bytetrade.io/web3os/app-store-server/app-store-server .
