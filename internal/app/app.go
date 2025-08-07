@@ -428,19 +428,42 @@ func configureDockerImageSource() error {
 
 	glog.Infof("Configuring docker image source: %s", imagesSource)
 
-	// Configure docker daemon to use the specified image source
-	// This can be done by setting DOCKER_REGISTRY_MIRROR environment variable
-	// or by configuring docker daemon configuration
-	cmd := exec.Command("docker", "info")
-	cmd.Env = append(os.Environ(), fmt.Sprintf("DOCKER_REGISTRY_MIRROR=%s", imagesSource))
-
-	output, err := cmd.Output()
+	// First check if docker command exists
+	_, err := exec.LookPath("docker")
 	if err != nil {
-		glog.Warningf("Failed to configure docker image source: %v", err)
-		return fmt.Errorf("failed to configure docker image source: %w", err)
+		glog.Warningf("Docker command not found in PATH: %v", err)
+		return fmt.Errorf("docker command not found: %w", err)
 	}
 
-	glog.Infof("Docker image source configured successfully: %s", string(output))
+	// Test basic docker connectivity first
+	testCmd := exec.Command("docker", "version", "--format", "{{.Server.Version}}")
+	testOutput, testErr := testCmd.CombinedOutput()
+	if testErr != nil {
+		glog.Warningf("Docker daemon not accessible: %v, output: %s", testErr, string(testOutput))
+		return fmt.Errorf("docker daemon not accessible: %w", testErr)
+	}
+
+	glog.Infof("Docker daemon is accessible, version: %s", strings.TrimSpace(string(testOutput)))
+
+	// Set environment variables for docker registry mirror
+	// These will be inherited by child processes that use docker commands
+	os.Setenv("DOCKER_REGISTRY_MIRROR", imagesSource)
+	os.Setenv("DOCKER_REGISTRY", imagesSource)
+
+	// For Docker BuildKit, also set these environment variables
+	os.Setenv("DOCKER_BUILDKIT", "1")
+
+	glog.Infof("Docker registry environment variables set to: %s", imagesSource)
+
+	// Log current docker configuration for debugging
+	infoCmd := exec.Command("docker", "info", "--format", "{{.RegistryConfig.IndexConfigs}}")
+	infoOutput, infoErr := infoCmd.CombinedOutput()
+	if infoErr != nil {
+		glog.Warningf("Failed to get docker info: %v, output: %s", infoErr, string(infoOutput))
+	} else {
+		glog.Infof("Current docker registry configuration: %s", string(infoOutput))
+	}
+
 	return nil
 }
 
@@ -449,6 +472,13 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, er
 	if err != nil {
 		glog.Warningf("read dir %s error: %s", dir, err.Error())
 		return nil, err
+	}
+
+	// Configure docker image source once before processing all apps
+	err = configureDockerImageSource()
+	if err != nil {
+		glog.Warningf("Failed to configure docker image source: %v", err)
+		// Continue processing even if image source configuration fails
 	}
 
 	for _, c := range charts {
@@ -461,13 +491,6 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, er
 		if err != nil {
 			glog.Warningf("app chart %s reading error: %s", c.Name(), err.Error())
 			continue
-		}
-
-		// Configure docker image source before downloading images
-		err = configureDockerImageSource()
-		if err != nil {
-			glog.Warningf("Failed to configure docker image source: %v", err)
-			// Continue processing even if image source configuration fails
 		}
 
 		// DownloadImagesInfo
