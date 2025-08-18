@@ -128,6 +128,56 @@ func downloadAndProcessManifestWithRetry(imageName, imageDir string) error {
 
 // downloadAndProcessManifest downloads manifest and processes multi-arch images
 func downloadAndProcessManifest(imageName, imageDir string) error {
+	// Check if main manifest already exists locally
+	manifestPath := filepath.Join(imageDir, "manifest.json")
+	if _, err := os.Stat(manifestPath); err == nil {
+		log.Printf("Main manifest already exists for image %s, skipping download", imageName)
+
+		// Read existing manifest to check if it's a multi-architecture manifest list
+		existingManifestData, err := os.ReadFile(manifestPath)
+		if err != nil {
+			log.Printf("Warning: failed to read existing manifest: %v", err)
+			// Continue with download if we can't read the existing file
+		} else {
+			var manifestList ManifestList
+			if err := json.Unmarshal(existingManifestData, &manifestList); err == nil {
+				// Check if this is a manifest list (multi-architecture)
+				if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" {
+					log.Printf("Image %s is a multi-architecture manifest list with %d architectures",
+						imageName, len(manifestList.Manifests))
+
+					// Check and skip existing architecture manifests
+					for _, manifest := range manifestList.Manifests {
+						arch := manifest.Platform.Architecture
+						osName := manifest.Platform.OS
+						variant := manifest.Platform.Variant
+
+						// Create architecture-specific directory
+						archDir := filepath.Join(imageDir, fmt.Sprintf("%s-%s", osName, arch))
+						if variant != "" {
+							archDir = filepath.Join(imageDir, fmt.Sprintf("%s-%s-%s", osName, arch, variant))
+						}
+
+						archManifestPath := filepath.Join(archDir, "manifest.json")
+						if _, err := os.Stat(archManifestPath); err == nil {
+							log.Printf("Architecture manifest for %s/%s already exists, skipping", osName, arch)
+						} else {
+							log.Printf("Architecture manifest for %s/%s missing, will download", osName, arch)
+							// Download missing architecture manifest
+							if err := downloadArchitectureManifest(imageName, manifest.Digest, archDir, osName, arch, variant); err != nil {
+								log.Printf("Warning: failed to download missing architecture manifest for %s/%s: %v", osName, arch, err)
+							}
+						}
+					}
+					return nil
+				} else {
+					log.Printf("Image %s is a single architecture image, manifest already exists", imageName)
+					return nil
+				}
+			}
+		}
+	}
+
 	// Download manifest using docker manifest inspect
 	manifestData, err := downloadManifestWithRetry(imageName)
 	if err != nil {
@@ -135,7 +185,6 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 	}
 
 	// Save the main manifest
-	manifestPath := filepath.Join(imageDir, "manifest.json")
 	if err := os.WriteFile(manifestPath, manifestData, 0644); err != nil {
 		return fmt.Errorf("failed to save manifest: %w", err)
 	}
@@ -168,23 +217,21 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 				continue
 			}
 
+			// Check if architecture manifest already exists
+			archManifestPath := filepath.Join(archDir, "manifest.json")
+			if _, err := os.Stat(archManifestPath); err == nil {
+				log.Printf("Architecture manifest for %s/%s already exists, skipping", osName, arch)
+				continue
+			}
+
 			// Download the specific architecture manifest with retry
-			archManifestData, err := downloadManifestByDigestWithRetry(imageName, manifest.Digest)
-			if err != nil {
+			if err := downloadArchitectureManifest(imageName, manifest.Digest, archDir, osName, arch, variant); err != nil {
 				log.Printf("Warning: failed to download manifest for %s/%s: %v", osName, arch, err)
 				// Create an error manifest file to indicate this architecture was attempted
-				archManifestPath := filepath.Join(archDir, "manifest.json")
 				emptyManifest := fmt.Sprintf(`{"error": "Failed to download manifest for %s/%s: %v"}`, osName, arch, err)
 				if writeErr := os.WriteFile(archManifestPath, []byte(emptyManifest), 0644); writeErr != nil {
 					log.Printf("Warning: failed to write error manifest: %v", writeErr)
 				}
-				continue
-			}
-
-			// Save architecture-specific manifest
-			archManifestPath := filepath.Join(archDir, "manifest.json")
-			if err := os.WriteFile(archManifestPath, archManifestData, 0644); err != nil {
-				log.Printf("Warning: failed to save arch manifest: %v", err)
 				continue
 			}
 
@@ -534,4 +581,21 @@ func cleanImageName(imageName string) string {
 	cleaned = strings.TrimSuffix(cleaned, "/")
 
 	return cleaned
+}
+
+// downloadArchitectureManifest downloads and saves a specific architecture manifest
+func downloadArchitectureManifest(imageName, digest, archDir, osName, arch, variant string) error {
+	// Download the specific architecture manifest with retry
+	archManifestData, err := downloadManifestByDigestWithRetry(imageName, digest)
+	if err != nil {
+		return fmt.Errorf("failed to download architecture manifest: %w", err)
+	}
+
+	// Save architecture-specific manifest
+	archManifestPath := filepath.Join(archDir, "manifest.json")
+	if err := os.WriteFile(archManifestPath, archManifestData, 0644); err != nil {
+		return fmt.Errorf("failed to save arch manifest: %w", err)
+	}
+
+	return nil
 }
