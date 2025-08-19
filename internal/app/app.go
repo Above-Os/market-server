@@ -19,6 +19,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"text/template"
@@ -34,6 +35,9 @@ const (
 	ImagesSourceEnv      = "IMAGES_SOURCE"
 )
 
+// 防重入相关变量 - 使用原子操作
+var isGitUpdating int32
+
 func getDisableCategories() string {
 	disableCategories := os.Getenv(DisableCategoriesEnv)
 	if disableCategories != "" {
@@ -44,12 +48,18 @@ func getDisableCategories() string {
 }
 
 func Init() error {
-	err := UpdateAppInfosToDB()
-	if err != nil {
-		glog.Warningf("%s", err.Error())
-		return err
-	}
+	// 异步初始化，不阻塞HTTP服务启动
+	go func() {
+		glog.Infof("Starting async app initialization...")
+		err := UpdateAppInfosToDB()
+		if err != nil {
+			glog.Warningf("Async app initialization failed: %s", err.Error())
+		} else {
+			glog.Infof("Async app initialization completed successfully")
+		}
+	}()
 
+	// 启动定时更新循环
 	go pullAndUpdateLoop()
 
 	return nil
@@ -126,6 +136,15 @@ func pullAndUpdateLoop() {
 }
 
 func GitPullAndUpdate(force bool) error {
+	// 使用原子操作检查并设置状态，实现防重入
+	if !atomic.CompareAndSwapInt32(&isGitUpdating, 0, 1) {
+		glog.Infof("Git update is already in progress, skipping this update.")
+		return nil
+	}
+
+	// 确保函数结束时重置状态
+	defer atomic.StoreInt32(&isGitUpdating, 0)
+
 	err := gitapp.Pull()
 	if err != nil {
 		if errors.Is(err, git.NoErrAlreadyUpToDate) && force {
