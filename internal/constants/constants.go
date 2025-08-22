@@ -17,8 +17,8 @@ package constants
 const (
 	APIServerListenAddress = ":8081"
 
-	AppGitLocalDir    = "./app_git"
-	AppGitZipLocalDir = "./charts"
+	AppGitLocalDir    = "/opt/app/app_git"
+	AppGitZipLocalDir = "/opt/app/charts"
 	AppCfgFileName    = "OlaresManifest.yaml"
 	ReadmeFileName    = "README.md"
 
