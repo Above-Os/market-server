@@ -92,7 +92,7 @@ func packApps(apps []*models.ApplicationInfoEntry) []*models.ApplicationInfoFull
 }
 
 func UpdateAppInfosToDB() error {
-	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
+	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir, false)
 	if err != nil {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
@@ -120,7 +120,22 @@ func UpdateAppInfosToDB() error {
 	glog.Infof("save to mongo success")
 
 	//sync info from mongodb to es
-	go es.SyncInfoFromMongo()
+	go func() {
+		err := es.SyncInfoFromMongo()
+		if err != nil {
+			glog.Warningf("es.SyncInfoFromMongo failed: %v", err)
+			return
+		}
+
+		// After ES sync completes, execute GetAppInfosFromGitDir with packageImage=true
+		glog.Infof("ES sync completed, starting GetAppInfosFromGitDir with packageImage=true")
+		_, err = GetAppInfosFromGitDir(constants.AppGitLocalDir, true)
+		if err != nil {
+			glog.Warningf("GetAppInfosFromGitDir with packageImage=true failed: %v", err)
+		} else {
+			glog.Infof("GetAppInfosFromGitDir with packageImage=true completed successfully")
+		}
+	}()
 
 	return nil
 }
@@ -468,7 +483,7 @@ func configureDockerImageSource() error {
 	return nil
 }
 
-func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, err error) {
+func GetAppInfosFromGitDir(dir string, packageImage bool) (infos []*models.ApplicationInfoEntry, err error) {
 	charts, err := os.ReadDir(dir)
 	if err != nil {
 		glog.Warningf("read dir %s error: %s", dir, err.Error())
@@ -494,11 +509,13 @@ func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, er
 			continue
 		}
 
-		// DownloadImagesInfo
-		err = images.DownloadImagesInfo(path.Join(constants.AppGitLocalDir, c.Name()))
-		if err != nil {
-			glog.Warningf("DownloadImagesInfo failed: %v", err)
-			continue
+		if packageImage == true {
+			// DownloadImagesInfo
+			err = images.DownloadImagesInfo(path.Join(constants.AppGitLocalDir, c.Name()))
+			if err != nil {
+				glog.Warningf("DownloadImagesInfo failed: %v", err)
+				continue
+			}
 		}
 
 		//helm package
