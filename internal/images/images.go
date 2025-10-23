@@ -142,7 +142,8 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 			var manifestList ManifestList
 			if err := json.Unmarshal(existingManifestData, &manifestList); err == nil {
 				// Check if this is a manifest list (multi-architecture)
-				if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" {
+				if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
+					manifestList.MediaType == "application/vnd.oci.image.index.v1+json" {
 					log.Printf("Image %s is a multi-architecture manifest list with %d architectures",
 						imageName, len(manifestList.Manifests))
 
@@ -196,7 +197,8 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 	}
 
 	// Check if this is a manifest list (multi-architecture)
-	if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" {
+	if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
+		manifestList.MediaType == "application/vnd.oci.image.index.v1+json" {
 		log.Printf("Image %s is a multi-architecture manifest list with %d architectures",
 			imageName, len(manifestList.Manifests))
 
