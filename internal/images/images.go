@@ -257,6 +257,11 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 		return fmt.Errorf("failed to download manifest: %w", err)
 	}
 
+	// Ensure directory exists before writing file
+	if err := os.MkdirAll(imageDir, 0755); err != nil {
+		return fmt.Errorf("failed to create image directory: %w", err)
+	}
+
 	// Save the main manifest
 	if err := os.WriteFile(manifestPath, manifestData, 0644); err != nil {
 		return fmt.Errorf("failed to save manifest: %w", err)
@@ -629,6 +634,11 @@ func downloadArchitectureManifest(imageName, digest, archDir, osName, arch, vari
 	archManifestData, err := downloadManifestByDigestWithRetry(imageName, digest)
 	if err != nil {
 		return fmt.Errorf("failed to download architecture manifest: %w", err)
+	}
+
+	// Ensure directory exists before writing file
+	if err := os.MkdirAll(archDir, 0755); err != nil {
+		return fmt.Errorf("failed to create arch directory: %w", err)
 	}
 
 	// Save architecture-specific manifest

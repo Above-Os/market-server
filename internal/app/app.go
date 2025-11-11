@@ -42,6 +42,8 @@ const (
 
 // 防重入相关变量 - 使用原子操作
 var isGitUpdating int32
+var isAppInfoUpdating int32
+var isImageProcessing int32
 
 func getDisableCategories() string {
 	disableCategories := os.Getenv(DisableCategoriesEnv)
@@ -94,6 +96,16 @@ func packApps(apps []*models.ApplicationInfoEntry) []*models.ApplicationInfoFull
 }
 
 func UpdateAppInfosToDB() error {
+	// Use atomic operation to prevent concurrent execution
+	if !atomic.CompareAndSwapInt32(&isAppInfoUpdating, 0, 1) {
+		glog.Infof("UpdateAppInfosToDB is already running, skipping this call")
+		return nil
+	}
+
+	// Ensure state is reset when function exits
+	defer atomic.StoreInt32(&isAppInfoUpdating, 0)
+
+	// First, quickly process app info without images to avoid blocking startup
 	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir, false)
 	if err != nil {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
@@ -116,11 +128,24 @@ func UpdateAppInfosToDB() error {
 			return
 		}
 
-		// After ES sync completes, execute GetAppInfosFromGitDir with packageImage=true
-		_, err = GetAppInfosFromGitDir(constants.AppGitLocalDir, true)
-		if err != nil {
-			glog.Warningf("GetAppInfosFromGitDir with packageImage=true failed: %v", err)
-		}
+		// After ES sync completes, process images in background asynchronously
+		// This ensures images are processed without blocking startup or ES sync
+		// Use atomic operation to prevent concurrent image processing
+		go func() {
+			if !atomic.CompareAndSwapInt32(&isImageProcessing, 0, 1) {
+				glog.Infof("Image processing is already running, skipping this call")
+				return
+			}
+			defer atomic.StoreInt32(&isImageProcessing, 0)
+
+			glog.Infof("Starting background image processing...")
+			_, err = GetAppInfosFromGitDir(constants.AppGitLocalDir, true)
+			if err != nil {
+				glog.Warningf("GetAppInfosFromGitDir with packageImage=true failed: %v", err)
+			} else {
+				glog.Infof("Background image processing completed successfully")
+			}
+		}()
 	}()
 
 	return nil
