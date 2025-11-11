@@ -25,6 +25,7 @@ import (
 
 	"text/template"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/go-git/go-git/v5"
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
@@ -316,8 +317,11 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 		},
 	}
 
+	// Create template with Sprig functions (includes semverCompare, toString, etc.)
+	funcMap := sprig.FuncMap()
+
 	// Create and render the template
-	tmpl, err := template.New("appconfig").Parse(templateContent)
+	tmpl, err := template.New("appconfig").Funcs(funcMap).Parse(templateContent)
 	if err != nil {
 		return nil, err
 	}
