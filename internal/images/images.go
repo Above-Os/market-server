@@ -1,8 +1,10 @@
 package images
 
 import (
+	"app-store-server/internal/constants"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -44,6 +46,15 @@ type ManifestList struct {
 	} `json:"manifests"`
 }
 
+// getCacheDir returns the persistent cache directory for image manifests
+func getCacheDir() string {
+	cacheDir := os.Getenv("IMAGE_MANIFESTS_CACHE_DIR")
+	if cacheDir == "" {
+		cacheDir = constants.ImageManifestsCacheDir
+	}
+	return cacheDir
+}
+
 func DownloadImagesInfo(chartDir string) error {
 	// 1. Extract all images from chart directory
 	images, err := extractImagesFromDirectory(chartDir)
@@ -55,30 +66,105 @@ func DownloadImagesInfo(chartDir string) error {
 		return nil
 	}
 
-	// 2. Create images directory
+	// 2. Initialize persistent cache directory
+	cacheDir := getCacheDir()
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to create cache directory: %w", err)
+	}
+
+	// 3. Create images directory in chartDir (for packaging)
 	imagesDir := filepath.Join(chartDir, "images")
 	if err := os.MkdirAll(imagesDir, 0755); err != nil {
 		return fmt.Errorf("failed to create images directory: %w", err)
 	}
 
-	// 3. Process each image with retry mechanism
+	// 4. Process each image: download to cache first, then copy to chartDir
 	for _, image := range images {
 		// Create safe directory name for image
 		safeImageName := createSafeDirectoryName(image)
-		imageDir := filepath.Join(imagesDir, safeImageName)
 
-		if err := os.MkdirAll(imageDir, 0755); err != nil {
-			log.Printf("Warning: failed to create directory for image %s: %v", image, err)
-			continue
+		// Cache directory for this image
+		cacheImageDir := filepath.Join(cacheDir, safeImageName)
+
+		// Chart directory for this image (for packaging)
+		chartImageDir := filepath.Join(imagesDir, safeImageName)
+
+		// Download and process manifest to cache with retry
+		if err := downloadAndProcessManifestWithRetry(image, cacheImageDir); err != nil {
+			return fmt.Errorf("failed to process image %s: %w", image, err)
 		}
 
-		// Download and process manifest with retry
-		if err := downloadAndProcessManifestWithRetry(image, imageDir); err != nil {
-			return fmt.Errorf("failed to process image %s: %w", image, err)
+		// Copy from cache to chartDir
+		if err := copyManifestFromCache(cacheImageDir, chartImageDir); err != nil {
+			log.Printf("Warning: failed to copy manifest from cache for image %s: %v", image, err)
+			// Continue even if copy fails, as cache is the primary storage
 		}
 	}
 
 	return nil
+}
+
+// copyManifestFromCache copies manifest files from cache directory to chart directory
+func copyManifestFromCache(cacheDir, chartDir string) error {
+	// Check if cache directory exists
+	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		return fmt.Errorf("cache directory does not exist: %s", cacheDir)
+	}
+
+	// Create chart directory
+	if err := os.MkdirAll(chartDir, 0755); err != nil {
+		return fmt.Errorf("failed to create chart directory: %w", err)
+	}
+
+	// Recursively copy all files from cache to chart directory
+	return filepath.Walk(cacheDir, func(srcPath string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Calculate relative path from cache directory
+		relPath, err := filepath.Rel(cacheDir, srcPath)
+		if err != nil {
+			return err
+		}
+
+		// Skip root directory
+		if relPath == "." {
+			return nil
+		}
+
+		// Destination path
+		dstPath := filepath.Join(chartDir, relPath)
+
+		if info.IsDir() {
+			// Create directory
+			return os.MkdirAll(dstPath, info.Mode())
+		} else {
+			// Copy file
+			return copyFile(srcPath, dstPath, info.Mode())
+		}
+	})
+}
+
+// copyFile copies a file from src to dst
+func copyFile(src, dst string, mode os.FileMode) error {
+	// Open source file
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	// Create destination file
+	dstFile, err := os.OpenFile(dst, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, mode)
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	// Copy content
+	_, err = io.Copy(dstFile, srcFile)
+	return err
 }
 
 // createSafeDirectoryName creates a safe directory name from image name
