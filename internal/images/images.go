@@ -51,7 +51,9 @@ func DownloadImagesInfo(chartDir string) error {
 		return fmt.Errorf("failed to extract images: %w", err)
 	}
 
-	log.Printf("Found %d unique images in chart directory", len(images))
+	if len(images) == 0 {
+		return nil
+	}
 
 	// 2. Create images directory
 	imagesDir := filepath.Join(chartDir, "images")
@@ -61,8 +63,6 @@ func DownloadImagesInfo(chartDir string) error {
 
 	// 3. Process each image with retry mechanism
 	for _, image := range images {
-		log.Printf("Processing image: %s", image)
-
 		// Create safe directory name for image
 		safeImageName := createSafeDirectoryName(image)
 		imageDir := filepath.Join(imagesDir, safeImageName)
@@ -74,7 +74,6 @@ func DownloadImagesInfo(chartDir string) error {
 
 		// Download and process manifest with retry
 		if err := downloadAndProcessManifestWithRetry(image, imageDir); err != nil {
-			log.Printf("Error: failed to process manifest for image %s after all retries: %v", image, err)
 			return fmt.Errorf("failed to process image %s: %w", image, err)
 		}
 	}
@@ -104,26 +103,22 @@ func downloadAndProcessManifestWithRetry(imageName, imageDir string) error {
 	maxRetries := 3
 	retryDelay := 5 * time.Second
 
+	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
-		log.Printf("Attempt %d/%d for image %s", attempt, maxRetries, imageName)
-
 		err := downloadAndProcessManifest(imageName, imageDir)
 		if err == nil {
-			log.Printf("Successfully processed image %s on attempt %d", imageName, attempt)
 			return nil
 		}
 
+		lastErr = err
 		if attempt < maxRetries {
-			log.Printf("Attempt %d failed for image %s: %v. Retrying in %v...", attempt, imageName, err, retryDelay)
 			time.Sleep(retryDelay)
 			// Increase delay for next retry
 			retryDelay = time.Duration(float64(retryDelay) * 1.5)
-		} else {
-			return fmt.Errorf("failed after %d attempts: %w", maxRetries, err)
 		}
 	}
 
-	return fmt.Errorf("unexpected error in retry loop")
+	return fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
 }
 
 // downloadAndProcessManifest downloads manifest and processes multi-arch images
@@ -131,12 +126,9 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 	// Check if main manifest already exists locally
 	manifestPath := filepath.Join(imageDir, "manifest.json")
 	if _, err := os.Stat(manifestPath); err == nil {
-		log.Printf("Main manifest already exists for image %s, skipping download", imageName)
-
 		// Read existing manifest to check if it's a multi-architecture manifest list
 		existingManifestData, err := os.ReadFile(manifestPath)
 		if err != nil {
-			log.Printf("Warning: failed to read existing manifest: %v", err)
 			// Continue with download if we can't read the existing file
 		} else {
 			var manifestList ManifestList
@@ -144,10 +136,7 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 				// Check if this is a manifest list (multi-architecture)
 				if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
 					manifestList.MediaType == "application/vnd.oci.image.index.v1+json" {
-					log.Printf("Image %s is a multi-architecture manifest list with %d architectures",
-						imageName, len(manifestList.Manifests))
-
-					// Check and skip existing architecture manifests
+					// Check and download missing architecture manifests
 					for _, manifest := range manifestList.Manifests {
 						arch := manifest.Platform.Architecture
 						osName := manifest.Platform.OS
@@ -160,19 +149,16 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 						}
 
 						archManifestPath := filepath.Join(archDir, "manifest.json")
-						if _, err := os.Stat(archManifestPath); err == nil {
-							log.Printf("Architecture manifest for %s/%s already exists, skipping", osName, arch)
-						} else {
-							log.Printf("Architecture manifest for %s/%s missing, will download", osName, arch)
+						if _, err := os.Stat(archManifestPath); err != nil {
 							// Download missing architecture manifest
 							if err := downloadArchitectureManifest(imageName, manifest.Digest, archDir, osName, arch, variant); err != nil {
-								log.Printf("Warning: failed to download missing architecture manifest for %s/%s: %v", osName, arch, err)
+								log.Printf("Warning: failed to download architecture manifest for %s/%s: %v", osName, arch, err)
 							}
 						}
 					}
 					return nil
 				} else {
-					log.Printf("Image %s is a single architecture image, manifest already exists", imageName)
+					// Single architecture image, manifest already exists
 					return nil
 				}
 			}
@@ -199,9 +185,6 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 	// Check if this is a manifest list (multi-architecture)
 	if manifestList.MediaType == "application/vnd.docker.distribution.manifest.list.v2+json" ||
 		manifestList.MediaType == "application/vnd.oci.image.index.v1+json" {
-		log.Printf("Image %s is a multi-architecture manifest list with %d architectures",
-			imageName, len(manifestList.Manifests))
-
 		// Download each architecture's manifest with retry
 		for _, manifest := range manifestList.Manifests {
 			arch := manifest.Platform.Architecture
@@ -222,7 +205,6 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 			// Check if architecture manifest already exists
 			archManifestPath := filepath.Join(archDir, "manifest.json")
 			if _, err := os.Stat(archManifestPath); err == nil {
-				log.Printf("Architecture manifest for %s/%s already exists, skipping", osName, arch)
 				continue
 			}
 
@@ -231,16 +213,10 @@ func downloadAndProcessManifest(imageName, imageDir string) error {
 				log.Printf("Warning: failed to download manifest for %s/%s: %v", osName, arch, err)
 				// Create an error manifest file to indicate this architecture was attempted
 				emptyManifest := fmt.Sprintf(`{"error": "Failed to download manifest for %s/%s: %v"}`, osName, arch, err)
-				if writeErr := os.WriteFile(archManifestPath, []byte(emptyManifest), 0644); writeErr != nil {
-					log.Printf("Warning: failed to write error manifest: %v", writeErr)
-				}
+				_ = os.WriteFile(archManifestPath, []byte(emptyManifest), 0644)
 				continue
 			}
-
-			log.Printf("Downloaded manifest for %s/%s (variant: %s)", osName, arch, variant)
 		}
-	} else {
-		log.Printf("Image %s is a single architecture image", imageName)
 	}
 
 	return nil
@@ -251,22 +227,21 @@ func downloadManifestWithRetry(imageName string) ([]byte, error) {
 	maxRetries := 3
 	retryDelay := 2 * time.Second
 
+	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		output, err := downloadManifest(imageName)
 		if err == nil {
 			return output, nil
 		}
 
+		lastErr = err
 		if attempt < maxRetries {
-			log.Printf("Attempt %d failed for manifest %s: %v. Retrying in %v...", attempt, imageName, err, retryDelay)
 			time.Sleep(retryDelay)
 			retryDelay = time.Duration(float64(retryDelay) * 1.5)
-		} else {
-			return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries, err)
 		}
 	}
 
-	return nil, fmt.Errorf("unexpected error in retry loop")
+	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
 }
 
 // downloadManifestByDigestWithRetry downloads a specific manifest by digest with retry mechanism
@@ -274,22 +249,21 @@ func downloadManifestByDigestWithRetry(imageName, digest string) ([]byte, error)
 	maxRetries := 3
 	retryDelay := 2 * time.Second
 
+	var lastErr error
 	for attempt := 1; attempt <= maxRetries; attempt++ {
 		output, err := downloadManifestByDigest(imageName, digest)
 		if err == nil {
 			return output, nil
 		}
 
+		lastErr = err
 		if attempt < maxRetries {
-			log.Printf("Attempt %d failed for digest %s: %v. Retrying in %v...", attempt, digest, err, retryDelay)
 			time.Sleep(retryDelay)
 			retryDelay = time.Duration(float64(retryDelay) * 1.5)
-		} else {
-			return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries, err)
 		}
 	}
 
-	return nil, fmt.Errorf("unexpected error in retry loop")
+	return nil, fmt.Errorf("failed after %d attempts: %w", maxRetries, lastErr)
 }
 
 // downloadManifest downloads manifest using docker manifest inspect
@@ -316,18 +290,14 @@ func modifyImageNameWithMirror(imageName string) string {
 
 	for _, skipRegistry := range skipMirrorRegistries {
 		if registry == skipRegistry {
-			log.Printf("Skipping mirror for registry: %s", registry)
 			return imageName
 		}
 	}
 
 	// Clean up mirror URL - remove protocol and trailing slash
 	cleanMirror := strings.TrimSuffix(mirror, "/")
-	if strings.HasPrefix(cleanMirror, "https://") {
-		cleanMirror = strings.TrimPrefix(cleanMirror, "https://")
-	} else if strings.HasPrefix(cleanMirror, "http://") {
-		cleanMirror = strings.TrimPrefix(cleanMirror, "http://")
-	}
+	cleanMirror = strings.TrimPrefix(cleanMirror, "https://")
+	cleanMirror = strings.TrimPrefix(cleanMirror, "http://")
 
 	// If it's already using the mirror, return as is
 	if registry == cleanMirror {
@@ -341,8 +311,6 @@ func modifyImageNameWithMirror(imageName string) string {
 func downloadManifest(imageName string) ([]byte, error) {
 	// Modify image name to use mirror if configured
 	modifiedImageName := modifyImageNameWithMirror(imageName)
-
-	log.Printf("Downloading manifest for %s (original: %s)", modifiedImageName, imageName)
 
 	cmd := exec.Command("docker", "manifest", "inspect", modifiedImageName)
 	output, err := cmd.Output()
@@ -363,8 +331,6 @@ func downloadManifestByDigest(imageName, digest string) ([]byte, error) {
 	// Use docker manifest inspect with the base image name and digest
 	// Format: docker manifest inspect <base-image>@<digest>
 	fullImageName := fmt.Sprintf("%s@%s", modifiedBaseImageName, digest)
-
-	log.Printf("Downloading manifest for %s (original: %s@%s)", fullImageName, baseImageName, digest)
 
 	cmd := exec.Command("docker", "manifest", "inspect", fullImageName)
 	output, err := cmd.Output()
@@ -467,9 +433,6 @@ func isYAMLFile(filePath string) bool {
 
 // extractImagesFromContent extracts Docker image references from file content
 func extractImagesFromContent(content string) []string {
-	// Add debug logging to help diagnose image extraction issues
-	log.Printf("Debug: Extracting images from content (length: %d)", len(content))
-
 	imageSet := make(map[string]bool)
 
 	// More specific regex to match Docker image fields in YAML
@@ -481,24 +444,17 @@ func extractImagesFromContent(content string) []string {
 	imageRegex := regexp.MustCompile(`(?m)^\s*image:\s*["\']?([a-zA-Z0-9][a-zA-Z0-9._/-]*[a-zA-Z0-9](?::[a-zA-Z0-9._-]+)?(?:@sha256:[a-fA-F0-9]{64})?)["\']?\s*$`)
 
 	matches := imageRegex.FindAllStringSubmatch(content, -1)
-	log.Printf("Debug: Found %d regex matches", len(matches))
 
-	for i, match := range matches {
-		log.Printf("Debug: Match %d: %v", i, match)
+	for _, match := range matches {
 		if len(match) > 1 {
 			image := strings.TrimSpace(match[1])
-			log.Printf("Debug: Extracted image candidate: '%s'", image)
 
 			if image != "" && isValidImageName(image) {
 				// Clean up the image name
 				cleanImage := cleanImageName(image)
-				log.Printf("Debug: Cleaned image: '%s'", cleanImage)
 				if cleanImage != "" {
 					imageSet[cleanImage] = true
-					log.Printf("Debug: Added image to set: '%s'", cleanImage)
 				}
-			} else {
-				log.Printf("Debug: Image '%s' failed validation", image)
 			}
 		}
 	}
@@ -508,7 +464,6 @@ func extractImagesFromContent(content string) []string {
 		images = append(images, image)
 	}
 
-	log.Printf("Debug: Final extracted images: %v", images)
 	return images
 }
 
@@ -573,11 +528,8 @@ func cleanImageName(imageName string) string {
 	// Remove quotes and extra whitespace
 	cleaned := strings.Trim(imageName, `"' `)
 
-	// Handle registry prefixes
-	if strings.HasPrefix(cleaned, "docker.io/") {
-		// docker.io is the default registry, can be simplified
-		cleaned = strings.TrimPrefix(cleaned, "docker.io/")
-	}
+	// Handle registry prefixes - docker.io is the default registry, can be simplified
+	cleaned = strings.TrimPrefix(cleaned, "docker.io/")
 
 	// Remove any trailing slashes
 	cleaned = strings.TrimSuffix(cleaned, "/")
@@ -598,6 +550,11 @@ func downloadArchitectureManifest(imageName, digest, archDir, osName, arch, vari
 	if err := os.WriteFile(archManifestPath, archManifestData, 0644); err != nil {
 		return fmt.Errorf("failed to save arch manifest: %w", err)
 	}
+
+	// osName, arch, and variant are kept for potential future use (e.g., logging or validation)
+	_ = osName
+	_ = arch
+	_ = variant
 
 	return nil
 }

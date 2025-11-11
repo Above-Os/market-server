@@ -50,12 +50,9 @@ func getDisableCategories() string {
 func Init() error {
 	// 异步初始化，不阻塞HTTP服务启动
 	go func() {
-		glog.Infof("Starting async app initialization...")
 		err := UpdateAppInfosToDB()
 		if err != nil {
 			glog.Warningf("Async app initialization failed: %s", err.Error())
-		} else {
-			glog.Infof("Async app initialization completed successfully")
 		}
 	}()
 
@@ -98,26 +95,13 @@ func UpdateAppInfosToDB() error {
 		return err
 	}
 
-	glog.Infof("app infos size:%d", len(infos))
-
 	apps := packApps(infos)
-
-	glog.Infof("apps size:%d", len(apps))
-	// just print one cell
-	// var m models.ApplicationInfo
-	// for _, info := range infos {
-	// 	if info.Name == "firefox" {
-	// 		m = *info
-	// 	}
-	// }
-	// glog.Warningf("firefox: %v", m)
 
 	err = UpdateAppInfosToMongo(apps)
 	if err != nil {
-		glog.Warningf("%s", err.Error())
+		glog.Warningf("Failed to update app infos to mongo: %s", err.Error())
 		return err
 	}
-	glog.Infof("save to mongo success")
 
 	//sync info from mongodb to es
 	go func() {
@@ -128,12 +112,9 @@ func UpdateAppInfosToDB() error {
 		}
 
 		// After ES sync completes, execute GetAppInfosFromGitDir with packageImage=true
-		glog.Infof("ES sync completed, starting GetAppInfosFromGitDir with packageImage=true")
 		_, err = GetAppInfosFromGitDir(constants.AppGitLocalDir, true)
 		if err != nil {
 			glog.Warningf("GetAppInfosFromGitDir with packageImage=true failed: %v", err)
-		} else {
-			glog.Infof("GetAppInfosFromGitDir with packageImage=true completed successfully")
 		}
 	}()
 
@@ -153,7 +134,6 @@ func pullAndUpdateLoop() {
 func GitPullAndUpdate(force bool) error {
 	// 使用原子操作检查并设置状态，实现防重入
 	if !atomic.CompareAndSwapInt32(&isGitUpdating, 0, 1) {
-		glog.Infof("Git update is already in progress, skipping this update.")
 		return nil
 	}
 
@@ -162,16 +142,11 @@ func GitPullAndUpdate(force bool) error {
 
 	err := gitapp.Pull()
 	if err != nil {
-		if errors.Is(err, git.NoErrAlreadyUpToDate) && force {
-			glog.Infof("info:%s", err.Error())
-			glog.Infof("force update")
-		} else {
-			glog.Warningf("git pull err:%s", err.Error())
+		if !errors.Is(err, git.NoErrAlreadyUpToDate) || !force {
+			glog.Warningf("git pull failed: %s", err.Error())
 			return err
 		}
 	}
-
-	glog.Infof("git repo update")
 
 	err = gitapp.GetLastCommitHashAndUpdate()
 	if err != nil {
@@ -348,43 +323,31 @@ func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.App
 	// Store the user (non-admin) application information in Variants
 	mergedInfo.Variants["user"] = *userInfo
 
-	// Record differences between the two views
-	if !reflect.DeepEqual(adminInfo, userInfo) {
-		glog.Infof("The admin view and user view of the application %s have configuration differences", adminInfo.Name)
-	}
+	// Record differences between the two views (logged at debug level if needed)
+	_ = reflect.DeepEqual(adminInfo, userInfo)
 
 	return mergedInfo
 }
 
 // Helper function to set i18n information
 func setI18nInfo(appInfo *models.ApplicationInfoEntry, appDir string) {
-	glog.Infof("---->start parse i18n<----")
 	i18nMap := make(map[string]models.I18n)
 	for _, lang := range appInfo.Locale {
-		glog.Infof("path:")
-		glog.Infof(appDir)
-		glog.Infof(lang)
-		glog.Infof(constants.AppCfgFileName)
-
 		data, err := ioutil.ReadFile(path.Join(appDir, "i18n", lang, constants.AppCfgFileName))
 		if err != nil {
-			glog.Warningf("failed to get file %s,err=%v", path.Join("i18n", lang, constants.AppCfgFileName), err)
+			// Only log if file is expected to exist (non-critical error)
 			continue
 		}
-		glog.Infof("data:")
-		glog.Infof(string(data))
 
 		var i18n models.I18n
 		err = yaml.Unmarshal(data, &i18n)
 		if err != nil {
-			glog.Warningf("unmarshal to I18n failed err=%v", err)
+			glog.Warningf("Failed to parse i18n file for %s/%s: %v", appInfo.Name, lang, err)
 			continue
 		}
-		fmt.Println(i18n)
 		i18nMap[lang] = i18n
 	}
 	appInfo.I18n = i18nMap
-	glog.Infof("---->end parse i18n<----")
 }
 
 func checkAppContainSpecialFile(info *models.ApplicationInfoEntry, appDir string) {
@@ -471,14 +434,11 @@ func configureDockerImageSource() error {
 
 	// Test basic docker connectivity first
 	testCmd := exec.Command("docker", "version", "--format", "{{.Server.Version}}")
-	testOutput, testErr := testCmd.CombinedOutput()
+	_, testErr := testCmd.CombinedOutput()
 	if testErr != nil {
-		glog.Warningf("Docker daemon not accessible: %v, output: %s", testErr, string(testOutput))
+		glog.Warningf("Docker daemon not accessible: %v", testErr)
 		return fmt.Errorf("docker daemon not accessible: %w", testErr)
 	}
-
-	glog.Infof("Docker daemon is accessible, version: %s", strings.TrimSpace(string(testOutput)))
-	glog.Infof("Docker image source configured: %s", imagesSource)
 
 	return nil
 }
@@ -525,7 +485,7 @@ func GetAppInfosFromGitDir(dir string, packageImage bool) (infos []*models.Appli
 			continue
 		}
 
-		glog.Infof("name:%s, version:%s, chartName:%s", c.Name(), appInfo.Version, appInfo.ChartName)
+		// Chart packaged successfully
 
 		//get git info
 		getGitInfosByName(appInfo, c.Name())

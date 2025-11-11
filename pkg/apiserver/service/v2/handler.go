@@ -68,7 +68,6 @@ func getTopsData() ([]AppStoreTopItem, error) {
 		})
 	}
 
-	glog.Infof("Retrieved %d top applications", len(tops))
 	return tops, nil
 }
 
@@ -79,7 +78,6 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 	// Parse the passed version string
 	v, err := semver.NewVersion(version)
 	if err != nil {
-		glog.Infof("error version:%s", version)
 		return nil, err
 	}
 
@@ -94,7 +92,6 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 					// Parsing version strings
 					constraint, err := semver.NewConstraint(dep.Version)
 					if err != nil {
-						glog.Infof("error version:%s", dep.Version)
 						return nil, err
 					}
 
@@ -102,7 +99,6 @@ func filterVersionForApps(apps []*models.ApplicationInfoFullData, version string
 					if constraint.Check(v) {
 						appv, err := semver.NewVersion(entry.Version)
 						if err != nil {
-							glog.Infof("error version:%s, error app:%s", entry.Version, entry.Name)
 							continue
 						}
 
@@ -159,7 +155,6 @@ func getTopsDataWithVersion(version string) ([]AppStoreTopItem, error) {
 		})
 	}
 
-	glog.Infof("Retrieved %d filtered top applications", len(tops))
 	return tops, nil
 }
 
@@ -175,16 +170,12 @@ func getAppStoreData(page, size, version string) (*AppStoreInfo, error) {
 		return nil, err
 	}
 
-	glog.Infof("Retrieved %d apps from database", len(appList))
-
 	// Filter apps based on version constraints
 	appEntryList, err := filterVersionForApps(appList, version)
 	if err != nil {
 		glog.Errorf("Failed to filter apps by version: %v", err)
 		return nil, err
 	}
-
-	glog.Infof("Filtered %d apps after version filtering", len(appEntryList))
 
 	// Convert []ApplicationInfoEntry to []ApplicationInfoFullData for hash calculation
 	var apps []models.ApplicationInfoFullData
@@ -244,8 +235,6 @@ func (h *Handler) handleAppStoreInfo(req *restful.Request, resp *restful.Respons
 		version = os.Getenv("LATEST_VERSION")
 	}
 
-	glog.Infof("handleAppStoreInfo - page:%s, size:%s, version:%s", page, size, version)
-
 	// Get appstore data with version filtering
 	appStoreInfo, err := getAppStoreData(page, size, version)
 	if err != nil {
@@ -283,8 +272,6 @@ func (h *Handler) handleChartDownload(req *restful.Request, resp *restful.Respon
 		version = os.Getenv("LATEST_VERSION")
 	}
 
-	glog.Infof("handleChartDownload for app: %s, version: %s, fileName: %s", appName, version, fileName)
-
 	// Determine file path based on fileName parameter
 	var filePath string
 	if fileName != "" {
@@ -296,8 +283,6 @@ func (h *Handler) handleChartDownload(req *restful.Request, resp *restful.Respon
 		api.HandleError(resp, req, errors.New("fileName parameter is required"))
 		return
 	}
-
-	glog.Infof("Chart file path: %s", filePath)
 
 	if filePath == "" {
 		api.HandleError(resp, req, fmt.Errorf("failed to get chart path"))
@@ -337,8 +322,6 @@ func (h *Handler) handleAppStoreHash(req *restful.Request, resp *restful.Respons
 	if version == "latest" {
 		version = os.Getenv("LATEST_VERSION")
 	}
-
-	glog.Infof("handleAppStoreHash - page:%s, size:%s, version:%s", page, size, version)
 
 	// Get appstore data with version filtering (same as handleAppStoreInfo)
 	appStoreInfo, err := getAppStoreData(page, size, version)
