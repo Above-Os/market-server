@@ -318,7 +318,8 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 	}
 
 	// Create template with Sprig functions (includes semverCompare, toString, etc.)
-	funcMap := sprig.FuncMap()
+	// Use TxtFuncMap for text/template compatibility
+	funcMap := sprig.TxtFuncMap()
 
 	// Create and render the template
 	tmpl, err := template.New("appconfig").Funcs(funcMap).Parse(templateContent)
