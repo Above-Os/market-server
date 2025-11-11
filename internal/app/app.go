@@ -19,6 +19,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -33,6 +34,10 @@ import (
 const (
 	DisableCategoriesEnv = "DISABLE_CATEGORIES"
 	ImagesSourceEnv      = "IMAGES_SOURCE"
+	// DefaultConcurrency is the default number of concurrent workers for processing apps
+	DefaultConcurrency = 10
+	// ConcurrencyEnv is the environment variable name for setting concurrency
+	ConcurrencyEnv = "APP_PROCESSING_CONCURRENCY"
 )
 
 // 防重入相关变量 - 使用原子操作
@@ -443,6 +448,20 @@ func configureDockerImageSource() error {
 	return nil
 }
 
+// getConcurrency returns the number of concurrent workers to use
+func getConcurrency() int {
+	concurrencyStr := os.Getenv(ConcurrencyEnv)
+	if concurrencyStr != "" {
+		var concurrency int
+		_, err := fmt.Sscanf(concurrencyStr, "%d", &concurrency)
+		if err == nil && concurrency > 0 {
+			return concurrency
+		}
+		glog.Warningf("Invalid concurrency value %s, using default %d", concurrencyStr, DefaultConcurrency)
+	}
+	return DefaultConcurrency
+}
+
 func GetAppInfosFromGitDir(dir string, packageImage bool) (infos []*models.ApplicationInfoEntry, err error) {
 	charts, err := os.ReadDir(dir)
 	if err != nil {
@@ -457,42 +476,131 @@ func GetAppInfosFromGitDir(dir string, packageImage bool) (infos []*models.Appli
 		// Continue processing even if image source configuration fails
 	}
 
+	// Collect valid app directories
+	var appDirs []string
 	for _, c := range charts {
 		if !c.IsDir() || strings.HasPrefix(c.Name(), ".") {
 			continue
 		}
+		appDirs = append(appDirs, c.Name())
+	}
+
+	if len(appDirs) == 0 {
+		return []*models.ApplicationInfoEntry{}, nil
+	}
+
+	// Use parallel processing for better performance
+	return GetAppInfosFromGitDirParallel(appDirs, packageImage)
+}
+
+// GetAppInfosFromGitDirParallel processes apps in parallel using worker pool pattern
+func GetAppInfosFromGitDirParallel(appDirs []string, packageImage bool) ([]*models.ApplicationInfoEntry, error) {
+	concurrency := getConcurrency()
+	// Ensure concurrency doesn't exceed the number of apps
+	if concurrency > len(appDirs) {
+		concurrency = len(appDirs)
+	}
+	glog.Infof("Processing %d apps with concurrency %d", len(appDirs), concurrency)
+
+	// Create channels for work distribution and result collection
+	jobs := make(chan string, len(appDirs))
+	results := make(chan *appProcessResult, len(appDirs))
+
+	// Populate jobs channel
+	for _, appDir := range appDirs {
+		jobs <- appDir
+	}
+	close(jobs)
+
+	// Start worker goroutines
+	var wg sync.WaitGroup
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			processAppWorker(jobs, results, packageImage)
+		}()
+	}
+
+	// Close results channel when all workers are done
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results
+	var infos []*models.ApplicationInfoEntry
+	var errors []error
+	successCount := 0
+	failureCount := 0
+
+	for result := range results {
+		if result.err != nil {
+			failureCount++
+			errors = append(errors, fmt.Errorf("app %s: %w", result.appName, result.err))
+			glog.Warningf("Failed to process app %s: %v", result.appName, result.err)
+		} else if result.appInfo != nil {
+			successCount++
+			infos = append(infos, result.appInfo)
+		}
+	}
+
+	glog.Infof("App processing completed: %d successful, %d failed out of %d total", successCount, failureCount, len(appDirs))
+
+	// Return error if all apps failed, but still return partial results
+	if len(infos) == 0 && len(errors) > 0 {
+		return nil, fmt.Errorf("all apps failed to process: %v", errors[0])
+	}
+
+	return infos, nil
+}
+
+// appProcessResult represents the result of processing a single app
+type appProcessResult struct {
+	appName string
+	appInfo *models.ApplicationInfoEntry
+	err     error
+}
+
+// processAppWorker is a worker function that processes apps from the jobs channel
+func processAppWorker(jobs <-chan string, results chan<- *appProcessResult, packageImage bool) {
+	for appName := range jobs {
+		result := &appProcessResult{
+			appName: appName,
+		}
 
 		// read app info from chart
-		appInfo, err := ReadAppInfo(c.Name())
+		appInfo, err := ReadAppInfo(appName)
 		if err != nil {
-			glog.Warningf("app chart %s reading error: %s", c.Name(), err.Error())
+			result.err = fmt.Errorf("ReadAppInfo failed: %w", err)
+			results <- result
 			continue
 		}
 
-		if packageImage == true {
+		if packageImage {
 			// DownloadImagesInfo
-			err = images.DownloadImagesInfo(path.Join(constants.AppGitLocalDir, c.Name()))
+			err = images.DownloadImagesInfo(path.Join(constants.AppGitLocalDir, appName))
 			if err != nil {
-				glog.Warningf("DownloadImagesInfo failed: %v", err)
+				result.err = fmt.Errorf("DownloadImagesInfo failed: %w", err)
+				results <- result
 				continue
 			}
 		}
 
-		//helm package
-		appInfo.ChartName, err = helmPackage(c.Name())
+		// helm package
+		appInfo.ChartName, err = helmPackage(appName)
 		if err != nil {
-			glog.Warningf("helm package %s error: %s", c.Name(), err.Error())
+			result.err = fmt.Errorf("helm package failed: %w", err)
+			results <- result
 			continue
 		}
 
-		// Chart packaged successfully
+		// get git info
+		getGitInfosByName(appInfo, appName)
 
-		//get git info
-		getGitInfosByName(appInfo, c.Name())
-		infos = append(infos, appInfo)
+		result.appInfo = appInfo
+		results <- result
 	}
-
-	return infos, nil
 }
 
 func getGitInfosByName(appInfo *models.ApplicationInfoEntry, name string) {
