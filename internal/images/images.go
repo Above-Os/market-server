@@ -78,10 +78,16 @@ func DownloadImagesInfo(chartDir string) error {
 		return fmt.Errorf("failed to create images directory: %w", err)
 	}
 
-	// 4. Process each image: download to cache first, then copy to chartDir
-	for _, image := range images {
+	// 4. Create images-v2 directory in chartDir (for packaging with containers/image/v5)
+	imagesV2Dir := filepath.Join(chartDir, "images-v2")
+	if err := os.MkdirAll(imagesV2Dir, 0755); err != nil {
+		return fmt.Errorf("failed to create images-v2 directory: %w", err)
+	}
+
+	// 5. Process each image: download to cache first, then copy to chartDir
+	for _, imageName := range images {
 		// Create safe directory name for image
-		safeImageName := createSafeDirectoryName(image)
+		safeImageName := createSafeDirectoryName(imageName)
 
 		// Cache directory for this image
 		cacheImageDir := filepath.Join(cacheDir, safeImageName)
@@ -89,15 +95,33 @@ func DownloadImagesInfo(chartDir string) error {
 		// Chart directory for this image (for packaging)
 		chartImageDir := filepath.Join(imagesDir, safeImageName)
 
-		// Download and process manifest to cache with retry
-		if err := downloadAndProcessManifestWithRetry(image, cacheImageDir); err != nil {
-			return fmt.Errorf("failed to process image %s: %w", image, err)
+		// Download and process manifest to cache with retry (v1 method)
+		if err := downloadAndProcessManifestWithRetry(imageName, cacheImageDir); err != nil {
+			log.Printf("Warning: failed to process image %s with v1 method: %v", imageName, err)
+			// Continue to try v2 method even if v1 fails
+		} else {
+			// Copy from cache to chartDir (v1 method)
+			if err := copyManifestFromCache(cacheImageDir, chartImageDir); err != nil {
+				log.Printf("Warning: failed to copy manifest from cache for image %s: %v", imageName, err)
+				// Continue even if copy fails, as cache is the primary storage
+			}
 		}
 
-		// Copy from cache to chartDir
-		if err := copyManifestFromCache(cacheImageDir, chartImageDir); err != nil {
-			log.Printf("Warning: failed to copy manifest from cache for image %s: %v", image, err)
-			// Continue even if copy fails, as cache is the primary storage
+		// Process image with v2 method (containers/image/v5)
+		// Cache directory for v2 (use same cache dir with v2 suffix)
+		cacheImageV2Dir := filepath.Join(cacheDir, safeImageName+"-v2")
+		chartImageV2Dir := filepath.Join(imagesV2Dir, safeImageName)
+
+		// Download and process image info to cache with retry (v2 method)
+		if err := downloadImagesInfoV2WithRetry(imageName, cacheImageV2Dir); err != nil {
+			log.Printf("Warning: failed to process image %s with v2 method: %v", imageName, err)
+			// Continue processing other images even if one fails
+		} else {
+			// Copy from cache to chartDir (v2 method)
+			if err := copyImageInfoFromCache(cacheImageV2Dir, chartImageV2Dir); err != nil {
+				log.Printf("Warning: failed to copy image info from cache for image %s: %v", imageName, err)
+				// Continue even if copy fails, as cache is the primary storage
+			}
 		}
 	}
 
