@@ -17,10 +17,13 @@ package constants
 const (
 	APIServerListenAddress = ":8081"
 
-	AppGitLocalDir    = "./app_git"
-	AppGitZipLocalDir = "./charts"
+	AppGitLocalDir    = "/opt/app/app_git"
+	AppGitZipLocalDir = "/opt/app/charts"
 	AppCfgFileName    = "OlaresManifest.yaml"
 	ReadmeFileName    = "README.md"
+	// ImageManifestsCacheDir is the persistent cache directory for image manifests (outside git repo)
+	// Can be overridden by IMAGE_MANIFESTS_CACHE_DIR environment variable
+	ImageManifestsCacheDir = "/opt/app/image_manifests_cache"
 
 	TimeFormatStr = "Mon Jan 2 15:04:05 2006 -0700"
 

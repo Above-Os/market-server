@@ -5,6 +5,7 @@ import (
 	"app-store-server/internal/es"
 	"app-store-server/internal/gitapp"
 	"app-store-server/internal/helm"
+	"app-store-server/internal/images"
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/models"
 	"app-store-server/pkg/utils"
@@ -14,21 +15,36 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"reflect"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
+	"text/template"
+
+	"github.com/Masterminds/sprig/v3"
 	"github.com/go-git/go-git/v5"
 	"github.com/golang/glog"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"text/template"
 )
 
 const (
 	DisableCategoriesEnv = "DISABLE_CATEGORIES"
+	ImagesSourceEnv      = "IMAGES_SOURCE"
+	// DefaultConcurrency is the default number of concurrent workers for processing apps
+	DefaultConcurrency = 10
+	// ConcurrencyEnv is the environment variable name for setting concurrency
+	ConcurrencyEnv = "APP_PROCESSING_CONCURRENCY"
 )
+
+// 防重入相关变量 - 使用原子操作
+var isGitUpdating int32
+var isAppInfoUpdating int32
+var isImageProcessing int32
 
 func getDisableCategories() string {
 	disableCategories := os.Getenv(DisableCategoriesEnv)
@@ -40,12 +56,15 @@ func getDisableCategories() string {
 }
 
 func Init() error {
-	err := UpdateAppInfosToDB()
-	if err != nil {
-		glog.Warningf("%s", err.Error())
-		return err
-	}
+	// 异步初始化，不阻塞HTTP服务启动
+	go func() {
+		err := UpdateAppInfosToDB()
+		if err != nil {
+			glog.Warningf("Async app initialization failed: %s", err.Error())
+		}
+	}()
 
+	// 启动定时更新循环
 	go pullAndUpdateLoop()
 
 	return nil
@@ -78,35 +97,57 @@ func packApps(apps []*models.ApplicationInfoEntry) []*models.ApplicationInfoFull
 }
 
 func UpdateAppInfosToDB() error {
-	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir)
+	// Use atomic operation to prevent concurrent execution
+	if !atomic.CompareAndSwapInt32(&isAppInfoUpdating, 0, 1) {
+		glog.Infof("UpdateAppInfosToDB is already running, skipping this call")
+		return nil
+	}
+
+	// Ensure state is reset when function exits
+	defer atomic.StoreInt32(&isAppInfoUpdating, 0)
+
+	// First, quickly process app info without images to avoid blocking startup
+	infos, err := GetAppInfosFromGitDir(constants.AppGitLocalDir, false)
 	if err != nil {
 		glog.Warningf("GetAppInfosFromGitDir %s err:%s", constants.AppGitLocalDir, err.Error())
 		return err
 	}
 
-	glog.Infof("app infos size:%d", len(infos))
-
 	apps := packApps(infos)
-
-	glog.Infof("apps size:%d", len(apps))
-	// just print one cell
-	// var m models.ApplicationInfo
-	// for _, info := range infos {
-	// 	if info.Name == "firefox" {
-	// 		m = *info
-	// 	}
-	// }
-	// glog.Warningf("firefox: %v", m)
 
 	err = UpdateAppInfosToMongo(apps)
 	if err != nil {
-		glog.Warningf("%s", err.Error())
+		glog.Warningf("Failed to update app infos to mongo: %s", err.Error())
 		return err
 	}
-	glog.Infof("save to mongo success")
 
 	//sync info from mongodb to es
-	go es.SyncInfoFromMongo()
+	go func() {
+		err := es.SyncInfoFromMongo()
+		if err != nil {
+			glog.Warningf("es.SyncInfoFromMongo failed: %v", err)
+			return
+		}
+
+		// After ES sync completes, process images in background asynchronously
+		// This ensures images are processed without blocking startup or ES sync
+		// Use atomic operation to prevent concurrent image processing
+		go func() {
+			if !atomic.CompareAndSwapInt32(&isImageProcessing, 0, 1) {
+				glog.Infof("Image processing is already running, skipping this call")
+				return
+			}
+			defer atomic.StoreInt32(&isImageProcessing, 0)
+
+			glog.Infof("Starting background image processing...")
+			_, err = GetAppInfosFromGitDir(constants.AppGitLocalDir, true)
+			if err != nil {
+				glog.Warningf("GetAppInfosFromGitDir with packageImage=true failed: %v", err)
+			} else {
+				glog.Infof("Background image processing completed successfully")
+			}
+		}()
+	}()
 
 	return nil
 }
@@ -122,18 +163,21 @@ func pullAndUpdateLoop() {
 }
 
 func GitPullAndUpdate(force bool) error {
+	// 使用原子操作检查并设置状态，实现防重入
+	if !atomic.CompareAndSwapInt32(&isGitUpdating, 0, 1) {
+		return nil
+	}
+
+	// 确保函数结束时重置状态
+	defer atomic.StoreInt32(&isGitUpdating, 0)
+
 	err := gitapp.Pull()
 	if err != nil {
-		if errors.Is(err, git.NoErrAlreadyUpToDate) && force {
-			glog.Infof("info:%s", err.Error())
-			glog.Infof("force update")
-		} else {
-			glog.Warningf("git pull err:%s", err.Error())
+		if !errors.Is(err, git.NoErrAlreadyUpToDate) || !force {
+			glog.Warningf("git pull failed: %s", err.Error())
 			return err
 		}
 	}
-
-	glog.Infof("git repo update")
 
 	err = gitapp.GetLastCommitHashAndUpdate()
 	if err != nil {
@@ -205,16 +249,16 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 				glog.Warningf("Failed to render admin application configuration: %s", err.Error())
 				return nil, err
 			}
-			
+
 			userAppInfo, err := renderAppConfigWithTemplate(string(cfgContent), false)
 			if err != nil {
 				glog.Warningf("Failed to render user application configuration: %s", err.Error())
 				return nil, err
 			}
-			
+
 			// Merge the two configurations to create an application information that contains both views
 			mergedAppInfo := mergeAppInfos(adminAppInfo, userAppInfo)
-			
+
 			// Continue processing the merged application information
 			disableCategories := getDisableCategories()
 			for _, categorie := range mergedAppInfo.Categories {
@@ -223,16 +267,16 @@ func ReadAppInfo(dirName string) (*models.ApplicationInfoEntry, error) {
 					mergedAppInfo.AppLabels = append(mergedAppInfo.AppLabels, constants.DisableLabel)
 				}
 			}
-			
+
 			// Set i18n information
 			setI18nInfo(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
-			
+
 			// Check for special files
 			checkAppContainSpecialFile(mergedAppInfo, path.Join(constants.AppGitLocalDir, dirName))
-			
+
 			return mergedAppInfo, nil
 		}
-		
+
 		glog.Warningf("Failed to parse application configuration: %s", err.Error())
 		return nil, err
 	}
@@ -272,27 +316,31 @@ func renderAppConfigWithTemplate(templateContent string, isAdmin bool) (*models.
 			},
 		},
 	}
-	
+
+	// Create template with Sprig functions (includes semverCompare, toString, etc.)
+	// Use TxtFuncMap for text/template compatibility
+	funcMap := sprig.TxtFuncMap()
+
 	// Create and render the template
-	tmpl, err := template.New("appconfig").Parse(templateContent)
+	tmpl, err := template.New("appconfig").Funcs(funcMap).Parse(templateContent)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var rendered bytes.Buffer
 	if err := tmpl.Execute(&rendered, values); err != nil {
 		return nil, err
 	}
-	
+
 	// Parse the rendered YAML
 	var appCfg models.AppConfiguration
 	if err := yaml.Unmarshal(rendered.Bytes(), &appCfg); err != nil {
 		return nil, err
 	}
-	
+
 	// Convert to application information entry
 	appInfo := appInfoParseQuantity(appCfg.ToAppInfo())
-	
+
 	return appInfo, nil
 }
 
@@ -301,52 +349,40 @@ func mergeAppInfos(adminInfo, userInfo *models.ApplicationInfoEntry) *models.App
 	// Use admin info as the primary application information
 	mergedInfo := &models.ApplicationInfoEntry{}
 	*mergedInfo = *adminInfo
-	
+
 	// Initialize the Variants map (if not already initialized)
 	if mergedInfo.Variants == nil {
 		mergedInfo.Variants = make(map[string]models.ApplicationInfoEntry)
 	}
-	
+
 	// Store the user (non-admin) application information in Variants
 	mergedInfo.Variants["user"] = *userInfo
-	
-	// Record differences between the two views
-	if !reflect.DeepEqual(adminInfo, userInfo) {
-		glog.Infof("The admin view and user view of the application %s have configuration differences", adminInfo.Name)
-	}
-	
+
+	// Record differences between the two views (logged at debug level if needed)
+	_ = reflect.DeepEqual(adminInfo, userInfo)
+
 	return mergedInfo
 }
 
 // Helper function to set i18n information
 func setI18nInfo(appInfo *models.ApplicationInfoEntry, appDir string) {
-	glog.Infof("---->start parse i18n<----")
 	i18nMap := make(map[string]models.I18n)
 	for _, lang := range appInfo.Locale {
-		glog.Infof("path:")
-		glog.Infof(appDir)
-		glog.Infof(lang)
-		glog.Infof(constants.AppCfgFileName)
-
 		data, err := ioutil.ReadFile(path.Join(appDir, "i18n", lang, constants.AppCfgFileName))
 		if err != nil {
-			glog.Warningf("failed to get file %s,err=%v", path.Join("i18n", lang, constants.AppCfgFileName), err)
+			// Only log if file is expected to exist (non-critical error)
 			continue
 		}
-		glog.Infof("data:")
-		glog.Infof(string(data))
 
 		var i18n models.I18n
 		err = yaml.Unmarshal(data, &i18n)
 		if err != nil {
-			glog.Warningf("unmarshal to I18n failed err=%v", err)
+			glog.Warningf("Failed to parse i18n file for %s/%s: %v", appInfo.Name, lang, err)
 			continue
 		}
-		fmt.Println(i18n)
 		i18nMap[lang] = i18n
 	}
 	appInfo.I18n = i18nMap
-	glog.Infof("---->end parse i18n<----")
 }
 
 func checkAppContainSpecialFile(info *models.ApplicationInfoEntry, appDir string) {
@@ -414,40 +450,187 @@ func appInfoParseQuantity(info *models.ApplicationInfoEntry) *models.Application
 	return info
 }
 
-func GetAppInfosFromGitDir(dir string) (infos []*models.ApplicationInfoEntry, err error) {
+// configureDockerImageSource configures docker image source using environment variable
+func configureDockerImageSource() error {
+	imagesSource := os.Getenv(ImagesSourceEnv)
+	if imagesSource == "" {
+		glog.Infof("IMAGES_SOURCE environment variable not set, using default docker registry")
+		return nil
+	}
+
+	glog.Infof("Configuring docker image source: %s", imagesSource)
+
+	// First check if docker command exists
+	_, err := exec.LookPath("docker")
+	if err != nil {
+		glog.Warningf("Docker command not found in PATH: %v", err)
+		return fmt.Errorf("docker command not found: %w", err)
+	}
+
+	// Test basic docker connectivity first
+	testCmd := exec.Command("docker", "version", "--format", "{{.Server.Version}}")
+	_, testErr := testCmd.CombinedOutput()
+	if testErr != nil {
+		glog.Warningf("Docker daemon not accessible: %v", testErr)
+		return fmt.Errorf("docker daemon not accessible: %w", testErr)
+	}
+
+	return nil
+}
+
+// getConcurrency returns the number of concurrent workers to use
+func getConcurrency() int {
+	concurrencyStr := os.Getenv(ConcurrencyEnv)
+	if concurrencyStr != "" {
+		var concurrency int
+		_, err := fmt.Sscanf(concurrencyStr, "%d", &concurrency)
+		if err == nil && concurrency > 0 {
+			return concurrency
+		}
+		glog.Warningf("Invalid concurrency value %s, using default %d", concurrencyStr, DefaultConcurrency)
+	}
+	return DefaultConcurrency
+}
+
+func GetAppInfosFromGitDir(dir string, packageImage bool) (infos []*models.ApplicationInfoEntry, err error) {
 	charts, err := os.ReadDir(dir)
 	if err != nil {
 		glog.Warningf("read dir %s error: %s", dir, err.Error())
 		return nil, err
 	}
 
+	// Configure docker image source once before processing all apps
+	err = configureDockerImageSource()
+	if err != nil {
+		glog.Warningf("Failed to configure docker image source: %v", err)
+		// Continue processing even if image source configuration fails
+	}
+
+	// Collect valid app directories
+	var appDirs []string
 	for _, c := range charts {
 		if !c.IsDir() || strings.HasPrefix(c.Name(), ".") {
 			continue
 		}
+		appDirs = append(appDirs, c.Name())
+	}
 
-		// read app info from chart
-		appInfo, err := ReadAppInfo(c.Name())
-		if err != nil {
-			glog.Warningf("app chart %s reading error: %s", c.Name(), err.Error())
-			continue
+	if len(appDirs) == 0 {
+		return []*models.ApplicationInfoEntry{}, nil
+	}
+
+	// Use parallel processing for better performance
+	return GetAppInfosFromGitDirParallel(appDirs, packageImage)
+}
+
+// GetAppInfosFromGitDirParallel processes apps in parallel using worker pool pattern
+func GetAppInfosFromGitDirParallel(appDirs []string, packageImage bool) ([]*models.ApplicationInfoEntry, error) {
+	concurrency := getConcurrency()
+	// Ensure concurrency doesn't exceed the number of apps
+	if concurrency > len(appDirs) {
+		concurrency = len(appDirs)
+	}
+	glog.Infof("Processing %d apps with concurrency %d", len(appDirs), concurrency)
+
+	// Create channels for work distribution and result collection
+	jobs := make(chan string, len(appDirs))
+	results := make(chan *appProcessResult, len(appDirs))
+
+	// Populate jobs channel
+	for _, appDir := range appDirs {
+		jobs <- appDir
+	}
+	close(jobs)
+
+	// Start worker goroutines
+	var wg sync.WaitGroup
+	for i := 0; i < concurrency; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			processAppWorker(jobs, results, packageImage)
+		}()
+	}
+
+	// Close results channel when all workers are done
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results
+	var infos []*models.ApplicationInfoEntry
+	var errors []error
+	successCount := 0
+	failureCount := 0
+
+	for result := range results {
+		if result.err != nil {
+			failureCount++
+			errors = append(errors, fmt.Errorf("app %s: %w", result.appName, result.err))
+			glog.Warningf("Failed to process app %s: %v", result.appName, result.err)
+		} else if result.appInfo != nil {
+			successCount++
+			infos = append(infos, result.appInfo)
 		}
+	}
 
-		//helm package
-		appInfo.ChartName, err = helmPackage(c.Name())
-		if err != nil {
-			glog.Warningf("helm package %s error: %s", c.Name(), err.Error())
-			continue
-		}
+	glog.Infof("App processing completed: %d successful, %d failed out of %d total", successCount, failureCount, len(appDirs))
 
-		glog.Infof("name:%s, version:%s, chartName:%s", c.Name(), appInfo.Version, appInfo.ChartName)
-
-		//get git info
-		getGitInfosByName(appInfo, c.Name())
-		infos = append(infos, appInfo)
+	// Return error if all apps failed, but still return partial results
+	if len(infos) == 0 && len(errors) > 0 {
+		return nil, fmt.Errorf("all apps failed to process: %v", errors[0])
 	}
 
 	return infos, nil
+}
+
+// appProcessResult represents the result of processing a single app
+type appProcessResult struct {
+	appName string
+	appInfo *models.ApplicationInfoEntry
+	err     error
+}
+
+// processAppWorker is a worker function that processes apps from the jobs channel
+func processAppWorker(jobs <-chan string, results chan<- *appProcessResult, packageImage bool) {
+	for appName := range jobs {
+		result := &appProcessResult{
+			appName: appName,
+		}
+
+		// read app info from chart
+		appInfo, err := ReadAppInfo(appName)
+		if err != nil {
+			result.err = fmt.Errorf("ReadAppInfo failed: %w", err)
+			results <- result
+			continue
+		}
+
+		if packageImage {
+			// DownloadImagesInfo
+			err = images.DownloadImagesInfo(path.Join(constants.AppGitLocalDir, appName))
+			if err != nil {
+				result.err = fmt.Errorf("DownloadImagesInfo failed: %w", err)
+				results <- result
+				continue
+			}
+		}
+
+		// helm package
+		appInfo.ChartName, err = helmPackage(appName)
+		if err != nil {
+			result.err = fmt.Errorf("helm package failed: %w", err)
+			results <- result
+			continue
+		}
+
+		// get git info
+		getGitInfosByName(appInfo, appName)
+
+		result.appInfo = appInfo
+		results <- result
+	}
 }
 
 func getGitInfosByName(appInfo *models.ApplicationInfoEntry, name string) {

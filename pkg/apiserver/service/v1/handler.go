@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/emicklei/go-restful/v3"
-	"github.com/golang/glog"
 )
 
 type Handler struct {
@@ -56,8 +55,6 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		version = os.Getenv("LATEST_VERSION")
 	}
 
-	glog.Infof("page:%s, size:%s, category:%s, version:%s", page, size, category, version)
-
 	from, sizeN := utils.VerifyFromAndSize(page, size)
 
 	appList, count, err := mongo.GetAppLists(int64(from), int64(sizeN), category, ty)
@@ -66,15 +63,11 @@ func (h *Handler) handleList(req *restful.Request, resp *restful.Response) {
 		return
 	}
 
-	glog.Infof("appList size:%d", len(appList))
-
 	appEntryList, err := filterVersionForApps(appList, version)
 	if err != nil {
 		api.HandleError(resp, req, err)
 		return
 	}
-
-	glog.Infof("appEntryList size:%d", len(appEntryList))
 
 	resp.WriteEntity(models.NewResponse(api.OK, api.Success, models.NewListResultWithCount(appEntryList, count)))
 }
@@ -131,10 +124,7 @@ func (h *Handler) handleApp(req *restful.Request, resp *restful.Response) {
 		version = os.Getenv("LATEST_VERSION")
 	}
 
-	glog.Infof("handleApp,%s,%s", appName, version)
 	fileName := getChartPath(appName, version)
-
-	glog.Infof("fileName,%s", fileName)
 
 	if fileName == "" {
 		api.HandleError(resp, req, fmt.Errorf("failed to get chart"))

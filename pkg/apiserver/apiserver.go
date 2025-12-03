@@ -22,6 +22,7 @@ import (
 	"app-store-server/internal/mongo"
 	"app-store-server/pkg/api"
 	servicev1 "app-store-server/pkg/apiserver/service/v1"
+	servicev2 "app-store-server/pkg/apiserver/service/v2"
 	"net/http"
 
 	restfulspec "github.com/emicklei/go-restful-openapi/v2"
@@ -113,6 +114,7 @@ func (s *APIServer) installAPIDocs() {
 
 func (s *APIServer) installModuleAPI() {
 	servicev1.AddToContainer(s.container)
+	servicev2.AddToContainer(s.container)
 }
 
 func enrichSwaggerObject(swo *spec.Swagger) {

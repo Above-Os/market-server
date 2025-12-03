@@ -67,8 +67,6 @@ func cloneCode() error {
 }
 
 func gitClone(url, branch, directory string) error {
-	glog.Infof("git clone %s %s %s --recursive", url, branch, directory)
-
 	//clone
 	r, err := git.PlainClone(directory, false, &git.CloneOptions{
 		URL:           url,
@@ -76,23 +74,21 @@ func gitClone(url, branch, directory string) error {
 		ReferenceName: plumbing.ReferenceName(branch),
 	})
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		glog.Warningf("git clone failed: %s", err.Error())
 		return err
 	}
 
 	ref, err := r.Head()
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		glog.Warningf("failed to get HEAD: %s", err.Error())
 		return err
 	}
-	glog.Infof("ref:%#v", ref)
 
 	commit, err := r.CommitObject(ref.Hash())
 	if err != nil {
-		glog.Warningf("err:%s", err.Error())
+		glog.Warningf("failed to get commit: %s", err.Error())
 		return err
 	}
-	glog.Infof("commit:%#v", commit)
 
 	updateLastHash(commit.Hash.String())
 
@@ -138,14 +134,12 @@ func gitPullV1(directory string) error {
 	cmd := exec.Command("git", "pull")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		glog.Infof("combined out:%s\n", string(out))
 		return err
 	}
 
 	if strings.Contains(string(out), "Already up to date") {
 		return git.NoErrAlreadyUpToDate
 	}
-	glog.Infof("out:%s\n", string(out))
 
 	return nil
 }
@@ -183,14 +177,12 @@ func gitPullV2(directory string) error {
 	cmd := exec.Command("git", "pull")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		glog.Infof("git pull output: %s\n", string(out))
 		return fmt.Errorf("git pull failed: %w", err)
 	}
 
 	if strings.Contains(string(out), "Already up to date") {
 		return git.NoErrAlreadyUpToDate
 	}
-	glog.Infof("git pull output: %s\n", string(out))
 
 	return nil
 }
@@ -357,14 +349,11 @@ func getLastUpdateTime(dirPath, subDirPath string) (string, error) {
 	}
 
 	cmd := exec.Command("git", "log", "-1", `--pretty=format:%ad`, `--`, subDirPath)
-	glog.Infof("cmd:%s", cmd.String())
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		glog.Warningf("combined out:%s\n", string(out))
 		return "", err
 	}
-	glog.Infof("out:%s", string(out))
 
 	return string(out), nil
 }
@@ -386,15 +375,12 @@ func getCreateTime(dirPath, subDirPath string) (string, error) {
 	}
 
 	cmd := exec.Command("git", "log", `--pretty=format:%ad`, `--`, subDirPath)
-	glog.Infof("cmd:%s", cmd.String())
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		glog.Warningf("combined out:%s\n", string(out))
 		return "", err
 	}
 
 	outStr := string(out)
-	glog.Infof("out:%s", outStr)
 	outStrSlice := strings.Split(outStr, "\n")
 	if len(outStrSlice) <= 0 {
 		return "", fmt.Errorf("%s not contain \\n", outStr)
