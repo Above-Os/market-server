@@ -1,4 +1,7 @@
 # app-store-server
+
+> [English](README_EN.md) | [中文](README.md)
+
 market-server（app-store-server）是 App Store 的核心后端服务，从 Git 仓库和 admin 中拉取并索引应用信息，提供应用列表/搜索/详情等 REST 接口给 Market 前端和其他服务使用。
 
 ## 架构&设计

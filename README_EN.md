@@ -1,4 +1,7 @@
 # app-store-server
+
+> [English](README_EN.md) | [中文](README.md)
+
 market-server (app-store-server) is the core backend service for the App Store. It pulls and indexes application information from Git repositories and admin, providing REST APIs for application listing, search, details, etc. to Market frontend and other services.
 
 ## Architecture & Design
